@@ -1,3 +1,7 @@
+mod bub;
+mod oao;
+mod wav;
+
 /// Metadata
 pub trait Metadata {}
 
