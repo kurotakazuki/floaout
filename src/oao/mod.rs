@@ -1,3 +1,3 @@
-mod sample;
 mod io;
 mod metadata;
+mod sample;
