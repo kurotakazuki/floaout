@@ -7,7 +7,11 @@ pub mod wav;
 pub trait Metadata {}
 
 /// Sample
-pub trait Sample {}
+pub trait Sample: Sized {
+    fn read<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self>;
+
+    fn write<W: std::io::Write>(self, writer: &mut W) -> std::io::Result<()>;
+}
 
 /// Frame Reader
 pub trait FrameReader {}

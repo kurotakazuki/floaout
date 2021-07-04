@@ -1,3 +1,5 @@
+use crate::Metadata;
+
 pub struct WavMetadata {
     format_tag: FormatTag,
     /// Number of sample frames
@@ -9,6 +11,8 @@ pub struct WavMetadata {
     /// Bits Per Sample
     bits_per_sample: u16,
 }
+
+impl Metadata for WavMetadata {}
 
 impl WavMetadata {
     pub const fn frames(&self) -> u32 {

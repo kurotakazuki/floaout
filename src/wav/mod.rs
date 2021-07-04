@@ -1,4 +1,4 @@
-pub use self::metadata::{WavMetadata, FormatTag};
+pub use self::metadata::{FormatTag, WavMetadata};
 
 mod io;
 mod metadata;
