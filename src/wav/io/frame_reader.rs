@@ -1,13 +1,11 @@
 use crate::io::ReadExt;
 use crate::wav::{WavMetadata, WavSample};
 use std::io::{Read, Result};
-use std::marker::PhantomData;
 
 pub struct WavFrameReader<R: Read, S: WavSample> {
     pub inner: R,
     pub metadata: WavMetadata<S>,
     pub pos: u32,
-    phantom_sample: PhantomData<S>,
 }
 
 impl<R: Read, S: WavSample> WavFrameReader<R, S> {
@@ -16,7 +14,6 @@ impl<R: Read, S: WavSample> WavFrameReader<R, S> {
             inner,
             metadata,
             pos: 0,
-            phantom_sample: PhantomData,
         }
     }
 
