@@ -1,36 +1,10 @@
-use crate::io::ReadExt;
 use crate::wav::{WavMetadata, WavSample};
+use crate::FrameReader;
 use std::io::{Read, Result};
 
-pub struct WavFrameReader<R: Read, S: WavSample> {
-    pub inner: R,
-    pub metadata: WavMetadata<S>,
-    pub pos: u32,
-}
+pub type WavFrameReader<R, S> = FrameReader<R, WavMetadata<S>>;
 
-impl<R: Read, S: WavSample> WavFrameReader<R, S> {
-    pub fn new(inner: R, metadata: WavMetadata<S>) -> Self {
-        Self {
-            inner,
-            metadata,
-            pos: 0,
-        }
-    }
-
-    pub fn get_ref(&self) -> &R {
-        &self.inner
-    }
-
-    pub fn get_mut(&mut self) -> &mut R {
-        &mut self.inner
-    }
-
-    pub fn into_inner(self) -> R {
-        self.inner
-    }
-}
-
-impl<R: ReadExt, S: WavSample> Iterator for WavFrameReader<R, S> {
+impl<R: Read, S: WavSample> Iterator for WavFrameReader<R, S> {
     type Item = Result<Vec<S>>;
 
     fn next(&mut self) -> Option<Self::Item> {
