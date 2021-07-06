@@ -1,5 +1,5 @@
 use crate::io::ReadBytes;
-use std::io::{Read, Result};
+use std::io::{Error, ErrorKind, Read, Result};
 
 pub trait ReadExt: Read + Sized {
     fn read_be<T: ReadBytes>(&mut self) -> Result<T> {
@@ -15,6 +15,16 @@ pub trait ReadExt: Read + Sized {
         self.read_exact(&mut buf)?;
         Ok(buf)
     }
+
+    fn read_string_for<const LEN: usize>(&mut self) -> Result<String> {
+        let bytes = self.read_bytes_for::<3>()?;
+        let s = String::from_utf8(bytes.to_vec());
+
+        match s {
+            Ok(s) => Ok(s),
+            Err(e) => Err(Error::new(ErrorKind::InvalidData, e)),
+        }
+    }
 }
 
 impl<R: Read> ReadExt for R {}
@@ -28,10 +38,11 @@ mod tests {
     fn read_str_for() {
         let mut v: &[u8] = &[111, 97, 111];
         let bytes = v.read_bytes_for::<3>().unwrap();
-
         let s = std::str::from_utf8(&bytes).unwrap();
-
         assert_eq!(s, "oao");
+        let mut v: &[u8] = &[111, 97, 111];
+        let bytes = v.read_string_for::<3>().unwrap();
+        assert_eq!(bytes, "oao");
     }
 
     #[test]
