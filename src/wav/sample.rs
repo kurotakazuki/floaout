@@ -17,3 +17,8 @@ macro_rules! wav_le_sample_impl {
 }
 
 wav_le_sample_impl!(f32, f64);
+
+pub trait WavSample: Sample {}
+
+impl WavSample for f32 {}
+impl WavSample for f64 {}
