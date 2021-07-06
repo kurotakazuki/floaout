@@ -1,3 +1,4 @@
+pub use self::io::WavFrameReader;
 pub use self::metadata::{FormatTag, WavMetadata};
 pub use self::sample::WavSample;
 
