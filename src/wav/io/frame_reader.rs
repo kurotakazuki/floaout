@@ -38,7 +38,6 @@ impl<R: Read> WavFrames<R> {
         match self {
             Self::F32(r) => Some(r),
             Self::F64(_) => None,
-            
         }
     }
 
@@ -46,7 +45,6 @@ impl<R: Read> WavFrames<R> {
         match self {
             Self::F32(_) => None,
             Self::F64(r) => Some(r),
-            
         }
     }
 }

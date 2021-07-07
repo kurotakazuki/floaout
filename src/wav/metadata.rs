@@ -1,4 +1,4 @@
-use crate::io::ReadExt;
+use crate::io::{ReadExt, WriteBytes, WriteExt};
 use crate::wav::WavSampleKind;
 use crate::Metadata;
 use std::io::{Error, ErrorKind, Result};
@@ -20,7 +20,7 @@ impl Metadata for WavMetadata {
             let fourcc = reader.read_string_for::<4>()?;
             Self::return_invalid_data_if_not_equal(fourcc, val.to_string())
         };
-        // Riff Chunk
+        // Riff chunk
         check_fourcc(reader, "RIFF")?;
         // File size - 8
         reader.read_bytes_for::<4>()?;
@@ -35,10 +35,9 @@ impl Metadata for WavMetadata {
             Ok(())
         };
 
-        // Fmt Chunk
+        // Fmt chunk
         loop {
             match check_fourcc(reader, "fmt ") {
-                // fmt
                 Ok(_) => {
                     let fmt_size: u32 = reader.read_le()?;
                     Self::return_invalid_data_if_not_equal(fmt_size, 16)?;
@@ -50,7 +49,7 @@ impl Metadata for WavMetadata {
                     let block_align: u16 = reader.read_le()?;
                     let bits_per_sample: u16 = reader.read_le()?;
 
-                    // Data Chunk
+                    // Data chunk
                     loop {
                         match check_fourcc(reader, "data") {
                             Ok(_) => {
@@ -89,8 +88,26 @@ impl Metadata for WavMetadata {
             }
         }
     }
+
     fn write<W: std::io::Write>(self, writer: &mut W) -> Result<()> {
-        todo!()
+        // Riff chunk
+        writer.write_str("RIFF")?;
+        self.standard_riff_chunk_size().write_le_bytes(writer)?;
+        writer.write_str("WAVE")?;
+        // Fmt chunk
+        writer.write_str("fmt ")?;
+        writer.write_le(16_u32)?;
+        self.format_tag().write_le_bytes(writer)?;
+        self.channels().write_le_bytes(writer)?;
+        self.samples_per_sec().write_le_bytes(writer)?;
+        self.avg_bytes_per_sec().write_le_bytes(writer)?;
+        self.block_align().write_le_bytes(writer)?;
+        self.bits_per_sample().write_le_bytes(writer)?;
+        // Data chunk
+        writer.write_str("data")?;
+        self.data_chunk_size().write_le_bytes(writer)?;
+
+        Ok(())
     }
 }
 
@@ -135,6 +152,15 @@ impl WavMetadata {
         self.samples_per_sec() * self.block_align() as u32
     }
 
+    pub const fn data_chunk_size(&self) -> u32 {
+        self.frames() * self.block_align() as u32
+    }
+
+    pub const fn standard_riff_chunk_size(&self) -> u32 {
+        // riff chunk + fmt chunk + data chunk
+        4 + 24 + 8 + self.data_chunk_size()
+    }
+
     fn return_invalid_data_if_not_equal<T: std::fmt::Display + Eq>(
         val: T,
         expect: T,
@@ -173,6 +199,22 @@ mod tests {
         assert_eq!(metadata.block_align(), 4);
         assert_eq!(metadata.bits_per_sample(), 32);
         assert_eq!(metadata.bytes_per_sample(), 4);
+
+        let metadata = WavMetadata {
+            frames: 88200,
+            wav_sample_kind,
+            channels: 1,
+            samples_per_sec,
+        };
+        assert_eq!(metadata.format_tag(), 3);
+        assert_eq!(metadata.channels(), 1);
+        assert_eq!(metadata.samples_per_sec(), 44100);
+        assert_eq!(metadata.avg_bytes_per_sec(), 176400);
+        assert_eq!(metadata.block_align(), 4);
+        assert_eq!(metadata.bits_per_sample(), 32);
+        assert_eq!(metadata.bytes_per_sample(), 4);
+        assert_eq!(metadata.data_chunk_size(), 352800);
+        assert_eq!(metadata.standard_riff_chunk_size(), 352836);
 
         let metadata = WavMetadata {
             frames,
@@ -284,6 +326,33 @@ mod tests {
         let mut data: &[u8] = &DATA[0..500];
         let val = WavMetadata::read(&mut data);
         assert!(val.is_err());
+
+        Ok(())
+    }
+
+    #[test]
+    fn write_and_read() -> Result<()> {
+        let mut v = Vec::new();
+        let metadata = WavMetadata {
+            frames: 88200,
+            wav_sample_kind: WavSampleKind::F32LE,
+            channels: 1,
+            samples_per_sec: 44100,
+        };
+        let mut data: &[u8] = &[
+            0x52, 0x49, 0x46, 0x46, 0x44, 0x62, 0x05, 0x00, 0x57, 0x41, 0x56, 0x45, 0x66, 0x6D,
+            0x74, 0x20, 0x10, 0x00, 0x00, 0x00, 0x03, 0x00, 0x01, 0x00, 0x44, 0xAC, 0x00, 0x00,
+            0x10, 0xB1, 0x02, 0x00, 0x04, 0x00, 0x20, 0x00, 0x64, 0x61, 0x74, 0x61, 0x20, 0x62,
+            0x05, 0x00,
+        ];
+
+        metadata.write(&mut v)?;
+
+        assert_eq!(v, data);
+
+        let written_metadata = WavMetadata::read(&mut data)?;
+
+        assert_eq!(written_metadata, metadata);
 
         Ok(())
     }
