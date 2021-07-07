@@ -35,7 +35,7 @@ mod tests {
     use std::mem::size_of;
 
     #[test]
-    fn read_data_by_wav_frame_reader() {
+    fn read() {
         macro_rules! test_read_wav {
             ( $( $t:ty ),* ) => ($(
                 let format_tag = FormatTag::IEEEFloatingPoint;

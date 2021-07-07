@@ -17,7 +17,7 @@ pub trait ReadExt: Read + Sized {
     }
 
     fn read_string_for<const LEN: usize>(&mut self) -> Result<String> {
-        let bytes = self.read_bytes_for::<3>()?;
+        let bytes = self.read_bytes_for::<LEN>()?;
         let s = String::from_utf8(bytes.to_vec());
 
         match s {
@@ -40,9 +40,12 @@ mod tests {
         let bytes = v.read_bytes_for::<3>().unwrap();
         let s = std::str::from_utf8(&bytes).unwrap();
         assert_eq!(s, "oao");
-        let mut v: &[u8] = &[111, 97, 111];
-        let bytes = v.read_string_for::<3>().unwrap();
-        assert_eq!(bytes, "oao");
+        let mut v: &[u8] = &[
+            0xE3, 0x81, 0xB3, 0xE3, 0x81, 0x8B, 0xE3, 0x81, 0xB3, 0xE3, 0x81, 0x8B, 0xE3, 0x81,
+            0xB3,
+        ];
+        let s = v.read_string_for::<15>().unwrap();
+        assert_eq!(s, "びかびかび");
     }
 
     #[test]
