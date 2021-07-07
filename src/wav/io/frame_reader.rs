@@ -33,6 +33,24 @@ pub enum WavFrames<R: Read> {
     F64(WavFrameReader<R, f64>),
 }
 
+impl<R: Read> WavFrames<R> {
+    pub fn into_f32(self) -> Option<WavFrameReader<R, f32>> {
+        match self {
+            Self::F32(r) => Some(r),
+            Self::F64(_) => None,
+            
+        }
+    }
+
+    pub fn into_f64(self) -> Option<WavFrameReader<R, f64>> {
+        match self {
+            Self::F32(_) => None,
+            Self::F64(r) => Some(r),
+            
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
