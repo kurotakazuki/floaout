@@ -28,6 +28,11 @@ impl<R: Read, S: WavSample> Iterator for WavFrameReader<R, S> {
     }
 }
 
+pub enum WavFrames<R: Read> {
+    F32(WavFrameReader<R, f32>),
+    F64(WavFrameReader<R, f64>),
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

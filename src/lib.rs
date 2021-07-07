@@ -19,7 +19,7 @@ pub trait Sample: Sized {
 }
 
 /// Frame Reader
-pub struct FrameReader<R: Read, M: Metadata, S: Sample> {
+pub struct FrameReader<R: Read, M: Metadata, S: Sample + Sized> {
     pub inner: R,
     pub metadata: M,
     pub pos: u32,
