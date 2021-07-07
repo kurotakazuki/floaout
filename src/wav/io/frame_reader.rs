@@ -36,26 +36,23 @@ pub enum WavFrames<R: Read> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::wav::FormatTag;
-    use std::mem::size_of;
+    use crate::wav::WavSampleKind;
 
     #[test]
     fn read() {
         macro_rules! test_read_wav {
             ( $( $t:ty ),* ) => ($(
-                let format_tag = FormatTag::IEEEFloatingPoint;
+                let wav_sample_kind = WavSampleKind::F32LE;
                 let channels = 1;
                 let samples_per_sec = 44100;
-                let bits_per_sample = (size_of::<$t>() * 8) as u16;
 
 
                 let data: Vec<u8> = Vec::new();
                 let metadata = WavMetadata {
                         frames: 0,
-                        format_tag,
+                        wav_sample_kind,
                         channels,
                         samples_per_sec,
-                        bits_per_sample,
                 };
                 let mut wav_frame_reader: WavFrameReader<&[u8], $t> = WavFrameReader::new(&data[..], metadata);
                 assert!(wav_frame_reader.next().is_none());
@@ -67,10 +64,9 @@ mod tests {
                     .collect();
                 let metadata = WavMetadata {
                     frames: 1,
-                    format_tag,
+                    wav_sample_kind,
                     channels,
                     samples_per_sec,
-                    bits_per_sample,
                 };
                 let mut wav_frame_reader: WavFrameReader<&[u8], $t> = WavFrameReader::new(&data[..], metadata);
                 assert_eq!(wav_frame_reader.next().unwrap().unwrap(), vec![0.5]);
@@ -83,10 +79,9 @@ mod tests {
                     .collect();
                 let metadata = WavMetadata {
                     frames: 2,
-                    format_tag,
+                    wav_sample_kind,
                     channels,
                     samples_per_sec,
-                    bits_per_sample,
                 };
                 let mut wav_frame_reader: WavFrameReader<&[u8], $t> = WavFrameReader::new(&data[..], metadata);
                 assert_eq!(wav_frame_reader.next().unwrap().unwrap(), vec![0.0]);
@@ -99,10 +94,9 @@ mod tests {
 
                 let metadata = WavMetadata {
                     frames: 2,
-                    format_tag,
+                    wav_sample_kind,
                     channels,
                     samples_per_sec,
-                    bits_per_sample,
                 };
                 let mut wav_frame_reader: WavFrameReader<&[u8], $t> = WavFrameReader::new(&data[..], metadata);
                 assert_eq!(wav_frame_reader.next().unwrap().unwrap(), vec![0.0, 1.0]);
@@ -120,10 +114,9 @@ mod tests {
                 .collect();
                 let metadata = WavMetadata {
                     frames: 2,
-                    format_tag,
+                    wav_sample_kind,
                     channels,
                     samples_per_sec,
-                    bits_per_sample,
                 };
                 let mut wav_frame_reader: WavFrameReader<&[u8], $t> = WavFrameReader::new(&data[..], metadata);
                 assert_eq!(wav_frame_reader.next().unwrap().unwrap(), vec![0.0, 1.0]);

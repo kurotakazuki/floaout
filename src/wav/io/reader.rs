@@ -1,5 +1,5 @@
-use crate::wav::{WavFrameReader, WavFrames, WavMetadata, WavSample};
-use crate::{Metadata, Sample};
+use crate::wav::{WavFrameReader, WavFrames, WavMetadata, WavSampleKind};
+use crate::Metadata;
 use std::fs::File;
 use std::io::{BufReader, Read, Result};
 use std::path::Path;
@@ -17,10 +17,13 @@ impl<R: Read> WavReader<R> {
     }
 
     pub fn into_wav_frames(self) -> WavFrames<R> {
-        match self.metadata.bits_per_sample() {
-            32 => WavFrames::F32(WavFrameReader::<R, f32>::new(self.inner, self.metadata)),
-            64 => WavFrames::F64(WavFrameReader::<R, f64>::new(self.inner, self.metadata)),
-            _ => unreachable!(),
+        match self.metadata.wav_sample_kind() {
+            WavSampleKind::F32LE => {
+                WavFrames::F32(WavFrameReader::<R, f32>::new(self.inner, self.metadata))
+            }
+            WavSampleKind::F64LE => {
+                WavFrames::F64(WavFrameReader::<R, f64>::new(self.inner, self.metadata))
+            }
         }
     }
 }
@@ -36,7 +39,6 @@ impl WavReader<BufReader<File>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::wav::FormatTag;
 
     #[test]
     fn open_wav_reader() {
@@ -44,10 +46,9 @@ mod tests {
 
         let metadata = WavMetadata {
             frames: 176400,
-            format_tag: FormatTag::IEEEFloatingPoint,
+            wav_sample_kind: WavSampleKind::F32LE,
             channels: 2,
             samples_per_sec: 44100,
-            bits_per_sample: 32,
         };
 
         assert_eq!(wav_reader.metadata, metadata);
