@@ -1,14 +1,14 @@
-use crate::wav::{WavMetadata, WavSample};
+use crate::wav::{WavMetadata, WavSample, WavFrame};
 use crate::FrameReader;
 use std::io::{Read, Result};
 
 pub type WavFrameReader<R, S> = FrameReader<R, WavMetadata, S>;
 
 impl<R: Read, S: WavSample> Iterator for WavFrameReader<R, S> {
-    type Item = Result<Vec<S>>;
+    type Item = Result<WavFrame<S>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let mut buf: Vec<S> = Vec::with_capacity(self.metadata.channels() as usize);
+        let mut buf: WavFrame<S> = Vec::with_capacity(self.metadata.channels() as usize);
 
         if self.metadata.frames() <= self.pos {
             return None;

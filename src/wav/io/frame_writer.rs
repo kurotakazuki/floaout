@@ -1,11 +1,11 @@
 use crate::FrameWriter;
-use crate::wav::{WavMetadata, WavSample};
+use crate::wav::{WavMetadata, WavSample, WavFrame};
 use std::io::{ErrorKind, Result, Write};
 
 pub type WavFrameWriter<R, S> = FrameWriter<R, WavMetadata, S>;
 
 impl<W: Write, S: WavSample> WavFrameWriter<W, S> {
-    pub fn write_wav_frame(&mut self, wav_frame: Vec<S>) -> Result<()> {
+    pub fn write_wav_frame(&mut self, wav_frame: WavFrame<S>) -> Result<()> {
         if wav_frame.len() != self.metadata.channels() as usize {
             return Err(ErrorKind::InvalidData.into());
         }
