@@ -19,7 +19,7 @@ pub trait Sample: Sized {
 }
 
 /// Frame Reader
-pub struct FrameReader<R: Read, M: Metadata, S: Sample + Sized> {
+pub struct FrameReader<R: Read, M: Metadata, S: Sample> {
     pub inner: R,
     pub metadata: M,
     pub pos: u32,
@@ -53,7 +53,41 @@ impl<R: Read, M: Metadata, S: Sample> FrameReader<R, M, S> {
 pub trait Reader {}
 
 /// Frame Writer
-pub trait FrameWriter {}
+pub struct FrameWriter<W: Write, M: Metadata, S: Sample> {
+    pub inner: W,
+    pub metadata: M,
+    pub pos: u32,
+    _phantom_sample: PhantomData<S>,
+}
+
+impl<W: Write, M: Metadata, S: Sample> FrameWriter<W, M, S> {
+    pub fn new(inner: W, metadata: M) -> Self {
+        let pos = 0;
+
+        Self {
+            inner,
+            metadata,
+            pos,
+            _phantom_sample: PhantomData,
+        }
+    }
+
+    pub fn flush(&mut self) -> Result<()> {
+        self.inner.flush()
+    }
+
+    pub fn get_ref(&self) -> &W {
+        &self.inner
+    }
+
+    pub fn get_mut(&mut self) -> &mut W {
+        &mut self.inner
+    }
+
+    pub fn into_inner(self) -> W {
+        self.inner
+    }
+}
 
 /// Writer
 pub trait Writer {}

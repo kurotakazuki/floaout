@@ -1,42 +1,8 @@
+use crate::FrameWriter;
 use crate::wav::{WavMetadata, WavSample};
 use std::io::{ErrorKind, Result, Write};
-use std::marker::PhantomData;
 
-pub struct WavFrameWriter<W: Write, S: WavSample> {
-    pub inner: W,
-    pub metadata: WavMetadata,
-    pub pos: u32,
-    _phantom_sample: PhantomData<S>,
-}
-
-impl<W: Write, S: WavSample> WavFrameWriter<W, S> {
-    pub fn new(inner: W, metadata: WavMetadata) -> Self {
-        let pos = 0;
-
-        Self {
-            inner,
-            metadata,
-            pos,
-            _phantom_sample: PhantomData,
-        }
-    }
-
-    pub fn flush(&mut self) -> Result<()> {
-        self.inner.flush()
-    }
-
-    pub fn get_ref(&self) -> &W {
-        &self.inner
-    }
-
-    pub fn get_mut(&mut self) -> &mut W {
-        &mut self.inner
-    }
-
-    pub fn into_inner(self) -> W {
-        self.inner
-    }
-}
+pub type WavFrameWriter<R, S> = FrameWriter<R, WavMetadata, S>;
 
 impl<W: Write, S: WavSample> WavFrameWriter<W, S> {
     pub fn write_wav_frame(&mut self, wav_frame: Vec<S>) -> Result<()> {
