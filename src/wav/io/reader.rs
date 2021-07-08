@@ -50,7 +50,7 @@ mod tests {
 
     #[test]
     fn open() {
-        let wav_reader = WavReader::open("sample.wav").unwrap();
+        let wav_reader = WavReader::open("tests/sample.wav").unwrap();
 
         let metadata = WavMetadata {
             frames: 176400,
@@ -64,7 +64,7 @@ mod tests {
 
     #[test]
     fn read_wav_frames() -> std::io::Result<()> {
-        let wav_reader = WavReader::open("sample.wav").unwrap();
+        let wav_reader = WavReader::open("tests/sample.wav").unwrap();
 
         let mut wav_frame_reader = wav_reader.into_wav_frame_reader::<f32>();
 

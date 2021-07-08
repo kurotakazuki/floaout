@@ -1,0 +1,22 @@
+
+running 12 tests
+test io::read::read_ext::tests::read_unsigned_integer_type ... ok
+test io::write::write_ext::tests::write_str ... ok
+test io::write::write_ext::tests::write_unsigned_integer_type ... ok
+test io::read::read_ext::tests::read_str_for ... ok
+test wav::io::frame_writer::tests::write ... ok
+test wav::io::reader::tests::open ... ok
+test wav::io::frame_reader::tests::read ... ok
+test wav::metadata::tests::info ... ok
+test wav::metadata::tests::write_and_read ... ok
+test wav::metadata::tests::read ... ok
+test wav::io::writer::tests::read_and_write ... ok
+test wav::io::reader::tests::read_wav_frames ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.22s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
