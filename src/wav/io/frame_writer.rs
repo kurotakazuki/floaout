@@ -1,5 +1,5 @@
+use crate::wav::{WavFrame, WavMetadata, WavSample};
 use crate::FrameWriter;
-use crate::wav::{WavMetadata, WavSample, WavFrame};
 use std::io::{ErrorKind, Result, Write};
 
 pub type WavFrameWriter<R, S> = FrameWriter<R, WavMetadata, S>;

@@ -23,7 +23,8 @@ pub trait WavSample: Sample {}
 impl WavSample for f32 {}
 impl WavSample for f64 {}
 
-pub type WavFrame<S: WavSample> = Vec<S>;
+/// This size is equal to block align.
+pub type WavFrame<S> = Vec<S>;
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum WavSampleKind {

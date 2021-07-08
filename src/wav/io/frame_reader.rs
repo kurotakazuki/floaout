@@ -1,6 +1,6 @@
-use crate::wav::{WavMetadata, WavSample, WavFrame};
+use crate::wav::{WavFrame, WavMetadata, WavSample, WavSampleKind};
 use crate::FrameReader;
-use std::io::{Read, Result};
+use std::io::{Error, ErrorKind, Read, Result};
 
 pub type WavFrameReader<R, S> = FrameReader<R, WavMetadata, S>;
 
@@ -28,23 +28,49 @@ impl<R: Read, S: WavSample> Iterator for WavFrameReader<R, S> {
     }
 }
 
-pub enum WavFrames<R: Read> {
-    F32(WavFrameReader<R, f32>),
-    F64(WavFrameReader<R, f64>),
+pub enum WavFrameReaderKind<R: Read> {
+    F32LE(WavFrameReader<R, f32>),
+    F64LE(WavFrameReader<R, f64>),
 }
 
-impl<R: Read> WavFrames<R> {
-    pub fn into_f32(self) -> Option<WavFrameReader<R, f32>> {
+impl<R: Read> From<WavFrameReader<R, f32>> for WavFrameReaderKind<R> {
+    fn from(r: WavFrameReader<R, f32>) -> Self {
+        Self::F32LE(r)
+    }
+}
+
+impl<R: Read> From<WavFrameReader<R, f64>> for WavFrameReaderKind<R> {
+    fn from(r: WavFrameReader<R, f64>) -> Self {
+        Self::F64LE(r)
+    }
+}
+
+impl<R: Read> WavFrameReaderKind<R> {
+    pub fn into_f32(self) -> Result<WavFrameReader<R, f32>> {
         match self {
-            Self::F32(r) => Some(r),
-            Self::F64(_) => None,
+            Self::F32LE(r) => Ok(r),
+            Self::F64LE(r) => Err(Error::new(
+                ErrorKind::Other,
+                format!(
+                    "expected `{:?}`, found `{:?}`",
+                    WavSampleKind::F32LE,
+                    r.metadata.wav_sample_kind()
+                ),
+            )),
         }
     }
 
-    pub fn into_f64(self) -> Option<WavFrameReader<R, f64>> {
+    pub fn into_f64(self) -> Result<WavFrameReader<R, f64>> {
         match self {
-            Self::F32(_) => None,
-            Self::F64(r) => Some(r),
+            Self::F32LE(r) => Err(Error::new(
+                ErrorKind::Other,
+                format!(
+                    "expected `{:?}`, found `{:?}`",
+                    WavSampleKind::F64LE,
+                    r.metadata.wav_sample_kind()
+                ),
+            )),
+            Self::F64LE(r) => Ok(r),
         }
     }
 }

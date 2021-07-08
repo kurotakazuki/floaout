@@ -1,4 +1,4 @@
-use crate::wav::{WavMetadata, WavFrameWriter, WavSample};
+use crate::wav::{WavFrameWriter, WavMetadata, WavSample};
 use crate::Metadata;
 use std::fs::File;
 use std::io::{BufWriter, Result, Write};
@@ -13,7 +13,7 @@ impl<W: Write> WavWriter<W> {
     pub fn new(mut inner: W, metadata: WavMetadata) -> Result<Self> {
         metadata.write(&mut inner)?;
 
-        Ok(Self{ inner, metadata })
+        Ok(Self { inner, metadata })
     }
 
     pub fn flush(&mut self) -> Result<()> {
@@ -47,7 +47,7 @@ mod tests {
         let v = Vec::new();
 
         let wav_reader = WavReader::open("tests/test.wav")?;
-        let wav_frame_reader = wav_reader.into_wav_frame_reader::<f32>();
+        let wav_frame_reader = wav_reader.into_wav_frame_reader_kind().into_f32()?;
 
         let wav_writer = WavWriter::new(v, wav_frame_reader.metadata)?;
         let mut wav_frame_writer = wav_writer.into_wav_frame_writer::<f32>();
@@ -56,9 +56,11 @@ mod tests {
             wav_frame_writer.write_wav_frame(frame?)?;
         }
 
-        assert_eq!(wav_frame_writer.inner, include_bytes!("./../../../tests/test.wav"));
+        assert_eq!(
+            wav_frame_writer.inner,
+            include_bytes!("./../../../tests/test.wav")
+        );
 
         Ok(())
     }
 }
-

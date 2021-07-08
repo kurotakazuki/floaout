@@ -1,4 +1,4 @@
-use crate::wav::{WavFrameReader, WavFrames, WavMetadata, WavSample, WavSampleKind};
+use crate::wav::{WavFrameReader, WavFrameReaderKind, WavMetadata, WavSample, WavSampleKind};
 use crate::Metadata;
 use std::fs::File;
 use std::io::{BufReader, Read, Result};
@@ -20,18 +20,14 @@ impl<R: Read> WavReader<R> {
     ///
     /// This is unsafe, due to the type of sample isn’t checked:
     /// - type of sample must follow [`WavSampleKind`]
-    pub fn into_wav_frame_reader<S: WavSample>(self) -> WavFrameReader<R, S> {
+    pub unsafe fn into_wav_frame_reader<S: WavSample>(self) -> WavFrameReader<R, S> {
         WavFrameReader::new(self.inner, self.metadata)
     }
 
-    pub fn into_wav_frames(self) -> WavFrames<R> {
+    pub fn into_wav_frame_reader_kind(self) -> WavFrameReaderKind<R> {
         match self.metadata.wav_sample_kind() {
-            WavSampleKind::F32LE => {
-                WavFrames::F32(WavFrameReader::<R, f32>::new(self.inner, self.metadata))
-            }
-            WavSampleKind::F64LE => {
-                WavFrames::F64(WavFrameReader::<R, f64>::new(self.inner, self.metadata))
-            }
+            WavSampleKind::F32LE => WavFrameReader::<R, f32>::new(self.inner, self.metadata).into(),
+            WavSampleKind::F64LE => WavFrameReader::<R, f64>::new(self.inner, self.metadata).into(),
         }
     }
 }
@@ -65,8 +61,9 @@ mod tests {
     #[test]
     fn read_wav_frames() -> std::io::Result<()> {
         let wav_reader = WavReader::open("tests/sample.wav").unwrap();
-
-        let mut wav_frame_reader = wav_reader.into_wav_frame_reader::<f32>();
+        assert!(wav_reader.into_wav_frame_reader_kind().into_f64().is_err());
+        let wav_reader = WavReader::open("tests/sample.wav").unwrap();
+        let mut wav_frame_reader = wav_reader.into_wav_frame_reader_kind().into_f32()?;
 
         for _ in 0..176400 {
             if let Some(frame) = wav_frame_reader.next() {

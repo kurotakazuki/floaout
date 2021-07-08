@@ -1,4 +1,4 @@
-pub use self::frame_reader::{WavFrameReader, WavFrames};
+pub use self::frame_reader::{WavFrameReader, WavFrameReaderKind};
 pub use self::frame_writer::WavFrameWriter;
 pub use self::reader::WavReader;
 pub use self::writer::WavWriter;
