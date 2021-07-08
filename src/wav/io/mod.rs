@@ -1,4 +1,5 @@
 pub use self::frame_reader::{WavFrameReader, WavFrames};
+pub use self::frame_writer::WavFrameWriter;
 pub use self::reader::WavReader;
 
 mod frame_reader;

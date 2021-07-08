@@ -58,7 +58,7 @@ mod tests {
     fn read() {
         macro_rules! test_read_wav {
             ( $( $t:ty ),* ) => ($(
-                let wav_sample_kind = WavSampleKind::F32LE;
+                let wav_sample_kind = WavSampleKind::from_format_tag_and_bits_per_sample(3, (std::mem::size_of::<$t>() * 8) as u16);
                 let channels = 1;
                 let samples_per_sec = 44100;
 
