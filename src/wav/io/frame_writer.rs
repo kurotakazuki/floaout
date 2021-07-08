@@ -1,8 +1,8 @@
-use crate::wav::{WavFrame, WavMetadata, WavSample};
+use crate::wav::{WavFrame, WavMetadata, WavSample, WavSampleKind};
 use crate::FrameWriter;
-use std::io::{ErrorKind, Result, Write};
+use std::io::{Error, ErrorKind, Result, Write};
 
-pub type WavFrameWriter<R, S> = FrameWriter<R, WavMetadata, S>;
+pub type WavFrameWriter<W, S> = FrameWriter<W, WavMetadata, S>;
 
 impl<W: Write, S: WavSample> WavFrameWriter<W, S> {
     pub fn write_wav_frame(&mut self, wav_frame: WavFrame<S>) -> Result<()> {
@@ -21,6 +21,53 @@ impl<W: Write, S: WavSample> WavFrameWriter<W, S> {
         }
 
         Ok(())
+    }
+}
+
+pub enum WavFrameWriterKind<W: Write> {
+    F32LE(WavFrameWriter<W, f32>),
+    F64LE(WavFrameWriter<W, f64>),
+}
+
+impl<W: Write> From<WavFrameWriter<W, f32>> for WavFrameWriterKind<W> {
+    fn from(w: WavFrameWriter<W, f32>) -> Self {
+        Self::F32LE(w)
+    }
+}
+
+impl<W: Write> From<WavFrameWriter<W, f64>> for WavFrameWriterKind<W> {
+    fn from(w: WavFrameWriter<W, f64>) -> Self {
+        Self::F64LE(w)
+    }
+}
+
+impl<W: Write> WavFrameWriterKind<W> {
+    pub fn into_f32(self) -> Result<WavFrameWriter<W, f32>> {
+        match self {
+            Self::F32LE(w) => Ok(w),
+            Self::F64LE(w) => Err(Error::new(
+                ErrorKind::Other,
+                format!(
+                    "expected `{:?}`, found `{:?}`",
+                    WavSampleKind::F32LE,
+                    w.metadata.wav_sample_kind()
+                ),
+            )),
+        }
+    }
+
+    pub fn into_f64(self) -> Result<WavFrameWriter<W, f64>> {
+        match self {
+            Self::F32LE(w) => Err(Error::new(
+                ErrorKind::Other,
+                format!(
+                    "expected `{:?}`, found `{:?}`",
+                    WavSampleKind::F64LE,
+                    w.metadata.wav_sample_kind()
+                ),
+            )),
+            Self::F64LE(w) => Ok(w),
+        }
     }
 }
 

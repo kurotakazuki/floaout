@@ -1,4 +1,4 @@
-use crate::wav::{WavFrameWriter, WavMetadata, WavSample};
+use crate::wav::{WavFrameWriter, WavFrameWriterKind, WavMetadata, WavSample, WavSampleKind};
 use crate::Metadata;
 use std::fs::File;
 use std::io::{BufWriter, Result, Write};
@@ -24,8 +24,15 @@ impl<W: Write> WavWriter<W> {
     ///
     /// This is unsafe, due to the type of sample isn’t checked:
     /// - type of sample must follow [`WavSampleKind`]
-    pub fn into_wav_frame_writer<S: WavSample>(self) -> WavFrameWriter<W, S> {
+    pub unsafe fn into_wav_frame_writer<S: WavSample>(self) -> WavFrameWriter<W, S> {
         WavFrameWriter::new(self.inner, self.metadata)
+    }
+
+    pub fn into_wav_frame_writer_kind(self) -> WavFrameWriterKind<W> {
+        match self.metadata.wav_sample_kind() {
+            WavSampleKind::F32LE => WavFrameWriter::<W, f32>::new(self.inner, self.metadata).into(),
+            WavSampleKind::F64LE => WavFrameWriter::<W, f64>::new(self.inner, self.metadata).into(),
+        }
     }
 }
 
@@ -50,7 +57,7 @@ mod tests {
         let wav_frame_reader = wav_reader.into_wav_frame_reader_kind().into_f32()?;
 
         let wav_writer = WavWriter::new(v, wav_frame_reader.metadata)?;
-        let mut wav_frame_writer = wav_writer.into_wav_frame_writer::<f32>();
+        let mut wav_frame_writer = wav_writer.into_wav_frame_writer_kind().into_f32()?;
 
         for frame in wav_frame_reader {
             wav_frame_writer.write_wav_frame(frame?)?;
