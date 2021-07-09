@@ -161,6 +161,10 @@ impl WavMetadata {
         4 + 24 + 8 + self.data_chunk_size()
     }
 
+    pub fn secs(&self) -> f64 {
+        f64::from(self.frames()) / f64::from(self.samples_per_sec())
+    }
+
     fn return_invalid_data_if_not_equal<T: std::fmt::Display + Eq>(
         val: T,
         expect: T,
@@ -199,6 +203,7 @@ mod tests {
         assert_eq!(metadata.block_align(), 4);
         assert_eq!(metadata.bits_per_sample(), 32);
         assert_eq!(metadata.bytes_per_sample(), 4);
+        assert_eq!(metadata.secs(), 0.0);
 
         let metadata = WavMetadata {
             frames: 88200,
@@ -215,6 +220,7 @@ mod tests {
         assert_eq!(metadata.bytes_per_sample(), 4);
         assert_eq!(metadata.data_chunk_size(), 352800);
         assert_eq!(metadata.standard_riff_chunk_size(), 352836);
+        assert_eq!(metadata.secs(), 2.0);
 
         let metadata = WavMetadata {
             frames,
