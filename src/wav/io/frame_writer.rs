@@ -42,7 +42,7 @@ impl<W: Write> From<WavFrameWriter<W, f64>> for WavFrameWriterKind<W> {
 }
 
 impl<W: Write> WavFrameWriterKind<W> {
-    pub fn into_f32(self) -> Result<WavFrameWriter<W, f32>> {
+    pub fn into_f32_le(self) -> Result<WavFrameWriter<W, f32>> {
         match self {
             Self::F32LE(w) => Ok(w),
             Self::F64LE(w) => Err(Error::new(
@@ -56,7 +56,7 @@ impl<W: Write> WavFrameWriterKind<W> {
         }
     }
 
-    pub fn into_f64(self) -> Result<WavFrameWriter<W, f64>> {
+    pub fn into_f64_le(self) -> Result<WavFrameWriter<W, f64>> {
         match self {
             Self::F32LE(w) => Err(Error::new(
                 ErrorKind::Other,

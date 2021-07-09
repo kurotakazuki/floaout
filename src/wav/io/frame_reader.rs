@@ -46,7 +46,7 @@ impl<R: Read> From<WavFrameReader<R, f64>> for WavFrameReaderKind<R> {
 }
 
 impl<R: Read> WavFrameReaderKind<R> {
-    pub fn into_f32(self) -> Result<WavFrameReader<R, f32>> {
+    pub fn into_f32_le(self) -> Result<WavFrameReader<R, f32>> {
         match self {
             Self::F32LE(r) => Ok(r),
             Self::F64LE(r) => Err(Error::new(
@@ -60,7 +60,7 @@ impl<R: Read> WavFrameReaderKind<R> {
         }
     }
 
-    pub fn into_f64(self) -> Result<WavFrameReader<R, f64>> {
+    pub fn into_f64_le(self) -> Result<WavFrameReader<R, f64>> {
         match self {
             Self::F32LE(r) => Err(Error::new(
                 ErrorKind::Other,

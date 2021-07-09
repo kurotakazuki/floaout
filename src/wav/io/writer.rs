@@ -54,10 +54,10 @@ mod tests {
         let v = Vec::new();
 
         let wav_reader = WavReader::open("tests/test.wav")?;
-        let wav_frame_reader = wav_reader.into_wav_frame_reader_kind().into_f32()?;
+        let wav_frame_reader = wav_reader.into_wav_frame_reader_kind().into_f32_le()?;
 
         let wav_writer = WavWriter::new(v, wav_frame_reader.metadata)?;
-        let mut wav_frame_writer = wav_writer.into_wav_frame_writer_kind().into_f32()?;
+        let mut wav_frame_writer = wav_writer.into_wav_frame_writer_kind().into_f32_le()?;
 
         for frame in wav_frame_reader {
             wav_frame_writer.write_wav_frame(frame?)?;

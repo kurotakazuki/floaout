@@ -61,9 +61,12 @@ mod tests {
     #[test]
     fn read_wav_frames() -> std::io::Result<()> {
         let wav_reader = WavReader::open("tests/sample.wav").unwrap();
-        assert!(wav_reader.into_wav_frame_reader_kind().into_f64().is_err());
+        assert!(wav_reader
+            .into_wav_frame_reader_kind()
+            .into_f64_le()
+            .is_err());
         let wav_reader = WavReader::open("tests/sample.wav").unwrap();
-        let mut wav_frame_reader = wav_reader.into_wav_frame_reader_kind().into_f32()?;
+        let mut wav_frame_reader = wav_reader.into_wav_frame_reader_kind().into_f32_le()?;
 
         for _ in 0..176400 {
             if let Some(frame) = wav_frame_reader.next() {
