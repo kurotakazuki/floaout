@@ -1,5 +1,5 @@
-use crate::wav::{WavFrame, WavMetadata, WavSample, WavSampleKind};
-use crate::FrameReader;
+use crate::wav::{WavFrame, WavMetadata, WavSample};
+use crate::{FrameReader, SampleKind};
 use std::io::{Error, ErrorKind, Read, Result};
 
 pub type WavFrameReader<R, S> = FrameReader<R, WavMetadata, S>;
@@ -53,7 +53,7 @@ impl<R: Read> WavFrameReaderKind<R> {
                 ErrorKind::Other,
                 format!(
                     "expected `{:?}`, found `{:?}`",
-                    WavSampleKind::F32LE,
+                    SampleKind::F32LE,
                     r.metadata.wav_sample_kind()
                 ),
             )),
@@ -66,7 +66,7 @@ impl<R: Read> WavFrameReaderKind<R> {
                 ErrorKind::Other,
                 format!(
                     "expected `{:?}`, found `{:?}`",
-                    WavSampleKind::F64LE,
+                    SampleKind::F64LE,
                     r.metadata.wav_sample_kind()
                 ),
             )),
@@ -78,13 +78,12 @@ impl<R: Read> WavFrameReaderKind<R> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::wav::WavSampleKind;
 
     #[test]
     fn read() {
         macro_rules! test_read_wav {
             ( $( $t:ty ),* ) => ($(
-                let wav_sample_kind = WavSampleKind::from_format_tag_and_bits_per_sample(3, (std::mem::size_of::<$t>() * 8) as u16);
+                let wav_sample_kind = SampleKind::from_format_tag_and_bits_per_sample(3, (std::mem::size_of::<$t>() * 8) as u16);
                 let channels = 1;
                 let samples_per_sec = 44100;
 

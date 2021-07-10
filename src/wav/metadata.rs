@@ -1,6 +1,5 @@
 use crate::io::{ReadExt, WriteBytes, WriteExt};
-use crate::wav::WavSampleKind;
-use crate::Metadata;
+use crate::{Metadata, SampleKind};
 use std::io::{Error, ErrorKind, Result};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -8,7 +7,7 @@ pub struct WavMetadata {
     /// Number of sample frames
     pub frames: u32,
     // Wav Sample Kind
-    pub wav_sample_kind: WavSampleKind,
+    pub wav_sample_kind: SampleKind,
     /// Channels
     pub channels: u16,
     /// Samples per sec
@@ -61,7 +60,7 @@ impl Metadata for WavMetadata {
                                 let wav_metadata = Self {
                                     frames,
                                     wav_sample_kind:
-                                        WavSampleKind::from_format_tag_and_bits_per_sample(
+                                        SampleKind::from_format_tag_and_bits_per_sample(
                                             format_tag,
                                             bits_per_sample,
                                         ),
@@ -120,7 +119,7 @@ impl WavMetadata {
         self.frames
     }
 
-    pub const fn wav_sample_kind(&self) -> WavSampleKind {
+    pub const fn wav_sample_kind(&self) -> SampleKind {
         self.wav_sample_kind
     }
 
@@ -186,7 +185,7 @@ mod tests {
 
     #[test]
     fn info() {
-        let wav_sample_kind = WavSampleKind::F32LE;
+        let wav_sample_kind = SampleKind::F32LE;
         let frames = 0;
         let samples_per_sec = 44100;
 
@@ -239,7 +238,7 @@ mod tests {
 
     #[test]
     fn read() -> Result<()> {
-        let wav_sample_kind = WavSampleKind::F32LE;
+        let wav_sample_kind = SampleKind::F32LE;
 
         let mut data: &[u8] = &[
             0x52, 0x49, 0x46, 0x46, 0x44, 0x62, 0x05, 0x00, 0x57, 0x41, 0x56, 0x45, 0x66, 0x6D,
@@ -341,7 +340,7 @@ mod tests {
         let mut v = Vec::new();
         let metadata = WavMetadata {
             frames: 88200,
-            wav_sample_kind: WavSampleKind::F32LE,
+            wav_sample_kind: SampleKind::F32LE,
             channels: 1,
             samples_per_sec: 44100,
         };

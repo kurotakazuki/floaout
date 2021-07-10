@@ -1,5 +1,5 @@
-use crate::wav::{WavFrameWriter, WavFrameWriterKind, WavMetadata, WavSample, WavSampleKind};
-use crate::Metadata;
+use crate::wav::{WavFrameWriter, WavFrameWriterKind, WavMetadata, WavSample};
+use crate::{Metadata, SampleKind};
 use std::fs::File;
 use std::io::{BufWriter, Result, Write};
 use std::path::Path;
@@ -23,15 +23,15 @@ impl<W: Write> WavWriter<W> {
     /// # Safety
     ///
     /// This is unsafe, due to the type of sample isn’t checked:
-    /// - type of sample must follow [`WavSampleKind`]
+    /// - type of sample must follow [`SampleKind`]
     pub unsafe fn into_wav_frame_writer<S: WavSample>(self) -> WavFrameWriter<W, S> {
         WavFrameWriter::new(self.inner, self.metadata)
     }
 
     pub fn into_wav_frame_writer_kind(self) -> WavFrameWriterKind<W> {
         match self.metadata.wav_sample_kind() {
-            WavSampleKind::F32LE => WavFrameWriter::<W, f32>::new(self.inner, self.metadata).into(),
-            WavSampleKind::F64LE => WavFrameWriter::<W, f64>::new(self.inner, self.metadata).into(),
+            SampleKind::F32LE => WavFrameWriter::<W, f32>::new(self.inner, self.metadata).into(),
+            SampleKind::F64LE => WavFrameWriter::<W, f64>::new(self.inner, self.metadata).into(),
         }
     }
 }

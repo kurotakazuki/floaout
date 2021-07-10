@@ -1,5 +1,5 @@
-use crate::wav::{WavFrameReader, WavFrameReaderKind, WavMetadata, WavSample, WavSampleKind};
-use crate::Metadata;
+use crate::wav::{WavFrameReader, WavFrameReaderKind, WavMetadata, WavSample};
+use crate::{Metadata, SampleKind};
 use std::fs::File;
 use std::io::{BufReader, Read, Result};
 use std::path::Path;
@@ -19,15 +19,15 @@ impl<R: Read> WavReader<R> {
     /// # Safety
     ///
     /// This is unsafe, due to the type of sample isn’t checked:
-    /// - type of sample must follow [`WavSampleKind`]
+    /// - type of sample must follow [`SampleKind`]
     pub unsafe fn into_wav_frame_reader<S: WavSample>(self) -> WavFrameReader<R, S> {
         WavFrameReader::new(self.inner, self.metadata)
     }
 
     pub fn into_wav_frame_reader_kind(self) -> WavFrameReaderKind<R> {
         match self.metadata.wav_sample_kind() {
-            WavSampleKind::F32LE => WavFrameReader::<R, f32>::new(self.inner, self.metadata).into(),
-            WavSampleKind::F64LE => WavFrameReader::<R, f64>::new(self.inner, self.metadata).into(),
+            SampleKind::F32LE => WavFrameReader::<R, f32>::new(self.inner, self.metadata).into(),
+            SampleKind::F64LE => WavFrameReader::<R, f64>::new(self.inner, self.metadata).into(),
         }
     }
 }
@@ -50,7 +50,7 @@ mod tests {
 
         let metadata = WavMetadata {
             frames: 176400,
-            wav_sample_kind: WavSampleKind::F32LE,
+            wav_sample_kind: SampleKind::F32LE,
             channels: 2,
             samples_per_sec: 44100,
         };

@@ -1,5 +1,5 @@
-use crate::wav::{WavFrame, WavMetadata, WavSample, WavSampleKind};
-use crate::FrameWriter;
+use crate::wav::{WavFrame, WavMetadata, WavSample};
+use crate::{FrameWriter, SampleKind};
 use std::io::{Error, ErrorKind, Result, Write};
 
 pub type WavFrameWriter<W, S> = FrameWriter<W, WavMetadata, S>;
@@ -49,7 +49,7 @@ impl<W: Write> WavFrameWriterKind<W> {
                 ErrorKind::Other,
                 format!(
                     "expected `{:?}`, found `{:?}`",
-                    WavSampleKind::F32LE,
+                    SampleKind::F32LE,
                     w.metadata.wav_sample_kind()
                 ),
             )),
@@ -62,7 +62,7 @@ impl<W: Write> WavFrameWriterKind<W> {
                 ErrorKind::Other,
                 format!(
                     "expected `{:?}`, found `{:?}`",
-                    WavSampleKind::F64LE,
+                    SampleKind::F64LE,
                     w.metadata.wav_sample_kind()
                 ),
             )),
@@ -74,14 +74,13 @@ impl<W: Write> WavFrameWriterKind<W> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::wav::WavSampleKind;
 
     #[test]
     fn write() -> Result<()> {
         let data: Vec<u8> = Vec::new();
         let metadata = WavMetadata {
             frames: 2,
-            wav_sample_kind: WavSampleKind::F32LE,
+            wav_sample_kind: SampleKind::F32LE,
             channels: 1,
             samples_per_sec: 44100,
         };

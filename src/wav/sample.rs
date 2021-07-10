@@ -25,39 +25,3 @@ impl WavSample for f64 {}
 
 /// This size is equal to block align.
 pub type WavFrame<S> = Vec<S>;
-
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub enum WavSampleKind {
-    F32LE,
-    F64LE,
-}
-
-impl WavSampleKind {
-    pub const fn format_tag(&self) -> u16 {
-        match self {
-            Self::F32LE => 3,
-            Self::F64LE => 3,
-        }
-    }
-
-    pub const fn bits_per_sample(&self) -> u16 {
-        match self {
-            Self::F32LE => 32,
-            Self::F64LE => 64,
-        }
-    }
-
-    pub fn from_format_tag_and_bits_per_sample(format_tag: u16, bits_per_sample: u16) -> Self {
-        match format_tag {
-            1 => {
-                todo!()
-            }
-            3 => match bits_per_sample {
-                32 => Self::F32LE,
-                64 => Self::F64LE,
-                _ => unimplemented!(),
-            },
-            _ => unimplemented!(),
-        }
-    }
-}
