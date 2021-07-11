@@ -10,14 +10,30 @@ pub trait ReadExt: Read + Sized {
         <T>::read_le_bytes(self)
     }
 
-    fn read_bytes_for<const LEN: usize>(&mut self) -> Result<[u8; LEN]> {
+    fn read_vec_for(&mut self, n: usize) -> Result<Vec<u8>> {
+        let mut buf = vec![0; n];
+        self.read_exact(&mut buf)?;
+        Ok(buf)
+    }
+
+    fn read_string_for(&mut self, n: usize) -> Result<String> {
+        let vec = self.read_vec_for(n)?;
+        let s = String::from_utf8(vec);
+
+        match s {
+            Ok(s) => Ok(s),
+            Err(e) => Err(Error::new(ErrorKind::InvalidData, e)),
+        }
+    }
+
+    fn read_array<const LEN: usize>(&mut self) -> Result<[u8; LEN]> {
         let mut buf = [0; LEN];
         self.read_exact(&mut buf)?;
         Ok(buf)
     }
 
-    fn read_string_for<const LEN: usize>(&mut self) -> Result<String> {
-        let bytes = self.read_bytes_for::<LEN>()?;
+    fn read_string<const LEN: usize>(&mut self) -> Result<String> {
+        let bytes = self.read_array::<LEN>()?;
         let s = String::from_utf8(bytes.to_vec());
 
         match s {
@@ -37,14 +53,21 @@ mod tests {
     #[test]
     fn read_str_for() {
         let mut v: &[u8] = &[111, 97, 111];
-        let bytes = v.read_bytes_for::<3>().unwrap();
+        let bytes = v.read_array::<3>().unwrap();
         let s = std::str::from_utf8(&bytes).unwrap();
         assert_eq!(s, "oao");
         let mut v: &[u8] = &[
             0xE3, 0x81, 0xB3, 0xE3, 0x81, 0x8B, 0xE3, 0x81, 0xB3, 0xE3, 0x81, 0x8B, 0xE3, 0x81,
             0xB3,
         ];
-        let s = v.read_string_for::<15>().unwrap();
+        let s = v.read_string::<15>().unwrap();
+        assert_eq!(s, "びかびかび");
+
+        let mut v: &[u8] = &[
+            0xE3, 0x81, 0xB3, 0xE3, 0x81, 0x8B, 0xE3, 0x81, 0xB3, 0xE3, 0x81, 0x8B, 0xE3, 0x81,
+            0xB3,
+        ];
+        let s = v.read_string_for(15).unwrap();
         assert_eq!(s, "びかびかび");
     }
 

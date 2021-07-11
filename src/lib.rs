@@ -1,9 +1,11 @@
-use std::io::{Read, Result, Write};
+use crate::io::{ReadExt, WriteExt};
+use std::io::{ErrorKind, Read, Result, Write};
 use std::marker::PhantomData;
 
 pub mod bub;
 pub mod io;
 pub mod oao;
+pub mod utils;
 pub mod wav;
 
 /// Metadata
@@ -25,6 +27,19 @@ pub enum SampleKind {
 }
 
 impl SampleKind {
+    pub fn read<R: Read>(reader: &mut R) -> Result<Self> {
+        let value: u8 = reader.read_le()?;
+        Ok(match value {
+            0 => Self::F32LE,
+            1 => Self::F64LE,
+            _ => return Err(ErrorKind::InvalidData.into()),
+        })
+    }
+
+    pub fn write<W: Write>(self, writer: &mut W) -> Result<()> {
+        writer.write_le(self.to_u8())
+    }
+
     pub fn from_u8(value: u8) -> Self {
         match value {
             0 => Self::F32LE,

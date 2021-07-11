@@ -1,6 +1,7 @@
 use crate::io::{ReadExt, WriteBytes, WriteExt};
+use crate::utils::return_invalid_data_if_not_equal;
 use crate::{Metadata, SampleKind};
-use std::io::{Error, ErrorKind, Result};
+use std::io::Result;
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct WavMetadata {
@@ -13,16 +14,17 @@ pub struct WavMetadata {
     /// Samples per sec
     pub samples_per_sec: u32,
 }
+
 impl Metadata for WavMetadata {
     fn read<R: std::io::Read>(reader: &mut R) -> Result<Self> {
         let check_fourcc = |reader: &mut R, val: &str| {
-            let fourcc = reader.read_string_for::<4>()?;
-            Self::return_invalid_data_if_not_equal(fourcc, val.to_string())
+            let fourcc = reader.read_string::<4>()?;
+            return_invalid_data_if_not_equal(fourcc, val.to_string())
         };
         // Riff chunk
         check_fourcc(reader, "RIFF")?;
         // File size - 8
-        reader.read_bytes_for::<4>()?;
+        reader.read_array::<4>()?;
         check_fourcc(reader, "WAVE")?;
 
         // Other chunk
@@ -39,7 +41,7 @@ impl Metadata for WavMetadata {
             match check_fourcc(reader, "fmt ") {
                 Ok(_) => {
                     let fmt_size: u32 = reader.read_le()?;
-                    Self::return_invalid_data_if_not_equal(fmt_size, 16)?;
+                    return_invalid_data_if_not_equal(fmt_size, 16)?;
 
                     let format_tag: u16 = reader.read_le()?;
                     let channels: u16 = reader.read_le()?;
@@ -68,11 +70,11 @@ impl Metadata for WavMetadata {
                                     samples_per_sec,
                                 };
 
-                                Self::return_invalid_data_if_not_equal(
+                                return_invalid_data_if_not_equal(
                                     avg_bytes_per_sec,
                                     wav_metadata.avg_bytes_per_sec(),
                                 )?;
-                                Self::return_invalid_data_if_not_equal(
+                                return_invalid_data_if_not_equal(
                                     block_align,
                                     wav_metadata.block_align(),
                                 )?;
@@ -162,19 +164,6 @@ impl WavMetadata {
 
     pub fn secs(&self) -> f64 {
         f64::from(self.frames()) / f64::from(self.samples_per_sec())
-    }
-
-    fn return_invalid_data_if_not_equal<T: std::fmt::Display + Eq>(
-        val: T,
-        expect: T,
-    ) -> Result<()> {
-        if val != expect {
-            return Err(Error::new(
-                ErrorKind::InvalidData,
-                format!("expected `{}`, found `{}`", expect, val),
-            ));
-        }
-        Ok(())
     }
 }
 
