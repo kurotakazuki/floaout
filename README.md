@@ -39,7 +39,7 @@ Floaout is the next-generation audio format.
 | Range | `` () |  |
 | Comma | `char` (1) | ',' |
 | Volume | `` () |  |
-| Comma or Period | `char` (1) | ',' if there is another |
+| Comma or Semicolon | `char` (1) | ',' if there is another |
 | Connected, Ended, and FunctionKind | `u8` (1) | Connected, Ended, and `FunctionKind` |
 | Ending (Relative) Time | `u64` (8) | Number of frames at the end of function. |
 | Next Starting (Relative) Time | `u64` (8) | Number of frames at the start of the next function. Optional (!connected && !ended) |
@@ -91,3 +91,55 @@ Floaout is the next-generation audio format.
 | tan | Tangent |
 | ln | The natural logarithm of the number. |
 | lg | The base 2 logarithm of the number. |
+
+### Punctuation
+| Symbol | Name |
+| ------------- | ------------- |
+| + | Plus |
+| - | Minus |
+| * | Star |
+| / | Slash |
+| ^ | Caret |
+| & | And |
+| | | Or |
+| > | Gt |
+| < | Lt |
+| >= | Ge |
+| <= | Le |
+
+### Delimiters
+| Symbol | Name |
+| ------------- | ------------- |
+| , | Comma |
+| ; | Semicolon |
+| ( ) | Parentheses |
+
+### Syntax
+```rust
+// Expression
+Expression = Keywords 
+
+// Keywords
+
+// Integer
+IntegerLiteral = DecLiteral () / f
+
+// Float
+FloatLiteral = DecLiteral PointAndDecLiteral / BytesF64Literal
+PointAndDecLiteral = '.' DecLiteral / f
+
+BytesF64Literal = 'f' ???????? / f
+
+DecLiteral = DecDigit ZeroOrDecLiteral / f
+ZeroOrDecLiteral = DecDigit () / ()
+
+DecDigit = '0' () / DecDigit1
+DecDigit1 = '1' () / DecDigit2
+DecDigit2 = '2' () / DecDigit3
+DecDigit3 = '3' () / DecDigit4
+DecDigit4 = '4' () / DecDigit5
+DecDigit5 = '5' () / DecDigit6
+DecDigit6 = '6' () / DecDigit7
+DecDigit7 = '7' () / DecDigit8
+DecDigit8 = '8' () / '9'
+```
