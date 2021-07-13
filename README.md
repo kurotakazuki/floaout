@@ -2,8 +2,8 @@
 Floaout is the next-generation audio format.
 
 
-
-
+# TODO
+- Use DecLiteral
 
 # Bubble File Format Specification
 
@@ -168,17 +168,17 @@ Factor4 = ExpressionInParentheses () / f
 
 
 // Variable
-Variable = "X" () / Variable1
-Variable1 = "Y" () / Variable2
-Variable2 = "Z" () / Variable3
-Variable3 = "x" () / Variable4
-Variable4 = "y" () / Variable5
-Variable5 = "z" () / Variable6
-Variable6 = "T" () / Variable7
-Variable7 = "t" () / Variable8
-Variable8 = "F" () / Variable9
+Variable = 'X' () / Variable1
+Variable1 = 'Y' () / Variable2
+Variable2 = 'Z' () / Variable3
+Variable3 = 'x' () / Variable4
+Variable4 = 'y' () / Variable5
+Variable5 = 'z' () / Variable6
+Variable6 = 'T' () / Variable7
+Variable7 = 't' () / Variable8
+Variable8 = 'F' () / Variable9
 Variable9 = "PI" () / Variable10
-Variable10 = "E" () / f
+Variable10 = 'E' () / f
 
 // Function
 Function = Sine () / Function1
@@ -198,7 +198,7 @@ ExpressionInParentheses = '(' ExpressionAndClose / f
 ExpressionAndClose = Expression ')' / f
 
 // Integer
-// IntegerLiteral = DecLiteral () / f
+IntegerLiteral = DecLiteral () / f
 
 // Float
 FloatLiteral = DecLiteral PointAndDecLiteral / BytesF64Literal
@@ -206,6 +206,7 @@ PointAndDecLiteral = '.' DecLiteral / f
 
 BytesF64Literal = 'f' ???????? / f
 
+// Dec
 DecLiteral = DecDigit ZeroOrDecLiteral / f
 ZeroOrDecLiteral = DecDigit ZeroOrDecLiteral / ()
 
@@ -219,7 +220,7 @@ DecDigit6 = '6' () / DecDigit7
 DecDigit7 = '7' () / DecDigit8
 DecDigit8 = '8' () / '9'
 
-// Other
+// Others
 PlusOrMinus = '+' () / '-'
 StarOrSlash = '*' () / '/'
 ```
