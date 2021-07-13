@@ -68,7 +68,10 @@ Floaout is the next-generation audio format.
 | ------------- | ------------- | ------------- |
 | Expression |  | Expression |
 
+
 ### Keywords
+
+#### Variables
 | Keyword | Description |
 | ------------- | ------------- |
 | X | X (Absolute) coordinate |
@@ -77,20 +80,29 @@ Floaout is the next-generation audio format.
 | x | x = X - X_0 (X_0 is Bubble's X coordinate). (Relative) coordinate. |
 | y | y = Y - Y_0 (Y_0 is Bubble's Y coordinate). (Relative) coordinate. |
 | z | z = Z - Z_0 (Z_0 is Bubble's Z coordinate). (Relative) coordinate. |
-| T | Number of frames starting from the file. (Absolute) Time. |
-| t | Number of frames starting from the function. (Relative) Time. |
+| T | Number of frames starting from the file. (Absolute) Time. (`as f64`) |
+| t | Number of frames starting from the function. (Relative) Time. (`as f64`) |
 | F | Samples per sec |
-|  |  |
+
+##### Constants
+| Keyword | Description |
+| ------------- | ------------- |
 | PI | Pi |
 | E | Euler's number |
-|  |  |
-| f | `f64` |
-|  |  |
+
+#### Functions
+| Keyword | Description |
+| ------------- | ------------- |
 | sin | Sine |
 | cos | Cosine |
 | tan | Tangent |
 | ln | The natural logarithm of the number. |
 | lg | The base 2 logarithm of the number. |
+
+#### Others
+| Keyword | Description |
+| ------------- | ------------- |
+| f | `f????????` `f64` |
 
 ### Punctuation
 | Symbol | Name |
@@ -99,9 +111,10 @@ Floaout is the next-generation audio format.
 | - | Minus |
 | * | Star |
 | / | Slash |
-| ^ | Caret |
-| & | And |
-| | | Or |
+| && | AndAnd |
+| || | OrOr |
+| == | EqEq |
+| != | Ne |
 | > | Gt |
 | < | Lt |
 | >= | Ge |
@@ -116,13 +129,76 @@ Floaout is the next-generation audio format.
 
 ### Syntax
 ```rust
-// Expression
-Expression = Keywords 
+// // OperatorExpression
+// OperatorExpression = ArithmeticOrLogicalExpression / ComparisonExpression / LazyBooleanExpression / NegationExpression
 
-// Keywords
+// // Lazy Boolean Expression
+// LazyBooleanExpression = Expression OrOrOrAndAndExpression / f
+// OrOrOrAndAndExpression = LazyOr Expression / f
+// LazyOr = "||" () / LazyAnd
+// LazyAnd = "&&" () / f
+
+// // Comparsion Expression
+// ComparisonExpression = Expression ComparisonAndExpression / f
+// ComparisonAndExpression = Comparison Expression / f
+// Comparison = "==" () / Comparison1
+// Comparison1 = "!=" () / Comparison2
+// Comparison2 = ">" () / Comparison3
+// Comparison3 = "<" () / Comparison4
+// Comparison4 = ">=" () / Comparison5
+// Comparison5 = "<=" () / f
+
+// // NegationExpression
+// NegationExpression = '-' Expression / f
+
+// Expression
+Expression = Term Expression1 / Term
+Expression1 = PlusOrMinus Expression / f
+
+// Term
+Term = Factor Term1 / Factor
+Term1 = StarOrSlash Term / f
+
+// Factor
+Factor = FloatLiteral () / Factor1
+Factor1 = PlusOrMinus Factor / Factor2
+Factor2 = Variable () / Factor3
+Factor3 = Function () / Factor4
+Factor4 = ExpressionInParentheses () / f
+
+
+// Variable
+Variable = "X" () / Variable1
+Variable1 = "Y" () / Variable2
+Variable2 = "Z" () / Variable3
+Variable3 = "x" () / Variable4
+Variable4 = "y" () / Variable5
+Variable5 = "z" () / Variable6
+Variable6 = "T" () / Variable7
+Variable7 = "t" () / Variable8
+Variable8 = "F" () / Variable9
+Variable9 = "PI" () / Variable10
+Variable10 = "E" () / f
+
+// Function
+Function = Sine () / Function1
+Function1 = Cosine () / Function2
+Function2 = Tangent () / Function3
+Function3 = Ln () / Function4
+Function4 = Lg () / f
+
+Sine = "sin" Expression / f
+Cosine = "cos" Expression / f
+Tangent = "tan" Expression / f
+Ln = "ln" Expression / f
+Lg = "lg" Expression / f
+
+// Delimiters
+ExpressionInParentheses = '(' ExpressionAndClose / f
+ExpressionAndClose = Expression ')' / f
 
 // Integer
-IntegerLiteral = DecLiteral () / f
+// IntegerLiteral = DecLiteral () / f
 
 // Float
 FloatLiteral = DecLiteral PointAndDecLiteral / BytesF64Literal
@@ -131,7 +207,7 @@ PointAndDecLiteral = '.' DecLiteral / f
 BytesF64Literal = 'f' ???????? / f
 
 DecLiteral = DecDigit ZeroOrDecLiteral / f
-ZeroOrDecLiteral = DecDigit () / ()
+ZeroOrDecLiteral = DecDigit ZeroOrDecLiteral / ()
 
 DecDigit = '0' () / DecDigit1
 DecDigit1 = '1' () / DecDigit2
@@ -142,4 +218,8 @@ DecDigit5 = '5' () / DecDigit6
 DecDigit6 = '6' () / DecDigit7
 DecDigit7 = '7' () / DecDigit8
 DecDigit8 = '8' () / '9'
+
+// Other
+PlusOrMinus = '+' () / '-'
+StarOrSlash = '*' () / '/'
 ```
