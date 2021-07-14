@@ -229,10 +229,10 @@ impl<'a> FunctionRules {
         },
         second: Second(E::V(Factor1)),
     };
-    /// Factor1 = DecLiteral () / Factor2
+    /// Factor1 = IntegerLiteral () / Factor2
     const FACTOR1_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::V(DecLiteral),
+            lhs: E::V(IntegerLiteral),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::V(Factor2)),

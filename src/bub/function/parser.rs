@@ -11,8 +11,8 @@ impl FunctionParser {
         input: &[u8],
         start_variable: &FunctionVariable,
     ) -> Result<
-        AST<FunctionVariable, StartAndLenSpan<u16, u16>, ()>,
-        AST<FunctionVariable, StartAndLenSpan<u16, u16>, ()>,
+        AST<FunctionVariable, StartAndLenSpan<u16, u16>, f64>,
+        AST<FunctionVariable, StartAndLenSpan<u16, u16>, f64>,
     > {
         let all_of_the_span = StartAndLenSpan::<u16, u16>::from_start_len(0, input.len() as u16);
         let rules = &FunctionRules;
