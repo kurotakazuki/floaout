@@ -26,7 +26,42 @@ mod tests {
 
     #[test]
     fn expr() {
+        let input: &[u8] = "".as_bytes();
+        let result = FunctionParser::parse(input, &FunctionVariable::Expression);
+        assert!(result.is_err());
+
+        let input: &[u8] = "E".as_bytes();
+        let result = FunctionParser::parse(input, &FunctionVariable::Expression);
+        assert!(result.is_ok());
+
         let input: &[u8] = "1+2".as_bytes();
+        let result = FunctionParser::parse(input, &FunctionVariable::Expression);
+        assert!(result.is_ok());
+
+        let input: &[u8] = "1.0-2.0+3.5".as_bytes();
+        let result = FunctionParser::parse(input, &FunctionVariable::Expression);
+        assert!(result.is_ok());
+
+        let input: &[u8] = "1.0-2.0+3.5*4.2*lg5".as_bytes();
+        let result = FunctionParser::parse(input, &FunctionVariable::Expression);
+        assert!(result.is_ok());
+
+        let input: &[u8] = "sin(2*PI*440*t/F)".as_bytes();
+        let result = FunctionParser::parse(input, &FunctionVariable::Expression);
+        assert!(result.is_ok());
+
+        let input: &[u8] = "1.2*(5+98.765432)/sin(t/F)/1000".as_bytes();
+        let result = FunctionParser::parse(input, &FunctionVariable::Expression);
+        assert!(result.is_ok());
+
+        let input: &[u8] = "X-Y+Z*x/y*(z)+tanPI-(cos((E+t-T)/F)+ln2+lg(5))+-1.0".as_bytes();
+        let result = FunctionParser::parse(input, &FunctionVariable::Expression);
+        assert!(result.is_ok());
+
+        let input: &[u8] = "4*(23-21)+54+(2343+t*(F-2))+sinPI".as_bytes();
+        let result = FunctionParser::parse(input, &FunctionVariable::Expression);
+        assert!(result.is_ok());
+        let input: &[u8] = "4*(23-21)+54+(2343+t*(F-2)+sinPI".as_bytes();
         let result = FunctionParser::parse(input, &FunctionVariable::Expression);
         assert!(result.is_err());
     }

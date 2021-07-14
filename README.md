@@ -161,24 +161,37 @@ Term1 = StarOrSlash Term / f
 
 // Factor
 Factor = FloatLiteral () / Factor1
-Factor1 = PlusOrMinus Factor / Factor2
-Factor2 = Variable () / Factor3
+Factor1 = DecLiteral () / Factor2
+Factor2 = PlusOrMinus Factor / Factor3
 Factor3 = Function () / Factor4
-Factor4 = ExpressionInParentheses () / f
+Factor4 = Variable () / Factor5
+Factor5 = ExpressionInParentheses () / f
 
 
 // Variable
-Variable = 'X' () / Variable1
-Variable1 = 'Y' () / Variable2
-Variable2 = 'Z' () / Variable3
-Variable3 = 'x' () / Variable4
-Variable4 = 'y' () / Variable5
-Variable5 = 'z' () / Variable6
-Variable6 = 'T' () / Variable7
-Variable7 = 't' () / Variable8
-Variable8 = 'F' () / Variable9
-Variable9 = "PI" () / Variable10
-Variable10 = 'E' () / f
+Variable = UppercaseX () / Variable1
+Variable1 = UppercaseY () / Variable2
+Variable2 = UppercaseZ () / Variable3
+Variable3 = LowercaseX () / Variable4
+Variable4 = LowercaseY () / Variable5
+Variable5 = LowercaseZ () / Variable6
+Variable6 = UppercaseT () / Variable7
+Variable7 = LowercaseT () / Variable8
+Variable8 = UppercaseF () / Variable9
+Variable9 = Pi () / Variable10
+Variable10 = E () / f
+
+UppercaseX = 'X' () / f
+UppercaseY = 'Y' () / f
+UppercaseZ = 'Z' () / f
+LowercaseX = 'x' () / f
+LowercaseY = 'y' () / f
+LowercaseZ = 'z' () / f
+UppercaseT = 'T' () / f
+LowercaseT = 't' () / f
+UppercaseF = 'F' () / f
+Pi = "PI" () / f
+E = 'E' () / f
 
 // Function
 Function = Sine () / Function1

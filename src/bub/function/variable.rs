@@ -18,6 +18,7 @@ pub enum FunctionVariable {
     Factor2,
     Factor3,
     Factor4,
+    Factor5,
 
     // Variable
     Variable,
@@ -31,6 +32,18 @@ pub enum FunctionVariable {
     Variable8,
     Variable9,
     Variable10,
+
+    UppercaseX,
+    UppercaseY,
+    UppercaseZ,
+    LowercaseX,
+    LowercaseY,
+    LowercaseZ,
+    UppercaseT,
+    LowercaseT,
+    UppercaseF,
+    Pi,
+    E,
 
     // Function
     Function,

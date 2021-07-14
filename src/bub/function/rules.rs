@@ -42,6 +42,7 @@ impl<'a> FunctionRules {
     };
 
     // Factor
+    /// Factor = FloatLiteral () / Factor1
     const FACTOR_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(FloatLiteral),
@@ -49,20 +50,23 @@ impl<'a> FunctionRules {
         },
         second: Second(E::V(Factor1)),
     };
+    /// Factor1 = DecLiteral () / Factor2
     const FACTOR1_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(DecLiteral),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::V(Factor2)),
+    };
+    /// Factor2 = PlusOrMinus Factor / Factor3
+    const FACTOR2_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(PlusOrMinus),
             rhs: E::V(Factor),
         },
-        second: Second(E::V(Factor2)),
-    };
-    const FACTOR2_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Variable),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
         second: Second(E::V(Factor3)),
     };
+    /// Factor3 = Function () / Factor4
     const FACTOR3_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(Function),
@@ -70,7 +74,16 @@ impl<'a> FunctionRules {
         },
         second: Second(E::V(Factor4)),
     };
+    /// Factor4 = Variable () / Factor5
     const FACTOR4_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(Variable),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::V(Factor5)),
+    };
+    /// Factor5 = ExpressionInParentheses () / f
+    const FACTOR5_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(ExpressionInParentheses),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
@@ -79,77 +92,177 @@ impl<'a> FunctionRules {
     };
 
     // Variable
+    /// Variable = UppercaseX () / Variable1
     const VARIABLE_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('X'))),
+            lhs: E::V(UppercaseX),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::V(Variable1)),
     };
+    /// Variable1 = UppercaseY () / Variable2
     const VARIABLE1_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('Y'))),
+            lhs: E::V(UppercaseY),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::V(Variable2)),
     };
+    /// Variable2 = UppercaseZ () / Variable3
     const VARIABLE2_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('Z'))),
+            lhs: E::V(UppercaseZ),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::V(Variable3)),
     };
+    /// Variable3 = LowercaseX () / Variable4
     const VARIABLE3_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('x'))),
+            lhs: E::V(LowercaseX),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::V(Variable4)),
     };
+    /// Variable4 = LowercaseY () / Variable5
     const VARIABLE4_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('y'))),
+            lhs: E::V(LowercaseY),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::V(Variable5)),
     };
+    /// Variable5 = LowercaseZ () / Variable6
     const VARIABLE5_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('z'))),
+            lhs: E::V(LowercaseZ),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::V(Variable6)),
     };
+    /// Variable6 = UppercaseT () / Variable7
     const VARIABLE6_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('T'))),
+            lhs: E::V(UppercaseT),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::V(Variable7)),
     };
+    /// Variable7 = LowercaseT () / Variable8
     const VARIABLE7_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('t'))),
+            lhs: E::V(LowercaseT),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::V(Variable8)),
     };
+    /// Variable8 = UppercaseF () / Variable9
     const VARIABLE8_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('F'))),
+            lhs: E::V(UppercaseF),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::V(Variable9)),
     };
+    /// Variable9 = Pi () / Variable10
     const VARIABLE9_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::T(TerminalSymbol::Original(Str("PI"))),
+            lhs: E::V(Pi),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::V(Variable10)),
     };
+    /// Variable10 = E () / f
     const VARIABLE10_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(E),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+
+    /// UppercaseX = 'X' () / f
+    const UPPERCASE_X_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Char('X'))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// UppercaseY = 'Y' () / f
+    const UPPERCASE_Y_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Char('Y'))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// UppercaseZ = 'Z' () / f
+    const UPPERCASE_Z_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Char('Z'))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// LowercaseX = 'x' () / f
+    const LOWERCASE_X_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Char('x'))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// LowercaseY = 'y' () / f
+    const LOWERCASE_Y_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Char('y'))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// LowercaseZ = 'z' () / f
+    const LOWERCASE_Z_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Char('z'))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// UppercaseT = 'T' () / f
+    const UPPERCASE_T_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Char('T'))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// LowercaseT = 't' () / f
+    const LOWERCASE_T_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Char('t'))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// UppercaseF = 'F' () / f
+    const UPPERCASE_F_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Char('F'))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// Pi = "PI" () / f
+    const PI_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Str("PI"))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// E = 'E' () / f
+    const E_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::T(TerminalSymbol::Original(Char('E'))),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
@@ -246,8 +359,8 @@ impl<'a> FunctionRules {
     /// ExpressionAndClose = Expression ')' / f
     const EXPRESSION_AND_CLOSE_RULE: Rule<'a> = RightRule {
         first: First {
-            rhs: E::V(Expression),
-            lhs: E::T(TerminalSymbol::Original(Char(')'))),
+            lhs: E::V(Expression),
+            rhs: E::T(TerminalSymbol::Original(Char(')'))),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
@@ -256,8 +369,8 @@ impl<'a> FunctionRules {
     /// IntegerLiteral = DecLiteral () / f
     const INTEGER_LITERAL_RULE: Rule<'a> = RightRule {
         first: First {
-            rhs: E::V(DecLiteral),
-            lhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+            lhs: E::V(DecLiteral),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
@@ -394,7 +507,7 @@ impl<'a> FunctionRules {
             lhs: E::T(TerminalSymbol::Original(Char('*'))),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
-        second: Second(E::T(TerminalSymbol::Original(Char('-')))),
+        second: Second(E::T(TerminalSymbol::Original(Char('/')))),
     };
 }
 
@@ -415,6 +528,7 @@ impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
             Factor2 => &Self::FACTOR2_RULE,
             Factor3 => &Self::FACTOR3_RULE,
             Factor4 => &Self::FACTOR4_RULE,
+            Factor5 => &Self::FACTOR5_RULE,
 
             // Variable
             Variable => &Self::VARIABLE_RULE,
@@ -428,6 +542,18 @@ impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
             Variable8 => &Self::VARIABLE8_RULE,
             Variable9 => &Self::VARIABLE9_RULE,
             Variable10 => &Self::VARIABLE10_RULE,
+
+            UppercaseX => &Self::UPPERCASE_X_RULE,
+            UppercaseY => &Self::UPPERCASE_Y_RULE,
+            UppercaseZ => &Self::UPPERCASE_Z_RULE,
+            LowercaseX => &Self::LOWERCASE_X_RULE,
+            LowercaseY => &Self::LOWERCASE_Y_RULE,
+            LowercaseZ => &Self::LOWERCASE_Z_RULE,
+            UppercaseT => &Self::UPPERCASE_T_RULE,
+            LowercaseT => &Self::LOWERCASE_T_RULE,
+            UppercaseF => &Self::UPPERCASE_F_RULE,
+            Pi => &Self::PI_RULE,
+            E => &Self::E_RULE,
 
             // Function
             Function => &Self::FUNCTION_RULE,
