@@ -3,6 +3,7 @@ Floaout is the next-generation audio format.
 
 
 # TODO
+- Update Factor2
 - Do not allow input like "2>1&&5".
 
 # Bubble File Format Specification
