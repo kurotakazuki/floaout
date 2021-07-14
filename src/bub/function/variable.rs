@@ -6,7 +6,40 @@ impl Variable for FunctionVariable {}
 pub enum FunctionVariable {
     // Expression
     Expression,
-    Expression1,
+
+    // OrOr Expression
+    OrOrExpression,
+    OrOrExpression1,
+
+    OrOr,
+
+    // AndAnd Expression
+    AndAndExpression,
+    AndAndExpression1,
+
+    AndAnd,
+
+    // Comparsion Expression
+    ComparisonExpression,
+    ComparisonExpression1,
+
+    Comparison,
+    Comparison1,
+    Comparison2,
+    Comparison3,
+    Comparison4,
+    Comparison5,
+
+    EqEq,
+    Ne,
+    Ge,
+    Le,
+    Gt,
+    Lt,
+
+    // PlusOrMinusExpression
+    PlusOrMinusExpression,
+    PlusOrMinusExpression1,
 
     // Term
     Term,
@@ -86,5 +119,12 @@ pub enum FunctionVariable {
 
     // Other
     PlusOrMinus,
+    PlusOrMinus1,
+    Plus,
+    Minus,
+
     StarOrSlash,
+    StarOrSlash1,
+    Star,
+    Slash,
 }

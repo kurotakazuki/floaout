@@ -10,17 +10,196 @@ type Rule<'a> = RightRule<U8SliceTerminal<'a>, FunctionVariable>;
 
 impl<'a> FunctionRules {
     // Expression
+    /// Expression = OrOrExpression () / f
     const EXPRESSION_RULE: Rule<'a> = RightRule {
         first: First {
+            lhs: E::V(OrOrExpression),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+
+    // OrOr Expression
+    /// OrOrExpression = AndAndExpression OrOrExpression1 / AndAndExpression
+    const OR_OR_EXPRESSION_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(AndAndExpression),
+            rhs: E::V(OrOrExpression1),
+        },
+        second: Second(E::V(AndAndExpression)),
+    };
+    /// OrOrExpression1 = OrOr OrOrExpression / f
+    const OR_OR_EXPRESSION1_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(OrOr),
+            rhs: E::V(OrOrExpression),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// OrOr = "||" () / f
+    const OR_OR_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Str("||"))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+
+    // AndAnd Expression
+    /// AndAndExpression = ComparisonExpression AndAndExpression1 / ComparisonExpression
+    const AND_AND_EXPRESSION_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(ComparisonExpression),
+            rhs: E::V(AndAndExpression1),
+        },
+        second: Second(E::V(ComparisonExpression)),
+    };
+    /// AndAndExpression1 = AndAnd AndAndExpression / f
+    const AND_AND_EXPRESSION1_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(AndAnd),
+            rhs: E::V(AndAndExpression),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// AndAnd = "&&" () / f
+    const AND_AND_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Str("&&"))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+
+    // Comparsion Expression
+    /// ComparisonExpression = PlusOrMinusExpression ComparisonExpression1 / PlusOrMinusExpression
+    const COMPARISON_EXPRESSION_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(PlusOrMinusExpression),
+            rhs: E::V(ComparisonExpression1),
+        },
+        second: Second(E::V(PlusOrMinusExpression)),
+    };
+    /// ComparisonExpression1 = Comparison ComparisonExpression / f
+    const COMPARISON_EXPRESSION1_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(Comparison),
+            rhs: E::V(ComparisonExpression),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+
+    // Comparsion
+    /// Comparison = EqEq () / Comparison1
+    const COMPARISON_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(EqEq),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::V(Comparison1)),
+    };
+    /// Comparison1 = Ne () / Comparison2
+    const COMPARISON1_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(Ne),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::V(Comparison2)),
+    };
+    /// Comparison2 = Ge () / Comparison3
+    const COMPARISON2_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(Ge),
+            rhs: E::V(Comparison),
+        },
+        second: Second(E::V(Comparison3)),
+    };
+    /// Comparison3 = Le () / Comparison4
+    const COMPARISON3_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(Le),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::V(Comparison4)),
+    };
+    /// Comparison4 = Gt () / Comparison5
+    const COMPARISON4_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(Gt),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::V(Comparison5)),
+    };
+    /// Comparison5 = Lt () / f
+    const COMPARISON5_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(Lt),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+
+    /// EqEq = "==" () / f
+    const EQ_EQ_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Str("=="))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// Ne = "!=" () / f
+    const NE_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Str("!="))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// Ge = ">=" () / f
+    const GE_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Str(">="))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// Le = "<=" () / f
+    const LE_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Str("<="))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// Gt = '>' () / f
+    const GT_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Char('>'))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// Lt = '<' () / f
+    const LT_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Char('<'))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+
+    // PlusOrMinusExpression
+    const PLUS_OR_MINUS_EXPRESSION_RULE: Rule<'a> = RightRule {
+        first: First {
             lhs: E::V(Term),
-            rhs: E::V(Expression1),
+            rhs: E::V(PlusOrMinusExpression1),
         },
         second: Second(E::V(Term)),
     };
-    const EXPRESSION1_RULE: Rule<'a> = RightRule {
+    const PLUS_OR_MINUS_EXPRESSION1_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(PlusOrMinus),
-            rhs: E::V(Expression),
+            rhs: E::V(PlusOrMinusExpression),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
@@ -306,43 +485,43 @@ impl<'a> FunctionRules {
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// `Sine = "sin" Expression / f`
+    /// `Sine = "sin" PlusOrMinusExpression / f`
     const SINE_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::T(TerminalSymbol::Original(Str("sin"))),
-            rhs: E::V(Expression),
+            rhs: E::V(PlusOrMinusExpression),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// Cosine = "cos" Expression / f
+    /// Cosine = "cos" PlusOrMinusExpression / f
     const COSINE_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::T(TerminalSymbol::Original(Str("cos"))),
-            rhs: E::V(Expression),
+            rhs: E::V(PlusOrMinusExpression),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// Tangent = "tan" Expression / f
+    /// Tangent = "tan" PlusOrMinusExpression / f
     const TANGENT_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::T(TerminalSymbol::Original(Str("tan"))),
-            rhs: E::V(Expression),
+            rhs: E::V(PlusOrMinusExpression),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// Ln = "ln" Expression / f
+    /// Ln = "ln" PlusOrMinusExpression / f
     const LN_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::T(TerminalSymbol::Original(Str("ln"))),
-            rhs: E::V(Expression),
+            rhs: E::V(PlusOrMinusExpression),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// Lg = "lg" Expression / f
+    /// Lg = "lg" PlusOrMinusExpression / f
     const LG_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::T(TerminalSymbol::Original(Str("lg"))),
-            rhs: E::V(Expression),
+            rhs: E::V(PlusOrMinusExpression),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
@@ -359,7 +538,7 @@ impl<'a> FunctionRules {
     /// ExpressionAndClose = Expression ')' / f
     const EXPRESSION_AND_CLOSE_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::V(Expression),
+            lhs: E::V(PlusOrMinusExpression),
             rhs: E::T(TerminalSymbol::Original(Char(')'))),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
@@ -493,21 +672,70 @@ impl<'a> FunctionRules {
     };
 
     // Others
-    /// PlusOrMinus = '+' () / '-'
+    /// PlusOrMinus = Plus () / PlusOrMinus1
     const PLUS_OR_MINUS_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(Plus),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::V(PlusOrMinus1)),
+    };
+    /// PlusOrMinus1 = Minus () / f
+    const PLUS_OR_MINUS1_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(Minus),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// Plus = '+' () / f
+    const PLUS_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::T(TerminalSymbol::Original(Char('+'))),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
-        second: Second(E::T(TerminalSymbol::Original(Char('-')))),
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// StarOrSlash = '*' () / '/'
+    /// Minus = '-' () / f
+    const MINUS_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Char('-'))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+
+    /// StarOrSlash = Star () / StarOrSlash1
     const STAR_OR_SLASH_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(Star),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::V(StarOrSlash1)),
+    };
+    /// StarOrSlash1 = Slash () / f
+    const STAR_OR_SLASH1_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(Slash),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// Star = '*' () / f
+    const STAR_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::T(TerminalSymbol::Original(Char('*'))),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
-        second: Second(E::T(TerminalSymbol::Original(Char('/')))),
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// Slash = '/' () / f
+    const SLASH_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Char('/'))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
 }
 
@@ -516,7 +744,40 @@ impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
         Some(match variable {
             // Expression
             Expression => &Self::EXPRESSION_RULE,
-            Expression1 => &Self::EXPRESSION1_RULE,
+
+            // OrOr Expression
+            OrOrExpression => &Self::OR_OR_EXPRESSION_RULE,
+            OrOrExpression1 => &Self::OR_OR_EXPRESSION1_RULE,
+
+            OrOr => &Self::OR_OR_RULE,
+
+            // AndAnd Expression
+            AndAndExpression => &Self::AND_AND_EXPRESSION_RULE,
+            AndAndExpression1 => &Self::AND_AND_EXPRESSION1_RULE,
+
+            AndAnd => &Self::AND_AND_RULE,
+
+            // Comparsion Expression
+            ComparisonExpression => &Self::COMPARISON_EXPRESSION_RULE,
+            ComparisonExpression1 => &Self::COMPARISON_EXPRESSION1_RULE,
+
+            Comparison => &Self::COMPARISON_RULE,
+            Comparison1 => &Self::COMPARISON1_RULE,
+            Comparison2 => &Self::COMPARISON2_RULE,
+            Comparison3 => &Self::COMPARISON3_RULE,
+            Comparison4 => &Self::COMPARISON4_RULE,
+            Comparison5 => &Self::COMPARISON5_RULE,
+
+            EqEq => &Self::EQ_EQ_RULE,
+            Ne => &Self::NE_RULE,
+            Ge => &Self::GE_RULE,
+            Le => &Self::LE_RULE,
+            Gt => &Self::GT_RULE,
+            Lt => &Self::LT_RULE,
+
+            // PlusOrMinusExpression
+            PlusOrMinusExpression => &Self::PLUS_OR_MINUS_EXPRESSION_RULE,
+            PlusOrMinusExpression1 => &Self::PLUS_OR_MINUS_EXPRESSION1_RULE,
 
             // Term
             Term => &Self::TERM_RULE,
@@ -596,7 +857,14 @@ impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
 
             // Other
             PlusOrMinus => &Self::PLUS_OR_MINUS_RULE,
+            PlusOrMinus1 => &Self::PLUS_OR_MINUS1_RULE,
+            Plus => &Self::PLUS_RULE,
+            Minus => &Self::MINUS_RULE,
+
             StarOrSlash => &Self::STAR_OR_SLASH_RULE,
+            StarOrSlash1 => &Self::STAR_OR_SLASH1_RULE,
+            Star => &Self::STAR_RULE,
+            Slash => &Self::SLASH_RULE,
         })
     }
 }

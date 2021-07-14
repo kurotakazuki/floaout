@@ -129,31 +129,42 @@ Floaout is the next-generation audio format.
 
 ### Syntax
 ```rust
-// // OperatorExpression
-// OperatorExpression = ArithmeticOrLogicalExpression / ComparisonExpression / LazyBooleanExpression / NegationExpression
-
-// // Lazy Boolean Expression
-// LazyBooleanExpression = Expression OrOrOrAndAndExpression / f
-// OrOrOrAndAndExpression = LazyOr Expression / f
-// LazyOr = "||" () / LazyAnd
-// LazyAnd = "&&" () / f
-
-// // Comparsion Expression
-// ComparisonExpression = Expression ComparisonAndExpression / f
-// ComparisonAndExpression = Comparison Expression / f
-// Comparison = "==" () / Comparison1
-// Comparison1 = "!=" () / Comparison2
-// Comparison2 = ">" () / Comparison3
-// Comparison3 = "<" () / Comparison4
-// Comparison4 = ">=" () / Comparison5
-// Comparison5 = "<=" () / f
-
-// // NegationExpression
-// NegationExpression = '-' Expression / f
-
 // Expression
-Expression = Term Expression1 / Term
-Expression1 = PlusOrMinus Expression / f
+Expression = OrOrExpression () / f
+
+// OrOr Expression
+OrOrExpression = AndAndExpression OrOrExpression1 / AndAndExpression
+OrOrExpression1 = OrOr OrOrExpression / f
+
+OrOr = "||" () / f
+
+// AndAnd Expression
+AndAndExpression = ComparisonExpression AndAndExpression1 / ComparisonExpression
+AndAndExpression1 = AndAnd AndAndExpression / f
+
+AndAnd = "&&" () / f
+
+// Comparsion Expression
+ComparisonExpression = PlusOrMinusExpression ComparisonExpression1 / PlusOrMinusExpression
+ComparisonExpression1 = Comparison ComparisonExpression / f
+
+Comparison = EqEq () / Comparison1
+Comparison1 = Ne () / Comparison2
+Comparison2 = Ge () / Comparison3
+Comparison3 = Le () / Comparison4
+Comparison4 = Gt () / Comparison5
+Comparison5 = Lt () / f
+
+EqEq = "==" () / f
+Ne = "!=" () / f
+Ge = ">=" () / f
+Le = "<=" () / f
+Gt = '>' () / f
+Lt = '<' () / f
+
+// PlusOrMinusExpression
+PlusOrMinusExpression = Term PlusOrMinusExpression1 / Term
+PlusOrMinusExpression1 = PlusOrMinus PlusOrMinusExpression / f
 
 // Term
 Term = Factor Term1 / Factor
@@ -166,7 +177,6 @@ Factor2 = PlusOrMinus Factor / Factor3
 Factor3 = Function () / Factor4
 Factor4 = Variable () / Factor5
 Factor5 = ExpressionInParentheses () / f
-
 
 // Variable
 Variable = UppercaseX () / Variable1
@@ -200,15 +210,15 @@ Function2 = Tangent () / Function3
 Function3 = Ln () / Function4
 Function4 = Lg () / f
 
-Sine = "sin" Expression / f
-Cosine = "cos" Expression / f
-Tangent = "tan" Expression / f
-Ln = "ln" Expression / f
-Lg = "lg" Expression / f
+Sine = "sin" PlusOrMinusExpression / f
+Cosine = "cos" PlusOrMinusExpression / f
+Tangent = "tan" PlusOrMinusExpression / f
+Ln = "ln" PlusOrMinusExpression / f
+Lg = "lg" PlusOrMinusExpression / f
 
 // Delimiters
 ExpressionInParentheses = '(' ExpressionAndClose / f
-ExpressionAndClose = Expression ')' / f
+ExpressionAndClose = PlusOrMinusExpression ')' / f
 
 // Integer
 IntegerLiteral = DecLiteral () / f
@@ -234,6 +244,13 @@ DecDigit7 = '7' () / DecDigit8
 DecDigit8 = '8' () / '9'
 
 // Others
-PlusOrMinus = '+' () / '-'
-StarOrSlash = '*' () / '/'
+PlusOrMinus = Plus () / PlusOrMinus1
+PlusOrMinus1 = Minus () / f
+Plus = '+' () / f
+Minus = '-' () / f
+
+StarOrSlash = Star () / StarOrSlash1
+StarOrSlash1 = Slash () / f
+Star = '*' () / f
+Slash = '/' () / f
 ```
