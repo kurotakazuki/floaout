@@ -145,8 +145,8 @@ AndAndExpression1 = AndAnd AndAndExpression / f
 AndAnd = "&&" () / f
 
 // Comparsion Expression
-ComparisonExpression = PlusOrMinusExpression ComparisonExpression1 / PlusOrMinusExpression
-ComparisonExpression1 = Comparison ComparisonExpression / f
+ComparisonExpression = PlusOrMinusExpression ComparisonExpression1 / f
+ComparisonExpression1 = Comparison PlusOrMinusExpression / f
 
 Comparison = EqEq () / Comparison1
 Comparison1 = Ne () / Comparison2

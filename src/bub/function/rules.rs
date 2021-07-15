@@ -72,19 +72,19 @@ impl<'a> FunctionRules {
     };
 
     // Comparsion Expression
-    /// ComparisonExpression = PlusOrMinusExpression ComparisonExpression1 / PlusOrMinusExpression
+    /// ComparisonExpression = PlusOrMinusExpression ComparisonExpression1 / f
     const COMPARISON_EXPRESSION_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(PlusOrMinusExpression),
             rhs: E::V(ComparisonExpression1),
         },
-        second: Second(E::V(PlusOrMinusExpression)),
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// ComparisonExpression1 = Comparison ComparisonExpression / f
+    /// ComparisonExpression1 = Comparison PlusOrMinusExpression / f
     const COMPARISON_EXPRESSION1_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(Comparison),
-            rhs: E::V(ComparisonExpression),
+            rhs: E::V(PlusOrMinusExpression),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
@@ -110,7 +110,7 @@ impl<'a> FunctionRules {
     const COMPARISON2_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(Ge),
-            rhs: E::V(Comparison),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::V(Comparison3)),
     };
@@ -750,6 +750,7 @@ impl<'a> FunctionRules {
 
 impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
     fn get(&self, variable: &FunctionVariable) -> Option<&Rule<'a>> {
+        println!("{:?}", variable);
         Some(match variable {
             // Expression
             Expression => &Self::EXPRESSION_RULE,
