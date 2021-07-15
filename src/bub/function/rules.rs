@@ -240,8 +240,8 @@ impl<'a> FunctionRules {
     /// Factor2 = PlusOrMinus Factor / Factor3
     const FACTOR2_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::V(PlusOrMinus),
-            rhs: E::V(Factor),
+            lhs: E::V(PlusOrMinusFactor),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::V(Factor3)),
     };
@@ -266,6 +266,15 @@ impl<'a> FunctionRules {
         first: First {
             lhs: E::V(ExpressionInParentheses),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+
+    /// PlusOrMinusFactor = PlusOrMinus Factor / f
+    const PLUS_OR_MINUS_FACTOR_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(PlusOrMinus),
+            rhs: E::V(Factor),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
@@ -790,6 +799,8 @@ impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
             Factor3 => &Self::FACTOR3_RULE,
             Factor4 => &Self::FACTOR4_RULE,
             Factor5 => &Self::FACTOR5_RULE,
+
+            PlusOrMinusFactor => &Self::PLUS_OR_MINUS_FACTOR_RULE,
 
             // Variable
             Variable => &Self::VARIABLE_RULE,

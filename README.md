@@ -3,7 +3,6 @@ Floaout is the next-generation audio format.
 
 
 # TODO
-- Update Factor2
 - Do not allow input like "2>1&&5".
 
 # Bubble File Format Specification
@@ -174,10 +173,13 @@ Term1 = StarOrSlash Term / f
 // Factor
 Factor = FloatLiteral () / Factor1
 Factor1 = IntegerLiteral () / Factor2
-Factor2 = PlusOrMinus Factor / Factor3
+Factor2 = PlusOrMinusFactor () / Factor3
 Factor3 = Function () / Factor4
 Factor4 = Variable () / Factor5
 Factor5 = ExpressionInParentheses () / f
+
+// PlusOrMinusFactor
+PlusOrMinusFactor = PlusOrMinus Factor / f
 
 // Variable
 Variable = UppercaseX () / Variable1

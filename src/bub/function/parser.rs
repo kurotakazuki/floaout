@@ -30,6 +30,10 @@ mod tests {
         let result = FunctionParser::parse(input, &FunctionVariable::Expression);
         assert!(result.is_err());
 
+        let input: &[u8] = "1**2".as_bytes();
+        let result = FunctionParser::parse(input, &FunctionVariable::Expression);
+        assert!(result.is_err());
+
         let input: &[u8] = "E".as_bytes();
         let result = FunctionParser::parse(input, &FunctionVariable::Expression);
         assert!(result.is_ok());
@@ -50,7 +54,7 @@ mod tests {
         let result = FunctionParser::parse(input, &FunctionVariable::Expression);
         assert!(result.is_ok());
 
-        let input: &[u8] = "1.2*(5+98.765432)/sin(t/F)/1000".as_bytes();
+        let input: &[u8] = "1.2*(5+-+98.532)/sin(t/F)/1000".as_bytes();
         let result = FunctionParser::parse(input, &FunctionVariable::Expression);
         assert!(result.is_ok());
 
@@ -65,7 +69,12 @@ mod tests {
         let result = FunctionParser::parse(input, &FunctionVariable::Expression);
         assert!(result.is_err());
 
-        let input = &["1.2*(5+98.765432)/sin(t/F)*f".as_bytes(), &1.0_f64.to_le_bytes(), "+cos(PI)+1".as_bytes()].concat();
+        let input = &[
+            "1.2*(5+98.765432)/sin(t/F)*f".as_bytes(),
+            &1.0_f64.to_le_bytes(),
+            "+cos(PI)+1".as_bytes(),
+        ]
+        .concat();
         let result = FunctionParser::parse(input, &FunctionVariable::Expression);
         assert!(result.is_ok());
     }

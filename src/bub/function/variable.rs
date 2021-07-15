@@ -53,6 +53,8 @@ pub enum FunctionVariable {
     Factor4,
     Factor5,
 
+    PlusOrMinusFactor,
+
     // Variable
     Variable,
     Variable1,
