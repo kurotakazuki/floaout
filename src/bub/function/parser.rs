@@ -64,5 +64,9 @@ mod tests {
         let input: &[u8] = "4*(23-21)+54+(2343+t*(F-2)+sinPI".as_bytes();
         let result = FunctionParser::parse(input, &FunctionVariable::Expression);
         assert!(result.is_err());
+
+        let input = &["1.2*(5+98.765432)/sin(t/F)*f".as_bytes(), &1.0_f64.to_le_bytes(), "+cos(PI)+1".as_bytes()].concat();
+        let result = FunctionParser::parse(input, &FunctionVariable::Expression);
+        assert!(result.is_ok());
     }
 }
