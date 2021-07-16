@@ -1,4 +1,4 @@
-pub use self::function::{FunctionParser, FunctionRules, FunctionVariable};
+pub use self::function::{FunctionRules, FunctionVariable};
 pub use self::id::BubbleID;
 pub use self::metadata::BubbleMetadata;
 

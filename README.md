@@ -1,9 +1,9 @@
 # Floaout
 Floaout is the next-generation audio format.
 
-
 # TODO
-- Do not allow input like "2>1&&5".
+- error handling
+- Remove unnecessay variables when parse.
 
 # Bubble File Format Specification
 
@@ -33,16 +33,16 @@ Floaout is the next-generation audio format.
 ## Bubble Sample
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
-| Bubble's X coordinate | `f64` (8) | Bubble's X coordinate |
-| Bubble's Y coordinate | `f64` (8) | Bubble's Y coordinate |
-| Bubble's Z coordinate | `f64` (8) | Bubble's Z coordinate |
+| Bubble's X coordinate | `f64` (8) | Bubble's X coordinate (X_0) |
+| Bubble's Y coordinate | `f64` (8) | Bubble's Y coordinate (Y_0) |
+| Bubble's Z coordinate | `f64` (8) | Bubble's Z coordinate (Z_0) |
 | Range | `` () |  |
 | Comma | `char` (1) | ',' |
 | Volume | `` () |  |
 | Comma or Semicolon | `char` (1) | ',' if there is another |
 | Connected, Ended, and FunctionKind | `u8` (1) | Connected, Ended, and `FunctionKind` |
-| Ending (Relative) Time | `u64` (8) | Number of frames at the end of function. |
-| Next Starting (Relative) Time | `u64` (8) | Number of frames at the start of the next function. Optional (!connected && !ended) |
+| Ending Relative Time | `u64` (8) | Number of frames at the end of function. |
+| Next Starting Relative Time | `u64` (8) | Number of frames at the start of the next function. Optional (!connected && !ended) |
 | Sample Data |  | Sample Data |
 
 ### Connected and Ended
@@ -74,14 +74,14 @@ Floaout is the next-generation audio format.
 #### Variables
 | Keyword | Description |
 | ------------- | ------------- |
-| X | X (Absolute) coordinate |
-| Y | Y (Absolute) coordinate |
-| Z | Z (Absolute) coordinate |
-| x | x = X - X_0 (X_0 is Bubble's X coordinate). (Relative) coordinate. |
-| y | y = Y - Y_0 (Y_0 is Bubble's Y coordinate). (Relative) coordinate. |
-| z | z = Z - Z_0 (Z_0 is Bubble's Z coordinate). (Relative) coordinate. |
-| T | Number of frames starting from the file. (Absolute) Time. (`as f64`) |
-| t | Number of frames starting from the function. (Relative) Time. (`as f64`) |
+| X | Speaker's absolute X coordinate |
+| Y | Speaker's absolute Y coordinate |
+| Z | Speaker's absolute Z coordinate |
+| x | x = X - X_0 (X_0 is Bubble's absolute X coordinate). Speaker's relative X coordinate. |
+| y | y = Y - Y_0 (Y_0 is Bubble's absolute Y coordinate). Speaker's relative Y coordinate. |
+| z | z = Z - Z_0 (Z_0 is Bubble's absolute Z coordinate). Speaker's relative Z coordinate. |
+| T | Number of frames starting from the file. Absolute Time (`as f64`) |
+| t | Number of frames starting from the function. Relative Time (`as f64`) |
 | F | Samples per sec |
 
 ##### Constants
