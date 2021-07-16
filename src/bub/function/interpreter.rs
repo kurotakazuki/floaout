@@ -37,6 +37,24 @@ impl FunctionInterpreter {
         }
     }
 
+    pub fn eval_or_or_expr(&self, ast: &FunctionAST) -> Result<bool, ()> {
+        let internal = ast.as_internal().expect("internal node");
+
+        // TODO: Check whether variable is OrOrExpression
+
+        match &*internal.equal {
+            Choice::First(first) => {
+                let lhs = self.eval_and_and_expr(&first.lhs)?;
+
+                let or_or_expr1 = first.rhs.as_first().unwrap();
+                let rhs = self.eval_or_or_expr(&or_or_expr1.rhs)?;
+
+                Ok(lhs || rhs)
+            }
+            Choice::Second(second) => self.eval_and_and_expr(&second.0),
+        }
+    }
+
     pub fn eval_and_and_expr(&self, ast: &FunctionAST) -> Result<bool, ()> {
         let internal = ast.as_internal().expect("internal node");
 
@@ -193,7 +211,53 @@ mod tests {
     use crate::bub::{function::parse, FunctionVariable};
 
     #[test]
-    fn and_and_expr() {
+    fn eval_or_or_expr() {
+        let interpreter =
+            FunctionInterpreter::new((-1.0, 1.0, 0.0), (2.0, 3.0, 4.0), 12.0, 3.0, 44100.0);
+
+        let input: &[u8] = "0.0<0.1".as_bytes();
+        let ast = parse(&input, &FunctionVariable::OrOrExpression).unwrap();
+        let result = interpreter.eval_or_or_expr(&ast);
+        assert_eq!(result, Ok(true));
+        let input: &[u8] = "1==0||0!=0".as_bytes();
+        let ast = parse(&input, &FunctionVariable::OrOrExpression).unwrap();
+        let result = interpreter.eval_or_or_expr(&ast);
+        assert_eq!(result, Ok(false));
+
+        let input: &[u8] = "3.14<PI&&PI<3.15".as_bytes();
+        let ast = parse(&input, &FunctionVariable::OrOrExpression).unwrap();
+        let result = interpreter.eval_or_or_expr(&ast);
+        assert_eq!(result, Ok(true));
+
+        let input: &[u8] = "2<E&&E<3&&3<PI&&PI<4".as_bytes();
+        let ast = parse(&input, &FunctionVariable::OrOrExpression).unwrap();
+        let result = interpreter.eval_or_or_expr(&ast);
+        assert_eq!(result, Ok(true));
+
+        let input: &[u8] = "1==0||2<E&&E<3&&3<PI&&PI<4".as_bytes();
+        let ast = parse(&input, &FunctionVariable::OrOrExpression).unwrap();
+        let result = interpreter.eval_or_or_expr(&ast);
+        assert_eq!(result, Ok(true));
+        let input: &[u8] = "0==0||1==1&&1==0".as_bytes();
+        let ast = parse(&input, &FunctionVariable::OrOrExpression).unwrap();
+        let result = interpreter.eval_or_or_expr(&ast);
+        assert_eq!(result, Ok(true));
+        let input: &[u8] = "0==0||1==1&&1==0||1==1".as_bytes();
+        let ast = parse(&input, &FunctionVariable::OrOrExpression).unwrap();
+        let result = interpreter.eval_or_or_expr(&ast);
+        assert_eq!(result, Ok(true));
+        let input: &[u8] = "0==0&&1==1||1==1&&0==1".as_bytes();
+        let ast = parse(&input, &FunctionVariable::OrOrExpression).unwrap();
+        let result = interpreter.eval_or_or_expr(&ast);
+        assert_eq!(result, Ok(true));
+        let input: &[u8] = "0==0&&1!=1||1==1".as_bytes();
+        let ast = parse(&input, &FunctionVariable::OrOrExpression).unwrap();
+        let result = interpreter.eval_or_or_expr(&ast);
+        assert_eq!(result, Ok(true));
+    }
+
+    #[test]
+    fn eval_and_and_expr() {
         let interpreter =
             FunctionInterpreter::new((-1.0, 1.0, 0.0), (2.0, 3.0, 4.0), 12.0, 3.0, 44100.0);
 
@@ -216,7 +280,7 @@ mod tests {
     }
 
     #[test]
-    fn comparison_expr() {
+    fn eval_comparison_expr() {
         let interpreter =
             FunctionInterpreter::new((-1.0, 1.0, 0.0), (2.0, 3.0, 4.0), 12.0, 3.0, 44100.0);
 
