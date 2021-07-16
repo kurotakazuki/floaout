@@ -352,18 +352,18 @@ impl<'a> FunctionRules {
         },
         second: Second(E::V(Variable9)),
     };
-    /// Variable9 = Pi () / Variable10
+    /// Variable9 = E () / Variable10
     const VARIABLE9_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::V(Pi),
+            lhs: E::V(E),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::V(Variable10)),
     };
-    /// Variable10 = E () / f
+    /// Variable10 = Pi () / f
     const VARIABLE10_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::V(E),
+            lhs: E::V(Pi),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
@@ -441,18 +441,18 @@ impl<'a> FunctionRules {
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// Pi = "PI" () / f
-    const PI_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Str("PI"))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
     /// E = 'E' () / f
     const E_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::T(TerminalSymbol::Original(Char('E'))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// Pi = "PI" () / f
+    const PI_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Str("PI"))),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
@@ -824,8 +824,8 @@ impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
             UppercaseT => &Self::UPPERCASE_T_RULE,
             LowercaseT => &Self::LOWERCASE_T_RULE,
             UppercaseF => &Self::UPPERCASE_F_RULE,
-            Pi => &Self::PI_RULE,
             E => &Self::E_RULE,
+            Pi => &Self::PI_RULE,
 
             // Function
             Function => &Self::FUNCTION_RULE,

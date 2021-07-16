@@ -192,8 +192,8 @@ Variable5 = LowercaseZ () / Variable6
 Variable6 = UppercaseT () / Variable7
 Variable7 = LowercaseT () / Variable8
 Variable8 = UppercaseF () / Variable9
-Variable9 = Pi () / Variable10
-Variable10 = E () / f
+Variable9 = E () / Variable10
+Variable10 = Pi () / f
 
 UppercaseX = 'X' () / f
 UppercaseY = 'Y' () / f
@@ -204,8 +204,8 @@ LowercaseZ = 'z' () / f
 UppercaseT = 'T' () / f
 LowercaseT = 't' () / f
 UppercaseF = 'F' () / f
-Pi = "PI" () / f
 E = 'E' () / f
+Pi = "PI" () / f
 
 // Function
 Function = Sine () / Function1
