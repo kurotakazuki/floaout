@@ -3,7 +3,7 @@ Floaout is the next-generation audio format.
 
 # TODO
 - error handling
-- Remove unnecessay variables when parse.
+- "1-8/8-9" should be -9
 
 # Bubble File Format Specification
 
