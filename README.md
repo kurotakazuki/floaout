@@ -37,9 +37,9 @@ Floaout is the next-generation audio format.
 | Bubble's Y coordinate | `f64` (8) | Bubble's Y coordinate (Y_0) |
 | Bubble's Z coordinate | `f64` (8) | Bubble's Z coordinate (Z_0) |
 | Range | `` () |  |
-| Comma | `char` (1) | ',' |
+| Semicolon | `char` (1) | ';' |
 | Volume | `` () |  |
-| Comma or Semicolon | `char` (1) | ',' if there is another |
+| Semicolon or Colon | `char` (1) | ':' if there is another |
 | Connected, Ended, and FunctionKind | `u8` (1) | Connected, Ended, and `FunctionKind` |
 | Ending Relative Time | `u64` (8) | Number of frames at the end of function. |
 | Next Starting Relative Time | `u64` (8) | Number of frames at the start of the next function. Optional (!connected && !ended) |
@@ -125,6 +125,7 @@ Floaout is the next-generation audio format.
 | ------------- | ------------- |
 | , | Comma |
 | ; | Semicolon |
+| : | Colon |
 | ( ) | Parentheses |
 
 ### Syntax
