@@ -15,10 +15,7 @@ pub trait Metadata: Sized {
 }
 
 /// Sample
-pub trait Sample: Sized {
-    fn read<R: Read>(reader: &mut R) -> Result<Self>;
-    fn write<W: Write>(self, writer: &mut W) -> Result<()>;
-}
+pub trait Sample: Sized {}
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum SampleKind {

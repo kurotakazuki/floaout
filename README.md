@@ -6,6 +6,7 @@ Floaout is the next-generation audio format.
 - Change syntax
     - Does "1-8/8-9" should be -9 ?
     - Does "sin(1/2*PI)" should be 1 ?
+- Clarify whether #[derive(Order)] is needed
 
 # Bubble File Format Specification
 
@@ -41,7 +42,7 @@ Floaout is the next-generation audio format.
 | Range | `` () |  |
 | Space | `char` (1) | ' ' |
 | Volume | `` () |  |
-| Space or Semicolon | `char` (1) | ';' if there is another |
+| Space or Semicolon | `char` (1) | ' ' if there is another |
 | Connected, Ended, and FunctionKind | `u8` (1) | Connected, Ended, and `FunctionKind` |
 | Ending Relative Time | `u64` (8) | Number of frames at the end of function. |
 | Next Starting Relative Time | `u64` (8) | Number of frames at the start of the next function. Optional (!connected && !ended) |

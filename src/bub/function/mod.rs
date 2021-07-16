@@ -12,4 +12,4 @@ mod parse;
 mod rules;
 mod variable;
 
-type FunctionAST = AST<FunctionVariable, StartAndLenSpan<u16, u16>, f64>;
+pub type FunctionAST = AST<FunctionVariable, StartAndLenSpan<u16, u16>, f64>;
