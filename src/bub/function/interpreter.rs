@@ -37,6 +37,24 @@ impl FunctionInterpreter {
         }
     }
 
+    pub fn eval_and_and_expr(&self, ast: &FunctionAST) -> Result<bool, ()> {
+        let internal = ast.as_internal().expect("internal node");
+
+        // TODO: Check whether variable is AndAndExpression
+
+        match &*internal.equal {
+            Choice::First(first) => {
+                let lhs = self.eval_comparison_expr(&first.lhs)?;
+
+                let and_and_expr1 = first.rhs.as_first().unwrap();
+                let rhs = self.eval_and_and_expr(&and_and_expr1.rhs)?;
+
+                Ok(lhs && rhs)
+            }
+            Choice::Second(second) => self.eval_comparison_expr(&second.0),
+        }
+    }
+
     pub fn eval_comparison_expr(&self, ast: &FunctionAST) -> Result<bool, ()> {
         // TODO: Check whether variable is ComparisonExpression
 
@@ -175,11 +193,33 @@ mod tests {
     use crate::bub::{function::parse, FunctionVariable};
 
     #[test]
+    fn and_and_expr() {
+        let interpreter =
+            FunctionInterpreter::new((-1.0, 1.0, 0.0), (2.0, 3.0, 4.0), 12.0, 3.0, 44100.0);
+
+        let input: &[u8] = "0.0<0.1".as_bytes();
+        let ast = parse(&input, &FunctionVariable::AndAndExpression).unwrap();
+        let result = interpreter.eval_and_and_expr(&ast);
+        assert_eq!(result, Ok(true));
+        let input: &[u8] = "0.0!=0.1&&1.0==tan(PI/4)".as_bytes();
+        let ast = parse(&input, &FunctionVariable::AndAndExpression).unwrap();
+        let result = interpreter.eval_and_and_expr(&ast);
+        assert_eq!(result, Ok(true));
+        let input: &[u8] = "0.0<0.1&&X==X&&F==F&&t!=T".as_bytes();
+        let ast = parse(&input, &FunctionVariable::AndAndExpression).unwrap();
+        let result = interpreter.eval_and_and_expr(&ast);
+        assert_eq!(result, Ok(true));
+        let input: &[u8] = "0.0<0.1&&X==X&&F==F&&t==T".as_bytes();
+        let ast = parse(&input, &FunctionVariable::AndAndExpression).unwrap();
+        let result = interpreter.eval_and_and_expr(&ast);
+        assert_eq!(result, Ok(false));
+    }
+
+    #[test]
     fn comparison_expr() {
         let interpreter =
             FunctionInterpreter::new((-1.0, 1.0, 0.0), (2.0, 3.0, 4.0), 12.0, 3.0, 44100.0);
 
-        // PlusOrMinusFactor
         let input: &[u8] = "1.0==tan(PI/4)".as_bytes();
         let ast = parse(&input, &FunctionVariable::ComparisonExpression).unwrap();
         let result = interpreter.eval_comparison_expr(&ast);
