@@ -37,6 +37,28 @@ impl FunctionInterpreter {
         }
     }
 
+    pub fn eval_comparison_expr(&self, ast: &FunctionAST) -> Result<bool, ()> {
+        // TODO: Check whether variable is ComparisonExpression
+
+        let first = ast.as_first().unwrap();
+
+        let lhs = self.eval_plus_or_minus_expr(&first.lhs)?;
+
+        let comparison_expr1 = first.rhs.as_first().unwrap();
+        let comparison_v = &comparison_expr1.lhs;
+        let rhs = self.eval_plus_or_minus_expr(&comparison_expr1.rhs)?;
+
+        match comparison_v.as_internal().expect("plus or minus").value.0 {
+            EqEq => Ok((lhs - rhs).abs() < f64::EPSILON),
+            Ne => Ok((lhs - rhs).abs() > f64::EPSILON),
+            Ge => Ok(lhs >= rhs),
+            Le => Ok(lhs <= rhs),
+            Gt => Ok(lhs > rhs),
+            Lt => Ok(lhs < rhs),
+            _ => unreachable!(),
+        }
+    }
+
     pub fn eval_plus_or_minus_expr(&self, ast: &FunctionAST) -> Result<f64, ()> {
         let internal = ast.as_internal().expect("internal node");
 
@@ -68,7 +90,7 @@ impl FunctionInterpreter {
     pub fn eval_term(&self, ast: &FunctionAST) -> Result<f64, ()> {
         let internal = ast.as_internal().expect("internal node");
 
-        // TODO: Check whether variable is PlusOrMinusExpression
+        // TODO: Check whether variable is Term
 
         match &*internal.equal {
             Choice::First(first) => {
@@ -151,6 +173,38 @@ impl FunctionInterpreter {
 mod tests {
     use super::*;
     use crate::bub::{function::parse, FunctionVariable};
+
+    #[test]
+    fn comparison_expr() {
+        let interpreter =
+            FunctionInterpreter::new((-1.0, 1.0, 0.0), (2.0, 3.0, 4.0), 12.0, 3.0, 44100.0);
+
+        // PlusOrMinusFactor
+        let input: &[u8] = "1.0==tan(PI/4)".as_bytes();
+        let ast = parse(&input, &FunctionVariable::ComparisonExpression).unwrap();
+        let result = interpreter.eval_comparison_expr(&ast);
+        assert_eq!(result, Ok(true));
+        let input: &[u8] = "1.0!=-1.0".as_bytes();
+        let ast = parse(&input, &FunctionVariable::ComparisonExpression).unwrap();
+        let result = interpreter.eval_comparison_expr(&ast);
+        assert_eq!(result, Ok(true));
+        let input: &[u8] = "1.0>=1.0".as_bytes();
+        let ast = parse(&input, &FunctionVariable::ComparisonExpression).unwrap();
+        let result = interpreter.eval_comparison_expr(&ast);
+        assert_eq!(result, Ok(true));
+        let input: &[u8] = "1.0<=(1.0*5-4)".as_bytes();
+        let ast = parse(&input, &FunctionVariable::ComparisonExpression).unwrap();
+        let result = interpreter.eval_comparison_expr(&ast);
+        assert_eq!(result, Ok(true));
+        let input: &[u8] = "-3<-1.0".as_bytes();
+        let ast = parse(&input, &FunctionVariable::ComparisonExpression).unwrap();
+        let result = interpreter.eval_comparison_expr(&ast);
+        assert_eq!(result, Ok(true));
+        let input: &[u8] = "-3>-1.0".as_bytes();
+        let ast = parse(&input, &FunctionVariable::ComparisonExpression).unwrap();
+        let result = interpreter.eval_comparison_expr(&ast);
+        assert_eq!(result, Ok(false));
+    }
 
     #[test]
     fn eval_plus_or_minus_expr() {
