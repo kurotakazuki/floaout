@@ -29,7 +29,7 @@ impl<W: Write> WavWriter<W> {
     }
 
     pub fn into_wav_frame_writer_kind(self) -> WavFrameWriterKind<W> {
-        match self.metadata.wav_sample_kind() {
+        match self.metadata.sample_kind() {
             SampleKind::F32LE => WavFrameWriter::<W, f32>::new(self.inner, self.metadata).into(),
             SampleKind::F64LE => WavFrameWriter::<W, f64>::new(self.inner, self.metadata).into(),
         }

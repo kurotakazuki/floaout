@@ -1,11 +1,56 @@
-use crate::bub::BubbleID;
+use crate::bub::{BubbleID, FunctionAST};
 use crate::io::{ReadExt, WriteExt};
 use crate::utils::return_invalid_data_if_not_equal;
 use crate::{Metadata, SampleKind};
-use std::io::Result;
+use std::io::{ErrorKind, Read, Result, Write};
 
-#[derive(Clone, Debug, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum BubbleState {
+    Starting,
+    Normal,
+    Stopped,
+    Ended,
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum BubbleSampleKind {
+    IEEEFloatingPoint,
+    Expression,
+}
+
+impl BubbleSampleKind {
+    pub fn read<R: Read>(reader: &mut R) -> Result<Self> {
+        let value: u8 = reader.read_le()?;
+        Ok(match value {
+            0 => Self::IEEEFloatingPoint,
+            1 => Self::Expression,
+            _ => return Err(ErrorKind::InvalidData.into()),
+        })
+    }
+
+    pub fn write<W: Write>(self, writer: &mut W) -> Result<()> {
+        writer.write_le(self.to_u8())
+    }
+
+    pub fn from_u8(value: u8) -> Self {
+        match value {
+            0 => Self::IEEEFloatingPoint,
+            1 => Self::Expression,
+            _ => unimplemented!(),
+        }
+    }
+
+    pub const fn to_u8(self) -> u8 {
+        match self {
+            Self::IEEEFloatingPoint => 0,
+            Self::Expression => 1,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub struct BubbleMetadata {
+    // In File Header
     /// Starting Sample
     pub starting_sample: u64,
     /// This is the number of `Bubble` version.
@@ -13,13 +58,58 @@ pub struct BubbleMetadata {
     /// Bubble ID
     pub bubble_id: BubbleID,
     /// Frames
-    pub frames: u64,
+    frames: u64,
     /// Samples Per Sec
-    pub samples_per_sec: f64,
+    samples_per_sec: f64,
     /// Bits Per Sample
-    pub sample_kind: SampleKind,
+    sample_kind: SampleKind,
+    /// Bubble Sample Kind
+    pub bubble_sample_kind: BubbleSampleKind,
     /// Name of Bubble
     pub name: String,
+
+    /// Speakers absolute coordinates
+    pub speakers_absolute_coordinates: Vec<(f64, f64, f64)>,
+
+    /// Bubble State
+    pub bubble_state: BubbleState,
+    /// Absolute Time
+    pub absolute_time: u64,
+    /// Functions
+    pub functions: Vec<(FunctionAST, FunctionAST)>,
+    /// Connected or Not Flag
+    /// | Value | Contents |
+    /// | ---------------- |
+    /// | 0 | Not Connected |
+    /// | 1 | Connected |
+    pub connected: bool,
+    /// Ended or Not Flag
+    /// | Value | Contents |
+    /// | ---------------- |
+    /// | 0 | Not Ended |
+    /// | 1 | Ended |
+    pub ended: bool,
+    /// Ending Time which means "Sample length"
+    /// If `self.ending_time_is_0` is `true', this won't exist.
+    pub ending_time: u64,
+    /// Next Starting Sample
+    /// If `self.connected` is `true', this won't exist.
+    /// If `self.ended` is `true', this won't exist.
+    pub next_starting_sample: u64,
+}
+
+impl BubbleMetadata {
+    pub const fn frames(&self) -> u64 {
+        self.frames
+    }
+
+    pub const fn sample_kind(&self) -> SampleKind {
+        self.sample_kind
+    }
+
+    pub const fn samples_per_sec(&self) -> f64 {
+        self.samples_per_sec
+    }
 }
 
 impl Metadata for BubbleMetadata {
@@ -34,6 +124,7 @@ impl Metadata for BubbleMetadata {
         let frames = reader.read_le()?;
         let samples_per_sec = reader.read_le()?;
         let sample_kind = SampleKind::read(reader)?;
+        let bubble_sample_kind = BubbleSampleKind::read(reader)?;
 
         let name_size: u8 = reader.read_le()?;
         let name = reader.read_string_for(name_size as usize)?;
@@ -47,7 +138,17 @@ impl Metadata for BubbleMetadata {
             frames,
             samples_per_sec,
             sample_kind,
+            bubble_sample_kind,
             name,
+
+            speakers_absolute_coordinates: Vec::new(),
+            bubble_state: BubbleState::Starting,
+            absolute_time: 0,
+            functions: Vec::new(),
+            connected: false,
+            ended: false,
+            ending_time: 0,
+            next_starting_sample: 0,
         })
     }
     fn write<W: std::io::Write>(self, writer: &mut W) -> Result<()> {
@@ -57,6 +158,7 @@ impl Metadata for BubbleMetadata {
         writer.write_le(self.frames)?;
         writer.write_le(self.samples_per_sec)?;
         self.sample_kind.write(writer)?;
+        self.bubble_sample_kind.write(writer)?;
         writer.write_le(self.name.len() as u8)?;
         writer.write_str(&self.name)?;
 
@@ -77,7 +179,17 @@ mod tests {
             frames: 96000,
             samples_per_sec: 96000.0,
             sample_kind: SampleKind::F32LE,
+            bubble_sample_kind: BubbleSampleKind::IEEEFloatingPoint,
             name: String::from("Vocal"),
+
+            speakers_absolute_coordinates: Vec::new(),
+            bubble_state: BubbleState::Starting,
+            absolute_time: 0,
+            functions: Vec::new(),
+            connected: false,
+            ended: false,
+            ending_time: 0,
+            next_starting_sample: 0,
         };
         let expected = bubble_metadata.clone();
 

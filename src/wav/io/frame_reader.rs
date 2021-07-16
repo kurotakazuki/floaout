@@ -54,7 +54,7 @@ impl<R: Read> WavFrameReaderKind<R> {
                 format!(
                     "expected `{:?}`, found `{:?}`",
                     SampleKind::F32LE,
-                    r.metadata.wav_sample_kind()
+                    r.metadata.sample_kind()
                 ),
             )),
         }
@@ -67,7 +67,7 @@ impl<R: Read> WavFrameReaderKind<R> {
                 format!(
                     "expected `{:?}`, found `{:?}`",
                     SampleKind::F64LE,
-                    r.metadata.wav_sample_kind()
+                    r.metadata.sample_kind()
                 ),
             )),
             Self::F64LE(r) => Ok(r),
@@ -83,7 +83,7 @@ mod tests {
     fn read() {
         macro_rules! test_read_wav {
             ( $( $t:ty ),* ) => ($(
-                let wav_sample_kind = SampleKind::from_format_tag_and_bits_per_sample(3, (std::mem::size_of::<$t>() * 8) as u16);
+                let sample_kind = SampleKind::from_format_tag_and_bits_per_sample(3, (std::mem::size_of::<$t>() * 8) as u16);
                 let channels = 1;
                 let samples_per_sec = 44100;
 
@@ -91,7 +91,7 @@ mod tests {
                 let data: Vec<u8> = Vec::new();
                 let metadata = WavMetadata {
                         frames: 0,
-                        wav_sample_kind,
+                        sample_kind,
                         channels,
                         samples_per_sec,
                 };
@@ -105,7 +105,7 @@ mod tests {
                     .collect();
                 let metadata = WavMetadata {
                     frames: 1,
-                    wav_sample_kind,
+                    sample_kind,
                     channels,
                     samples_per_sec,
                 };
@@ -120,7 +120,7 @@ mod tests {
                     .collect();
                 let metadata = WavMetadata {
                     frames: 2,
-                    wav_sample_kind,
+                    sample_kind,
                     channels,
                     samples_per_sec,
                 };
@@ -135,7 +135,7 @@ mod tests {
 
                 let metadata = WavMetadata {
                     frames: 2,
-                    wav_sample_kind,
+                    sample_kind,
                     channels,
                     samples_per_sec,
                 };
@@ -155,7 +155,7 @@ mod tests {
                 .collect();
                 let metadata = WavMetadata {
                     frames: 2,
-                    wav_sample_kind,
+                    sample_kind,
                     channels,
                     samples_per_sec,
                 };

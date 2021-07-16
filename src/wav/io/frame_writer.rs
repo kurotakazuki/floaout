@@ -50,7 +50,7 @@ impl<W: Write> WavFrameWriterKind<W> {
                 format!(
                     "expected `{:?}`, found `{:?}`",
                     SampleKind::F32LE,
-                    w.metadata.wav_sample_kind()
+                    w.metadata.sample_kind()
                 ),
             )),
         }
@@ -63,7 +63,7 @@ impl<W: Write> WavFrameWriterKind<W> {
                 format!(
                     "expected `{:?}`, found `{:?}`",
                     SampleKind::F64LE,
-                    w.metadata.wav_sample_kind()
+                    w.metadata.sample_kind()
                 ),
             )),
             Self::F64LE(w) => Ok(w),
@@ -80,7 +80,7 @@ mod tests {
         let data: Vec<u8> = Vec::new();
         let metadata = WavMetadata {
             frames: 2,
-            wav_sample_kind: SampleKind::F32LE,
+            sample_kind: SampleKind::F32LE,
             channels: 1,
             samples_per_sec: 44100,
         };

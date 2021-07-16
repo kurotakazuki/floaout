@@ -25,7 +25,7 @@ impl<R: Read> WavReader<R> {
     }
 
     pub fn into_wav_frame_reader_kind(self) -> WavFrameReaderKind<R> {
-        match self.metadata.wav_sample_kind() {
+        match self.metadata.sample_kind() {
             SampleKind::F32LE => WavFrameReader::<R, f32>::new(self.inner, self.metadata).into(),
             SampleKind::F64LE => WavFrameReader::<R, f64>::new(self.inner, self.metadata).into(),
         }
@@ -50,7 +50,7 @@ mod tests {
 
         let metadata = WavMetadata {
             frames: 176400,
-            wav_sample_kind: SampleKind::F32LE,
+            sample_kind: SampleKind::F32LE,
             channels: 2,
             samples_per_sec: 44100,
         };

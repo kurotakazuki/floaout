@@ -19,6 +19,7 @@ Floaout is the next-generation audio format.
 | Frames | `u64` (8) | Number of frames |
 | Samples Per Sec | `f64` (8) | Samples per sec |
 | SampleKind | `u8` (1) | `SampleKind` |
+| BubbleSampleKind | `u8` (1) | `BubbleSampleKind` |
 | Name Size | `u8` (1) | Name Size |
 | Name | `String` | Name (UTF-8) |
 | CRC | `` () | Pending |
@@ -28,6 +29,12 @@ Floaout is the next-generation audio format.
 | ------------- | ------------- | ------------- |
 | F32LE | `f32` Little Endian | 0 (`u8`) |
 | F64LE | `f64` Little Endian | 1 (`u8`) |
+
+### BubbleSampleKind
+| Variant  | Description | Value |
+| ------------- | ------------- | ------------- |
+| IEEEFloatingPoint | IEEEFloatingPoint | 0 |
+| Expression | Expression | 1 |
 
 ## Each Sample
 | Bubble Sample |  | `BubbleSample` |
@@ -43,7 +50,7 @@ Floaout is the next-generation audio format.
 | Space | `char` (1) | ' ' |
 | Volume | `` () |  |
 | Space or Semicolon | `char` (1) | ' ' if there is another |
-| Connected, Ended, and FunctionKind | `u8` (1) | Connected, Ended, and `FunctionKind` |
+| Connected and Ended | `u8` (1) | Connected and Ended |
 | Ending Relative Time | `u64` (8) | Number of frames at the end of function. |
 | Next Starting Relative Time | `u64` (8) | Number of frames at the start of the next function. Optional (!connected && !ended) |
 | Sample Data |  | Sample Data |
@@ -53,12 +60,6 @@ Floaout is the next-generation audio format.
 | ------------- | ------------- | ------------- |
 | ?0?????? | Stopped (NST) | Normal |
 | ?1?????? | Ended | Ended |
-
-### FunctionKind
-| Variant  | Description | Value |
-| ------------- | ------------- | ------------- |
-| IEEEFloatingPoint | IEEEFloatingPoint | 0 |
-| Expression | Expression | 1 |
 
 ### Sample Data
 #### IEEEFloatingPoint

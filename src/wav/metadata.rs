@@ -7,8 +7,8 @@ use std::io::Result;
 pub struct WavMetadata {
     /// Number of sample frames
     pub frames: u32,
-    // Wav Sample Kind
-    pub wav_sample_kind: SampleKind,
+    // Sample Kind
+    pub sample_kind: SampleKind,
     /// Channels
     pub channels: u16,
     /// Samples per sec
@@ -61,11 +61,10 @@ impl Metadata for WavMetadata {
 
                                 let wav_metadata = Self {
                                     frames,
-                                    wav_sample_kind:
-                                        SampleKind::from_format_tag_and_bits_per_sample(
-                                            format_tag,
-                                            bits_per_sample,
-                                        ),
+                                    sample_kind: SampleKind::from_format_tag_and_bits_per_sample(
+                                        format_tag,
+                                        bits_per_sample,
+                                    ),
                                     channels,
                                     samples_per_sec,
                                 };
@@ -121,12 +120,12 @@ impl WavMetadata {
         self.frames
     }
 
-    pub const fn wav_sample_kind(&self) -> SampleKind {
-        self.wav_sample_kind
+    pub const fn sample_kind(&self) -> SampleKind {
+        self.sample_kind
     }
 
     pub const fn format_tag(&self) -> u16 {
-        self.wav_sample_kind.format_tag()
+        self.sample_kind.format_tag()
     }
 
     pub const fn channels(&self) -> u16 {
@@ -138,7 +137,7 @@ impl WavMetadata {
     }
 
     pub const fn bits_per_sample(&self) -> u16 {
-        self.wav_sample_kind.bits_per_sample()
+        self.sample_kind.bits_per_sample()
     }
 
     pub const fn bytes_per_sample(&self) -> u16 {
@@ -174,13 +173,13 @@ mod tests {
 
     #[test]
     fn info() {
-        let wav_sample_kind = SampleKind::F32LE;
+        let sample_kind = SampleKind::F32LE;
         let frames = 0;
         let samples_per_sec = 44100;
 
         let metadata = WavMetadata {
             frames,
-            wav_sample_kind,
+            sample_kind,
             channels: 1,
             samples_per_sec,
         };
@@ -195,7 +194,7 @@ mod tests {
 
         let metadata = WavMetadata {
             frames: 88200,
-            wav_sample_kind,
+            sample_kind,
             channels: 1,
             samples_per_sec,
         };
@@ -212,7 +211,7 @@ mod tests {
 
         let metadata = WavMetadata {
             frames,
-            wav_sample_kind,
+            sample_kind,
             channels: 2,
             samples_per_sec,
         };
@@ -227,7 +226,7 @@ mod tests {
 
     #[test]
     fn read() -> Result<()> {
-        let wav_sample_kind = SampleKind::F32LE;
+        let sample_kind = SampleKind::F32LE;
 
         let mut data: &[u8] = &[
             0x52, 0x49, 0x46, 0x46, 0x44, 0x62, 0x05, 0x00, 0x57, 0x41, 0x56, 0x45, 0x66, 0x6D,
@@ -238,7 +237,7 @@ mod tests {
         let val = WavMetadata::read(&mut data)?;
         let expect = WavMetadata {
             frames: 88200,
-            wav_sample_kind,
+            sample_kind,
             channels: 1,
             samples_per_sec: 44100,
         };
@@ -305,7 +304,7 @@ mod tests {
         let val = WavMetadata::read(&mut data)?;
         let expect = WavMetadata {
             frames: 5250,
-            wav_sample_kind,
+            sample_kind,
             channels: 2,
             samples_per_sec: 44100,
         };
@@ -329,7 +328,7 @@ mod tests {
         let mut v = Vec::new();
         let metadata = WavMetadata {
             frames: 88200,
-            wav_sample_kind: SampleKind::F32LE,
+            sample_kind: SampleKind::F32LE,
             channels: 1,
             samples_per_sec: 44100,
         };
