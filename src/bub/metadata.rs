@@ -14,7 +14,7 @@ pub enum BubbleState {
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum BubbleSampleKind {
-    IEEEFloatingPoint,
+    LPCM,
     Expression,
 }
 
@@ -22,7 +22,7 @@ impl BubbleSampleKind {
     pub fn read<R: Read>(reader: &mut R) -> Result<Self> {
         let value: u8 = reader.read_le()?;
         Ok(match value {
-            0 => Self::IEEEFloatingPoint,
+            0 => Self::LPCM,
             1 => Self::Expression,
             _ => return Err(ErrorKind::InvalidData.into()),
         })
@@ -34,7 +34,7 @@ impl BubbleSampleKind {
 
     pub fn from_u8(value: u8) -> Self {
         match value {
-            0 => Self::IEEEFloatingPoint,
+            0 => Self::LPCM,
             1 => Self::Expression,
             _ => unimplemented!(),
         }
@@ -42,7 +42,7 @@ impl BubbleSampleKind {
 
     pub const fn to_u8(self) -> u8 {
         match self {
-            Self::IEEEFloatingPoint => 0,
+            Self::LPCM => 0,
             Self::Expression => 1,
         }
     }
@@ -179,7 +179,7 @@ mod tests {
             frames: 96000,
             samples_per_sec: 96000.0,
             sample_kind: SampleKind::F32LE,
-            bubble_sample_kind: BubbleSampleKind::IEEEFloatingPoint,
+            bubble_sample_kind: BubbleSampleKind::LPCM,
             name: String::from("Vocal"),
 
             speakers_absolute_coordinates: Vec::new(),

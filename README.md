@@ -33,7 +33,7 @@ Floaout is the next-generation audio format.
 ### BubbleSampleKind
 | Variant  | Description | Value |
 | ------------- | ------------- | ------------- |
-| IEEEFloatingPoint | IEEEFloatingPoint | 0 |
+| LPCM | LPCM | 0 |
 | Expression | Expression | 1 |
 
 ## Each Sample
@@ -43,26 +43,33 @@ Floaout is the next-generation audio format.
 ## Bubble Sample
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
-| Bubble's X coordinate | `f64` (8) | Bubble's X coordinate (X_0) |
-| Bubble's Y coordinate | `f64` (8) | Bubble's Y coordinate (Y_0) |
-| Bubble's Z coordinate | `f64` (8) | Bubble's Z coordinate (Z_0) |
-| Range | `` () |  |
+| Connected, Ended and Functions size | `u16` (1) | Connected, Ended and Functions size |
+| Bubble's X coordinate | `PlusOrMinusExpression` | Bubble's X coordinate (X_0) |
 | Space | `char` (1) | ' ' |
-| Volume | `` () |  |
+| Bubble's Y coordinate | `PlusOrMinusExpression` | Bubble's Y coordinate (Y_0) |
+| Space | `char` (1) | ' ' |
+| Bubble's Z coordinate | `PlusOrMinusExpression` | Bubble's Z coordinate (Z_0) |
+| Space | `char` (1) | ' ' |
+| Range | `OrOrExpression` |  |
+| Space | `char` (1) | ' ' |
+| Volume | `PlusOrMinusExpression` |  |
 | Space or Semicolon | `char` (1) | ' ' if there is another |
-| Connected and Ended | `u8` (1) | Connected and Ended |
 | Ending Relative Time | `u64` (8) | Number of frames at the end of function. |
 | Next Starting Relative Time | `u64` (8) | Number of frames at the start of the next function. Optional (!connected && !ended) |
 | Sample Data |  | Sample Data |
 
-### Connected and Ended
-| ended \ connected | 0??????? | 1??????? |
+### Connected, Ended and Functions size
+| Name | `Type` (bits) | Description |
 | ------------- | ------------- | ------------- |
-| ?0?????? | Stopped (NST) | Normal |
-| ?1?????? | Ended | Ended |
+| Functions Size | `u16` (14)  | Functions Size is 14 bits |
+
+| ended \ connected | 0?????????????? | 1?????????????? |
+| ------------- | ------------- | ------------- |
+| ?0????????????? | Stopped (NST) | Normal |
+| ?1????????????? | Ended | Ended |
 
 ### Sample Data
-#### IEEEFloatingPoint
+#### LPCM
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
 | WavSample | `f32` or `f64` (4 or 8) | depends on `SampleKind` |
@@ -70,7 +77,8 @@ Floaout is the next-generation audio format.
 #### Expression
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
-| Expression |  | Expression |
+| Expression Size | `u16` (2) | Expression Size |
+| Expression | `PlusOrMinusExpression` | Expression |
 
 
 ### Keywords
