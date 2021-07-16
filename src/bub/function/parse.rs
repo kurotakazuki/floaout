@@ -17,33 +17,33 @@ mod tests {
     #[test]
     fn expr() {
         let input: &[u8] = "".as_bytes();
-        let result = parse(input, &FunctionVariable::Expression);
+        let result = parse(input, &FunctionVariable::OrOrExpression);
         assert!(result.is_err());
 
         let input: &[u8] = "E".as_bytes();
-        let result = parse(input, &FunctionVariable::Expression);
+        let result = parse(input, &FunctionVariable::OrOrExpression);
         assert!(result.is_err());
 
         let input: &[u8] = "2.7<E".as_bytes();
-        let result = parse(input, &FunctionVariable::Expression);
+        let result = parse(input, &FunctionVariable::OrOrExpression);
         assert!(result.is_ok());
 
         let input: &[u8] = "PI>3.15&&2.7<E".as_bytes();
-        let result = parse(input, &FunctionVariable::Expression);
+        let result = parse(input, &FunctionVariable::OrOrExpression);
         assert!(result.is_ok());
 
         let input: &[u8] = "PI>3.15&&2.7<E&&2".as_bytes();
-        let result = parse(input, &FunctionVariable::Expression);
+        let result = parse(input, &FunctionVariable::OrOrExpression);
         assert!(result.is_err());
 
         let input: &[u8] = "X<=1.1&&Y!=1.0||T<3".as_bytes();
-        let result = parse(input, &FunctionVariable::Expression);
+        let result = parse(input, &FunctionVariable::OrOrExpression);
         assert!(result.is_ok());
 
         let input: &[u8] =
             "X<=1.1&&Y!=1.0||Z==0&&t<2*4||z+5*PI>9||y<=1.1&&sin2*cos(1/2*PI)!=sinPI*t&&tanF>=1.0"
                 .as_bytes();
-        let result = parse(input, &FunctionVariable::Expression);
+        let result = parse(input, &FunctionVariable::OrOrExpression);
         assert!(result.is_ok());
     }
 

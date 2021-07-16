@@ -9,16 +9,6 @@ pub struct FunctionRules;
 type Rule<'a> = RightRule<U8SliceTerminal<'a>, FunctionVariable>;
 
 impl<'a> FunctionRules {
-    // Expression
-    /// Expression = OrOrExpression () / f
-    const EXPRESSION_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(OrOrExpression),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-
     // OrOr Expression
     /// OrOrExpression = AndAndExpression OrOrExpression1 / AndAndExpression
     const OR_OR_EXPRESSION_RULE: Rule<'a> = RightRule {
@@ -751,9 +741,6 @@ impl<'a> FunctionRules {
 impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
     fn get(&self, variable: &FunctionVariable) -> Option<&Rule<'a>> {
         Some(match variable {
-            // Expression
-            Expression => &Self::EXPRESSION_RULE,
-
             // OrOr Expression
             OrOrExpression => &Self::OR_OR_EXPRESSION_RULE,
             OrOrExpression1 => &Self::OR_OR_EXPRESSION1_RULE,

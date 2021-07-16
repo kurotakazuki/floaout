@@ -4,9 +4,6 @@ impl Variable for FunctionVariable {}
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum FunctionVariable {
-    // Expression
-    Expression,
-
     // OrOr Expression
     OrOrExpression,
     OrOrExpression1,
