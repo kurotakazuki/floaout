@@ -107,7 +107,22 @@ impl FunctionInterpreter {
                         _ => unreachable!(),
                     }
                 }
-                Function => todo!(),
+                // Functions
+                Sine => Ok(self
+                    .eval_plus_or_minus_expr(&ast.as_first().unwrap().rhs)?
+                    .sin()),
+                Cosine => Ok(self
+                    .eval_plus_or_minus_expr(&ast.as_first().unwrap().rhs)?
+                    .cos()),
+                Tangent => Ok(self
+                    .eval_plus_or_minus_expr(&ast.as_first().unwrap().rhs)?
+                    .tan()),
+                Ln => Ok(self
+                    .eval_plus_or_minus_expr(&ast.as_first().unwrap().rhs)?
+                    .ln()),
+                Lg => Ok(self
+                    .eval_plus_or_minus_expr(&ast.as_first().unwrap().rhs)?
+                    .log2()),
                 // Variables
                 UppercaseX => Ok(self.uppercase_x),
                 UppercaseY => Ok(self.uppercase_y),
@@ -160,6 +175,32 @@ mod tests {
         let result = interpreter.eval_plus_or_minus_expr(&ast);
         assert_eq!(result, Ok(1.0));
 
+        // Functions
+        let input: &[u8] = "sin(PI/2)".as_bytes();
+        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
+        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        assert_eq!(result, Ok(1.0));
+        let input: &[u8] = "cos(PI/4)".as_bytes();
+        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
+        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let abs_difference = (result.unwrap() - 1.0 / 2.0_f64.sqrt()).abs();
+        assert!(abs_difference < 1.0e-10);
+        let input: &[u8] = "tan(PI/4)".as_bytes();
+        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
+        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let abs_difference = (result.unwrap() - 1.0).abs();
+        assert!(abs_difference < 1.0e-10);
+        let input: &[u8] = "ln(E*E)".as_bytes();
+        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
+        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let abs_difference = (result.unwrap() - 2.0).abs();
+        assert!(abs_difference < 1.0e-10);
+        let input: &[u8] = "lg8".as_bytes();
+        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
+        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let abs_difference = (result.unwrap() - 3.0).abs();
+        assert!(abs_difference < 1.0e-10);
+
         // Variables
         let input: &[u8] = "X".as_bytes();
         let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
@@ -199,6 +240,10 @@ mod tests {
         let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
         let result = interpreter.eval_plus_or_minus_expr(&ast);
         assert_eq!(result, Ok(-2.0));
+        let input: &[u8] = "cos(2*PI)".as_bytes();
+        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
+        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        assert_eq!(result, Ok(1.0));
 
         let input: &[u8] = "1+2*3".as_bytes();
         let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();

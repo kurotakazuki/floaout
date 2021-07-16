@@ -3,7 +3,8 @@ Floaout is the next-generation audio format.
 
 # TODO
 - error handling
-- "1-8/8-9" should be -9
+- Does "1-8/8-9" should be -9 ?
+- Does "sin(1/2*PI)" should be 1 ?
 
 # Bubble File Format Specification
 
