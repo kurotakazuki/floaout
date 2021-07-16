@@ -750,7 +750,6 @@ impl<'a> FunctionRules {
 
 impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
     fn get(&self, variable: &FunctionVariable) -> Option<&Rule<'a>> {
-        println!("{:?}", variable);
         Some(match variable {
             // Expression
             Expression => &Self::EXPRESSION_RULE,

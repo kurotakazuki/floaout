@@ -1,6 +1,7 @@
 use mpl::span::StartAndLenSpan;
 use mpl::trees::AST;
 
+pub use self::parse::parse;
 pub use self::rules::FunctionRules;
 pub use self::variable::FunctionVariable;
 

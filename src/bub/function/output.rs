@@ -17,8 +17,7 @@ impl<'input> Output<'input, [u8], FunctionVariable, StartAndLenSpan<u16, u16>> f
                 loop {
                     match equal {
                         Choice::First(first) => {
-                            cst.node.equal = first.lhs.into();
-                            return AST::from_cst(cst);
+                            return first.lhs;
                         }
                         Choice::Second(second) => {
                             equal = *second.0.node.into_internal().unwrap().equal;
