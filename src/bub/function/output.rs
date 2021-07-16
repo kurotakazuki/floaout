@@ -63,6 +63,11 @@ impl<'input> Output<'input, [u8], FunctionVariable, StartAndLenSpan<u16, u16>> f
                     AST::from_cst(cst)
                 }
             }
+            // TODO
+            // ExpressionInParentheses => {
+            //     let expression_and_close = cst.into_first().unwrap().rhs.into_first().unwrap();
+            //     expression_and_close.lhs
+            // }
             _ => AST::from_cst(cst),
         }
     }

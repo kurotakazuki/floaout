@@ -121,7 +121,10 @@ impl FunctionInterpreter {
                 E => Ok(std::f64::consts::E),
                 Pi => Ok(std::f64::consts::PI),
 
-                ExpressionInParentheses => todo!(),
+                ExpressionInParentheses => {
+                    let expression_and_close = ast.as_first().unwrap().rhs.as_first().unwrap();
+                    self.eval_plus_or_minus_expr(&expression_and_close.lhs)
+                }
 
                 _ => unreachable!(),
             },
@@ -191,11 +194,18 @@ mod tests {
         let result = interpreter.eval_plus_or_minus_expr(&ast);
         assert_eq!(result, Ok(-3.14159265358979323846264338327950288));
 
+        // Paren
+        let input: &[u8] = "1+2*((5)-4/(2))-(3*(9/(8-5)))".as_bytes();
+        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
+        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        assert_eq!(result, Ok(-2.0));
+
         let input: &[u8] = "1+2*3".as_bytes();
         let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
         let result = interpreter.eval_plus_or_minus_expr(&ast);
         assert_eq!(result, Ok(7.0));
 
+        // TODO
         // let input: &[u8] = "1+2*3.0+4+5*6-8/8+9".as_bytes();
         // let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
         // let result = interpreter.eval_plus_or_minus_expr(&ast);
