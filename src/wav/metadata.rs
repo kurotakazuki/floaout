@@ -6,7 +6,7 @@ use std::io::Result;
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct WavMetadata {
     /// Number of sample frames
-    pub frames: u32,
+    pub frames: u64,
     // Sample Kind
     pub sample_kind: SampleKind,
     /// Channels
@@ -112,11 +112,11 @@ impl Metadata for WavMetadata {
 }
 
 impl WavMetadata {
-    pub fn calculate_frames(data_size: u32, channels: u16, bits_per_sample: u16) -> u32 {
-        data_size / (channels * bits_per_sample / 8) as u32
+    pub fn calculate_frames(data_size: u32, channels: u16, bits_per_sample: u16) -> u64 {
+        data_size as u64 / (channels * bits_per_sample / 8) as u64
     }
 
-    pub const fn frames(&self) -> u32 {
+    pub const fn frames(&self) -> u64 {
         self.frames
     }
 
@@ -153,7 +153,7 @@ impl WavMetadata {
     }
 
     pub const fn data_chunk_size(&self) -> u32 {
-        self.frames() * self.block_align() as u32
+        self.frames() as u32 * self.block_align() as u32
     }
 
     pub const fn standard_riff_chunk_size(&self) -> u32 {
@@ -162,7 +162,7 @@ impl WavMetadata {
     }
 
     pub fn secs(&self) -> f64 {
-        f64::from(self.frames()) / f64::from(self.samples_per_sec())
+        f64::from(self.frames() as u32) / f64::from(self.samples_per_sec())
     }
 }
 

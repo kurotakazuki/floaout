@@ -85,7 +85,7 @@ impl SampleKind {
 pub struct FrameReader<R: Read, M: Metadata, S: Sample> {
     pub inner: R,
     pub metadata: M,
-    pub pos: u32,
+    pub pos: u64,
     _phantom_sample: PhantomData<S>,
 }
 
@@ -119,7 +119,7 @@ pub trait Reader {}
 pub struct FrameWriter<W: Write, M: Metadata, S: Sample> {
     pub inner: W,
     pub metadata: M,
-    pub pos: u32,
+    pub pos: u64,
     _phantom_sample: PhantomData<S>,
 }
 

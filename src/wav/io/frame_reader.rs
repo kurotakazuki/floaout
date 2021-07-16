@@ -8,13 +8,13 @@ impl<R: Read, S: WavSample> Iterator for WavFrameReader<R, S> {
     type Item = Result<WavFrame<S>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let mut buf: WavFrame<S> = Vec::with_capacity(self.metadata.channels() as usize);
-
         if self.metadata.frames() <= self.pos {
             return None;
         } else {
             self.pos += 1;
         }
+
+        let mut buf: WavFrame<S> = Vec::with_capacity(self.metadata.channels() as usize);
 
         for _ in 0..self.metadata.channels() as usize {
             let wav_sample = S::read(self.get_mut());

@@ -9,15 +9,17 @@
 //     type Item = Result<WavFrame<S>>;
 
 //     fn next(&mut self) -> Option<Self::Item> {
-//         let mut buf: WavFrame<S> = Vec::with_capacity(self.metadata.channels() as usize);
-
 //         if self.metadata.frames() <= self.pos {
 //             return None;
 //         } else {
 //             self.pos += 1;
 //         }
 
-//         for _ in 0..self.metadata.channels() as usize {
+//         let channels = self.metadata.speakers_absolute_coordinates.len();
+
+//         let mut buf: WavFrame<S> = Vec::with_capacity(channels);
+
+//         for _ in 0..channels as usize {
 //             let bub_sample = S::read(self.get_mut());
 //             match bub_sample {
 //                 Ok(s) => buf.push(s),
@@ -55,7 +57,7 @@
 //                 format!(
 //                     "expected `{:?}`, found `{:?}`",
 //                     SampleKind::F32LE,
-//                     r.metadata.bub_sample_kind()
+//                     r.metadata.sample_kind()
 //                 ),
 //             )),
 //         }
@@ -68,7 +70,7 @@
 //                 format!(
 //                     "expected `{:?}`, found `{:?}`",
 //                     SampleKind::F64LE,
-//                     r.metadata.bub_sample_kind()
+//                     r.metadata.sample_kind()
 //                 ),
 //             )),
 //             Self::F64LE(r) => Ok(r),
