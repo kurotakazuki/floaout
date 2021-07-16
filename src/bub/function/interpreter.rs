@@ -95,9 +95,24 @@ impl FunctionInterpreter {
 
     pub fn eval_factor(&self, ast: &FunctionAST) -> Result<f64, ()> {
         match &ast.node {
+            // FloatLiteral Or IntegerLiteral
             Leaf(leaf) => leaf.as_original().map(|n| *n).ok_or(()),
-            Internal(internal) => match internal {
-                _ => todo!(),
+            Internal(internal) => match internal.value.0 {
+
+                // Factor
+                PlusOrMinusFactor => {
+                    let plus_or_minus_factor = internal.as_first().unwrap();
+                    match plus_or_minus_factor.lhs.as_internal().unwrap().value.0 {
+                        Plus => Ok(self.eval_factor(&plus_or_minus_factor.rhs)?),
+                        Minus => Ok(- self.eval_factor(&plus_or_minus_factor.rhs)?),
+                        _ => unreachable!(),
+                    }
+                },
+                Function => todo!(),
+                Variable => todo!(),
+                ExpressionInParentheses => todo!(),
+
+                _ => unreachable!(),
             },
         }
     }
@@ -112,6 +127,24 @@ mod tests {
     fn eval_plus_or_minus_expr() {
         let interpreter =
             FunctionInterpreter::new((1.0, 1.0, 0.0), (2.0, 2.0, 2.0), 12.0, 3.0, 44100.0);
+
+        // PlusOrMinusFactor
+        let input: &[u8] = "-3".as_bytes();
+        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
+        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        assert_eq!(result, Ok(-3.0));
+        let input: &[u8] = "++3".as_bytes();
+        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
+        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        assert_eq!(result, Ok(3.0));
+        let input: &[u8] = "---3".as_bytes();
+        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
+        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        assert_eq!(result, Ok(-3.0));
+        let input: &[u8] = "2-----1".as_bytes();
+        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
+        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        assert_eq!(result, Ok(1.0));
 
         let input: &[u8] = "1+2*3".as_bytes();
         let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
