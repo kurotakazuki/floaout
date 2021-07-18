@@ -44,13 +44,17 @@ pub enum FunctionVariable {
 
     // Factor
     Factor,
-    Factor1,
-    Factor2,
-    Factor3,
-    Factor4,
-    Factor5,
 
-    PlusOrMinusFactor,
+    // Power
+    Power,
+    PowerAndFactor,
+
+    // Atom
+    Atom,
+    Atom1,
+    Atom2,
+    Atom3,
+    Atom4,
 
     // Variable
     Variable,

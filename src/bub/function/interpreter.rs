@@ -152,18 +152,47 @@ impl FunctionInterpreter {
     }
 
     pub fn eval_factor(&self, ast: &FunctionAST) -> Result<f64, ()> {
+        let internal = ast.as_internal().expect("internal node");
+
+        // TODO: Check whether variable is Factor
+
+        match &*internal.equal {
+            Choice::First(first) => match first.lhs.as_internal().unwrap().value.0 {
+                Plus => Ok(self.eval_factor(&first.rhs)?),
+                Minus => Ok(-self.eval_factor(&first.rhs)?),
+                _ => unreachable!(),
+            },
+            Choice::Second(second) => self.eval_power(&second.0),
+        }
+    }
+
+    pub fn eval_power(&self, ast: &FunctionAST) -> Result<f64, ()> {
+        let internal = ast.as_internal().expect("internal node");
+
+        // TODO: Check whether variable is Power
+
+        match &*internal.equal {
+            Choice::First(first) => {
+                let base = self.eval_atom(&first.lhs)?;
+
+                let power_and_factor_v = first.rhs.as_first().unwrap();
+                let exponent = self.eval_factor(&power_and_factor_v.rhs)?;
+
+                Ok(base.powf(exponent))
+            }
+            Choice::Second(second) => self.eval_atom(&second.0),
+        }
+    }
+
+    pub fn eval_atom(&self, ast: &FunctionAST) -> Result<f64, ()> {
         match &ast.node {
             // FloatLiteral Or IntegerLiteral
             Leaf(leaf) => leaf.as_original().map(|n| *n).ok_or(()),
             Internal(internal) => match internal.value.0 {
-                // Factor
-                PlusOrMinusFactor => {
-                    let plus_or_minus_factor = internal.as_first().unwrap();
-                    match plus_or_minus_factor.lhs.as_internal().unwrap().value.0 {
-                        Plus => Ok(self.eval_factor(&plus_or_minus_factor.rhs)?),
-                        Minus => Ok(-self.eval_factor(&plus_or_minus_factor.rhs)?),
-                        _ => unreachable!(),
-                    }
+                // ExpressionInParentheses
+                ExpressionInParentheses => {
+                    let expression_and_close = ast.as_first().unwrap().rhs.as_first().unwrap();
+                    self.eval_plus_or_minus_expr(&expression_and_close.lhs)
                 }
                 // Functions
                 Sine => Ok(self
@@ -193,12 +222,6 @@ impl FunctionInterpreter {
                 UppercaseF => Ok(self.uppercase_f),
                 E => Ok(std::f64::consts::E),
                 Pi => Ok(std::f64::consts::PI),
-
-                ExpressionInParentheses => {
-                    let expression_and_close = ast.as_first().unwrap().rhs.as_first().unwrap();
-                    self.eval_plus_or_minus_expr(&expression_and_close.lhs)
-                }
-
                 _ => unreachable!(),
             },
         }
@@ -283,6 +306,11 @@ mod tests {
     fn eval_comparison_expr() {
         let interpreter =
             FunctionInterpreter::new((-1.0, 1.0, 0.0), (2.0, 3.0, 4.0), 12.0, 3.0, 44100.0);
+
+        let input: &[u8] = "-1.0==-1".as_bytes();
+        let ast = parse(&input, &FunctionVariable::ComparisonExpression).unwrap();
+        let result = interpreter.eval_comparison_expr(&ast);
+        assert_eq!(result, Ok(true));
 
         let input: &[u8] = "1.0==tan(PI/4)".as_bytes();
         let ast = parse(&input, &FunctionVariable::ComparisonExpression).unwrap();
@@ -407,6 +435,29 @@ mod tests {
         let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
         let result = interpreter.eval_plus_or_minus_expr(&ast);
         assert_eq!(result, Ok(7.0));
+
+        // Power
+        let input: &[u8] = "-2^2".as_bytes();
+        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
+        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        assert_eq!(result, Ok(-4.0));
+        let input: &[u8] = "2^-2".as_bytes();
+        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
+        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        assert_eq!(result, Ok(0.25));
+        let input: &[u8] = "(2+1)^(5-3)".as_bytes();
+        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
+        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        assert_eq!(result, Ok(9.0));
+        let input: &[u8] = "(lg2)^2".as_bytes();
+        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
+        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        assert_eq!(result, Ok(1.0));
+        let input: &[u8] = "2^lnE^2".as_bytes();
+        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
+        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        assert_eq!(result, Ok(4.0));
+
 
         // TODO
         // let input: &[u8] = "1+2*3.0+4+5*6-8/8+9".as_bytes();

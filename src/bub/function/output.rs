@@ -12,7 +12,7 @@ impl<'input> Output<'input, [u8], FunctionVariable, StartAndLenSpan<u16, u16>> f
         mut cst: CST<FunctionVariable, StartAndLenSpan<u16, u16>, Self>,
     ) -> AST<FunctionVariable, StartAndLenSpan<u16, u16>, Self> {
         match cst.node.value {
-            Comparison | Factor | Variable | PlusOrMinus | StarOrSlash | Function => {
+            Comparison | Atom | PlusOrMinus | StarOrSlash | Function | Variable => {
                 let mut equal = cst.node.equal;
                 loop {
                     match equal {

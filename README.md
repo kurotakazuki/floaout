@@ -7,6 +7,8 @@ Floaout is the next-generation audio format.
     - Does "1-8/8-9" should be -9 ?
     - Does "sin(1/2*PI)" should be 1 ?
 - Clarify whether #[derive(Order)] is needed
+- Add Functions like pow, sinh, ...
+- Change Const Variables to `f64` when parse
 
 # Bubble File Format Specification
 
@@ -181,15 +183,18 @@ Term = Factor Term1 / Factor
 Term1 = StarOrSlash Term / f
 
 // Factor
-Factor = FloatLiteral () / Factor1
-Factor1 = IntegerLiteral () / Factor2
-Factor2 = PlusOrMinusFactor () / Factor3
-Factor3 = Function () / Factor4
-Factor4 = Variable () / Factor5
-Factor5 = ExpressionInParentheses () / f
+Factor = PlusOrMinus Factor / Power
 
-// PlusOrMinusFactor
-PlusOrMinusFactor = PlusOrMinus Factor / f
+// Power
+Power = Atom PowerAndFactor / Atom
+PowerAndFactor = '^' Factor / f
+
+// Atom
+Atom = ExpressionInParentheses () / Atom1
+Atom1 = FloatLiteral () / Atom2
+Atom2 = IntegerLiteral () / Atom3
+Atom3 = Function () / Atom4
+Atom4 = Variable () / f
 
 // Variable
 Variable = UppercaseX () / Variable1

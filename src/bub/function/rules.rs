@@ -211,60 +211,71 @@ impl<'a> FunctionRules {
     };
 
     // Factor
-    /// Factor = FloatLiteral () / Factor1
+    /// Factor = PlusOrMinus Factor / Power
     const FACTOR_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::V(FloatLiteral),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+            lhs: E::V(PlusOrMinus),
+            rhs: E::V(Factor),
         },
-        second: Second(E::V(Factor1)),
+        second: Second(E::V(Power)),
     };
-    /// Factor1 = IntegerLiteral () / Factor2
-    const FACTOR1_RULE: Rule<'a> = RightRule {
+
+    // Power
+    /// Power = Atom PowerAndFactor / Atom
+    const POWER_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::V(IntegerLiteral),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+            lhs: E::V(Atom),
+            rhs: E::V(PowerAndFactor),
         },
-        second: Second(E::V(Factor2)),
+        second: Second(E::V(Atom)),
     };
-    /// Factor2 = PlusOrMinus Factor / Factor3
-    const FACTOR2_RULE: Rule<'a> = RightRule {
+    /// PowerAndFactor = '^' Factor / f
+    const POWER_AND_FACTOR_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::V(PlusOrMinusFactor),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Factor3)),
-    };
-    /// Factor3 = Function () / Factor4
-    const FACTOR3_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Function),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Factor4)),
-    };
-    /// Factor4 = Variable () / Factor5
-    const FACTOR4_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Variable),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Factor5)),
-    };
-    /// Factor5 = ExpressionInParentheses () / f
-    const FACTOR5_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(ExpressionInParentheses),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+            lhs: E::T(TerminalSymbol::Original(Char('^'))),
+            rhs: E::V(Factor),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
 
-    /// PlusOrMinusFactor = PlusOrMinus Factor / f
-    const PLUS_OR_MINUS_FACTOR_RULE: Rule<'a> = RightRule {
+    // Atom
+    /// Atom = ExpressionInParentheses () / Atom1
+    const ATOM_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::V(PlusOrMinus),
-            rhs: E::V(Factor),
+            lhs: E::V(ExpressionInParentheses),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::V(Atom1)),
+    };
+    /// Atom1 = FloatLiteral () / Atom2
+    const ATOM1_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(FloatLiteral),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::V(Atom2)),
+    };
+    /// Atom2 = IntegerLiteral () / Atom3
+    const ATOM2_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(IntegerLiteral),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::V(Atom3)),
+    };
+    /// Atom3 = Function () / Atom4
+    const ATOM3_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(Function),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::V(Atom4)),
+    };
+    /// Atom4 = Variable () / f
+    const ATOM4_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(Variable),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
@@ -781,13 +792,17 @@ impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
 
             // Factor
             Factor => &Self::FACTOR_RULE,
-            Factor1 => &Self::FACTOR1_RULE,
-            Factor2 => &Self::FACTOR2_RULE,
-            Factor3 => &Self::FACTOR3_RULE,
-            Factor4 => &Self::FACTOR4_RULE,
-            Factor5 => &Self::FACTOR5_RULE,
 
-            PlusOrMinusFactor => &Self::PLUS_OR_MINUS_FACTOR_RULE,
+            // Power
+            Power => &Self::POWER_RULE,
+            PowerAndFactor => &Self::POWER_AND_FACTOR_RULE,
+
+            // Atom
+            Atom => &Self::ATOM_RULE,
+            Atom1 => &Self::ATOM1_RULE,
+            Atom2 => &Self::ATOM2_RULE,
+            Atom3 => &Self::ATOM3_RULE,
+            Atom4 => &Self::ATOM4_RULE,
 
             // Variable
             Variable => &Self::VARIABLE_RULE,

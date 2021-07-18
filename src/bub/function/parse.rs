@@ -65,6 +65,10 @@ mod tests {
         let result = parse(input, &FunctionVariable::PlusOrMinusExpression);
         assert!(result.is_ok());
 
+        let input: &[u8] = "-1".as_bytes();
+        let result = parse(input, &FunctionVariable::PlusOrMinusExpression);
+        assert!(result.is_ok());
+
         let input: &[u8] = "E".as_bytes();
         let result = parse(input, &FunctionVariable::PlusOrMinusExpression);
         assert!(result.is_ok());
