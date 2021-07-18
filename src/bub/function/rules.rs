@@ -271,10 +271,18 @@ impl<'a> FunctionRules {
         },
         second: Second(E::V(Atom4)),
     };
-    /// Atom4 = Variable () / f
+    /// Atom4 = Variable () / Atom5
     const ATOM4_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(Variable),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::V(Atom5)),
+    };
+    /// Atom5 = Constant () / f
+    const ATOM5_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(Constant),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
@@ -345,26 +353,10 @@ impl<'a> FunctionRules {
         },
         second: Second(E::V(Variable8)),
     };
-    /// Variable8 = UppercaseF () / Variable9
+    /// Variable8 = UppercaseF () / f
     const VARIABLE8_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(UppercaseF),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Variable9)),
-    };
-    /// Variable9 = E () / Variable10
-    const VARIABLE9_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(E),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Variable10)),
-    };
-    /// Variable10 = Pi () / f
-    const VARIABLE10_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Pi),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
@@ -438,6 +430,24 @@ impl<'a> FunctionRules {
     const UPPERCASE_F_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::T(TerminalSymbol::Original(Char('F'))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+
+    // Constant
+    /// Constant = E () / Constant1
+    const CONSTANT_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(E),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::V(Constant1)),
+    };
+    /// Constant1 = Pi () / f
+    const CONSTANT1_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(Pi),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
@@ -803,6 +813,7 @@ impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
             Atom2 => &Self::ATOM2_RULE,
             Atom3 => &Self::ATOM3_RULE,
             Atom4 => &Self::ATOM4_RULE,
+            Atom5 => &Self::ATOM5_RULE,
 
             // Variable
             Variable => &Self::VARIABLE_RULE,
@@ -814,8 +825,6 @@ impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
             Variable6 => &Self::VARIABLE6_RULE,
             Variable7 => &Self::VARIABLE7_RULE,
             Variable8 => &Self::VARIABLE8_RULE,
-            Variable9 => &Self::VARIABLE9_RULE,
-            Variable10 => &Self::VARIABLE10_RULE,
 
             UppercaseX => &Self::UPPERCASE_X_RULE,
             UppercaseY => &Self::UPPERCASE_Y_RULE,
@@ -826,6 +835,11 @@ impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
             UppercaseT => &Self::UPPERCASE_T_RULE,
             LowercaseT => &Self::LOWERCASE_T_RULE,
             UppercaseF => &Self::UPPERCASE_F_RULE,
+
+            // Constant
+            Constant => &Self::CONSTANT_RULE,
+            Constant1 => &Self::CONSTANT1_RULE,
+
             E => &Self::E_RULE,
             Pi => &Self::PI_RULE,
 

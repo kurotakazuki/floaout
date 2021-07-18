@@ -8,7 +8,6 @@ Floaout is the next-generation audio format.
     - Does "sin(1/2*PI)" should be 1 ?
 - Clarify whether #[derive(Order)] is needed
 - Add Functions like pow, sinh, ...
-- Change Const Variables to `f64` when parse
 
 # Bubble File Format Specification
 
@@ -101,8 +100,8 @@ Floaout is the next-generation audio format.
 ##### Constants
 | Keyword | Description |
 | ------------- | ------------- |
-| PI | Pi |
 | E | Euler's number |
+| PI | Pi |
 
 #### Functions
 | Keyword | Description |
@@ -194,7 +193,8 @@ Atom = ExpressionInParentheses () / Atom1
 Atom1 = FloatLiteral () / Atom2
 Atom2 = IntegerLiteral () / Atom3
 Atom3 = Function () / Atom4
-Atom4 = Variable () / f
+Atom4 = Variable () / Atom5
+Atom5 = Constant () / f
 
 // Variable
 Variable = UppercaseX () / Variable1
@@ -205,9 +205,7 @@ Variable4 = LowercaseY () / Variable5
 Variable5 = LowercaseZ () / Variable6
 Variable6 = UppercaseT () / Variable7
 Variable7 = LowercaseT () / Variable8
-Variable8 = UppercaseF () / Variable9
-Variable9 = E () / Variable10
-Variable10 = Pi () / f
+Variable8 = UppercaseF () / f
 
 UppercaseX = 'X' () / f
 UppercaseY = 'Y' () / f
@@ -218,6 +216,11 @@ LowercaseZ = 'z' () / f
 UppercaseT = 'T' () / f
 LowercaseT = 't' () / f
 UppercaseF = 'F' () / f
+
+// Constant
+Constant = E () / Constant1
+Constant1 = Pi () / f
+
 E = 'E' () / f
 Pi = "PI" () / f
 

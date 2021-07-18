@@ -220,8 +220,6 @@ impl FunctionInterpreter {
                 UppercaseT => Ok(self.uppercase_t),
                 LowercaseT => Ok(self.lowercase_t),
                 UppercaseF => Ok(self.uppercase_f),
-                E => Ok(std::f64::consts::E),
-                Pi => Ok(std::f64::consts::PI),
                 _ => unreachable!(),
             },
         }
@@ -457,7 +455,6 @@ mod tests {
         let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
         let result = interpreter.eval_plus_or_minus_expr(&ast);
         assert_eq!(result, Ok(4.0));
-
 
         // TODO
         // let input: &[u8] = "1+2*3.0+4+5*6-8/8+9".as_bytes();

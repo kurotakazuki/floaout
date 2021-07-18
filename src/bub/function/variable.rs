@@ -55,6 +55,7 @@ pub enum FunctionVariable {
     Atom2,
     Atom3,
     Atom4,
+    Atom5,
 
     // Variable
     Variable,
@@ -66,8 +67,6 @@ pub enum FunctionVariable {
     Variable6,
     Variable7,
     Variable8,
-    Variable9,
-    Variable10,
 
     UppercaseX,
     UppercaseY,
@@ -78,6 +77,10 @@ pub enum FunctionVariable {
     UppercaseT,
     LowercaseT,
     UppercaseF,
+
+    // Constant
+    Constant,
+    Constant1,
     Pi,
     E,
 

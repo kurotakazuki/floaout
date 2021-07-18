@@ -53,9 +53,34 @@ impl<'input> Output<'input, [u8], FunctionVariable, StartAndLenSpan<u16, u16>> f
 
                 AST::from_leaf(TerminalSymbol::from_original(n), cst.span)
             }
+            Constant => match cst.node.equal {
+                Choice::First(first) => {
+                    return first.lhs;
+                }
+                Choice::Second(second) => {
+                    return second.0;
+                }
+            },
+            Constant1 => {
+                let o = cst
+                    .node
+                    .equal
+                    .into_first()
+                    .unwrap()
+                    .lhs
+                    .into_original()
+                    .unwrap();
+                AST::from_leaf(TerminalSymbol::from_original(o), cst.span)
+            }
+            E => AST::from_leaf(TerminalSymbol::from_original(std::f64::consts::E), cst.span),
+            Pi => AST::from_leaf(
+                TerminalSymbol::from_original(std::f64::consts::PI),
+                cst.span,
+            ),
+            // Into Second
             OrOr | AndAnd | EqEq | Ne | Ge | Le | Gt | Lt | UppercaseX | UppercaseY
             | UppercaseZ | LowercaseX | LowercaseY | LowercaseZ | UppercaseT | LowercaseT
-            | UppercaseF | Pi | E | Plus | Minus | Star | Slash => {
+            | UppercaseF | Plus | Minus | Star | Slash => {
                 if let Choice::First(first) = cst.node.equal {
                     cst.node.equal = first.lhs.into();
                     AST::from_cst(cst)
