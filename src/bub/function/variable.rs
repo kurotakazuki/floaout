@@ -40,7 +40,8 @@ pub enum FunctionVariable {
 
     // Term
     Term,
-    Term1,
+    ZeroOrMoreStarOrSlashAndTerm,
+    StarOrSlashAndTerm,
 
     // Factor
     Factor,

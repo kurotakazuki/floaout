@@ -178,8 +178,9 @@ PlusOrMinusExpression = Term PlusOrMinusExpression1 / Term
 PlusOrMinusExpression1 = PlusOrMinus PlusOrMinusExpression / f
 
 // Term
-Term = Factor Term1 / Factor
-Term1 = StarOrSlash Term / f
+Term = Factor ZeroOrMoreStarOrSlashAndTerm / f
+ZeroOrMoreStarOrSlashAndTerm = StarOrSlashAndTerm ZeroOrMoreStarOrSlashAndTerm / ()
+StarOrSlashAndTerm = StarOrSlash Factor / f
 
 // Factor
 Factor = PlusOrMinus Factor / Power

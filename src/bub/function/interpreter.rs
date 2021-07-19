@@ -124,30 +124,41 @@ impl FunctionInterpreter {
     }
 
     pub fn eval_term(&self, ast: &FunctionAST) -> Result<f64, ()> {
-        let internal = ast.as_internal().expect("internal node");
+        println!("{}", ast);
+        let term_v = ast.as_first().unwrap();
 
         // TODO: Check whether variable is Term
 
-        match &*internal.equal {
-            Choice::First(first) => {
-                let lhs = self.eval_factor(&first.lhs)?;
+        let mut lhs = self.eval_factor(&term_v.lhs)?;
 
-                let star_or_slash_expr1 = first.rhs.as_first().unwrap();
-                let star_or_slash_v = &star_or_slash_expr1.lhs;
-                let rhs = self.eval_term(&star_or_slash_expr1.rhs)?;
+        let mut zero_or_more = &term_v.rhs;
 
-                match star_or_slash_v
-                    .as_internal()
-                    .expect("star or slash")
-                    .value
-                    .0
-                {
-                    Star => Ok(lhs * rhs),
-                    Slash => Ok(lhs / rhs),
-                    _ => unreachable!(),
+        // zero or more star or slash and term
+        loop {
+            match &zero_or_more.node {
+                // StarOrSlashAndTerm ZeroOrMoreStarOrSlashAndTerm
+                Internal(internal) => {
+                    let first = internal.as_first().unwrap();
+                    let star_or_slash_and_term_v = first.lhs.as_first().unwrap();
+                    zero_or_more = &first.rhs;
+
+                    let star_or_slash_v = &star_or_slash_and_term_v.lhs;
+                    let rhs = self.eval_factor(&star_or_slash_and_term_v.rhs)?;
+
+                    lhs = match star_or_slash_v
+                        .as_internal()
+                        .expect("star or slash")
+                        .value
+                        .0
+                    {
+                        Star => lhs * rhs,
+                        Slash => lhs / rhs,
+                        _ => unreachable!(),
+                    };
                 }
+                // ()
+                Leaf(_) => return Ok(lhs),
             }
-            Choice::Second(second) => self.eval_factor(&second.0),
         }
     }
 
@@ -456,6 +467,15 @@ mod tests {
         let result = interpreter.eval_plus_or_minus_expr(&ast);
         assert_eq!(result, Ok(4.0));
 
+        // Term
+        let input: &[u8] = "4/2*2".as_bytes();
+        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
+        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        assert_eq!(result, Ok(4.0));
+        let input: &[u8] = "32/2/2/2/2/2".as_bytes();
+        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
+        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        assert_eq!(result, Ok(1.0));
         // TODO
         // let input: &[u8] = "1+2*3.0+4+5*6-8/8+9".as_bytes();
         // let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();

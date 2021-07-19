@@ -195,17 +195,27 @@ impl<'a> FunctionRules {
     };
 
     // Term
+    /// Term = Factor ZeroOrMoreStarOrSlashAndTerm / f
     const TERM_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(Factor),
-            rhs: E::V(Term1),
+            rhs: E::V(ZeroOrMoreStarOrSlashAndTerm),
         },
-        second: Second(E::V(Factor)),
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    const TERM1_RULE: Rule<'a> = RightRule {
+    /// ZeroOrMoreStarOrSlashAndTerm = StarOrSlashAndTerm ZeroOrMoreStarOrSlashAndTerm / ()
+    const ZERO_OR_MORE_STAR_OR_SLASH_AND_TERM_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(StarOrSlashAndTerm),
+            rhs: E::V(ZeroOrMoreStarOrSlashAndTerm),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Empty))),
+    };
+    /// StarOrSlashAndTerm = StarOrSlash Factor / f
+    const STAR_OR_SLASH_AND_TERM_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(StarOrSlash),
-            rhs: E::V(Term),
+            rhs: E::V(Factor),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
@@ -798,7 +808,8 @@ impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
 
             // Term
             Term => &Self::TERM_RULE,
-            Term1 => &Self::TERM1_RULE,
+            ZeroOrMoreStarOrSlashAndTerm => &Self::ZERO_OR_MORE_STAR_OR_SLASH_AND_TERM_RULE,
+            StarOrSlashAndTerm => &Self::STAR_OR_SLASH_AND_TERM_RULE,
 
             // Factor
             Factor => &Self::FACTOR_RULE,
