@@ -78,11 +78,11 @@ impl FunctionInterpreter {
 
         let first = ast.as_first().unwrap();
 
-        let lhs = self.eval_plus_or_minus_expr(&first.lhs)?;
+        let lhs = self.eval_sum(&first.lhs)?;
 
         let comparison_expr1 = first.rhs.as_first().unwrap();
         let comparison_v = &comparison_expr1.lhs;
-        let rhs = self.eval_plus_or_minus_expr(&comparison_expr1.rhs)?;
+        let rhs = self.eval_sum(&comparison_expr1.rhs)?;
 
         match comparison_v.as_internal().expect("plus or minus").value.0 {
             EqEq => Ok((lhs - rhs).abs() < f64::EPSILON),
@@ -95,36 +95,45 @@ impl FunctionInterpreter {
         }
     }
 
-    pub fn eval_plus_or_minus_expr(&self, ast: &FunctionAST) -> Result<f64, ()> {
-        let internal = ast.as_internal().expect("internal node");
+    pub fn eval_sum(&self, ast: &FunctionAST) -> Result<f64, ()> {
+        let sum_v = ast.as_first().unwrap();
 
-        // TODO: Check whether variable is PlusOrMinusExpression
+        // TODO: Check whether variable is Sum
 
-        match &*internal.equal {
-            Choice::First(first) => {
-                let lhs = self.eval_term(&first.lhs)?;
+        let mut lhs = self.eval_term(&sum_v.lhs)?;
 
-                let plus_or_minus_expr1 = first.rhs.as_first().unwrap();
-                let plus_or_minus_v = &plus_or_minus_expr1.lhs;
-                let rhs = self.eval_plus_or_minus_expr(&plus_or_minus_expr1.rhs)?;
+        let mut zero_or_more = &sum_v.rhs;
 
-                match plus_or_minus_v
-                    .as_internal()
-                    .expect("plus or minus")
-                    .value
-                    .0
-                {
-                    Plus => Ok(lhs + rhs),
-                    Minus => Ok(lhs - rhs),
-                    _ => unreachable!(),
+        // zero or more plus or minus and term
+        loop {
+            match &zero_or_more.node {
+                // PlusOrMinusAndTerm ZeroOrMorePlusOrMinusAndTerm
+                Internal(internal) => {
+                    let first = internal.as_first().unwrap();
+                    let plus_or_minus_and_term_v = first.lhs.as_first().unwrap();
+                    zero_or_more = &first.rhs;
+
+                    let plus_or_minus_v = &plus_or_minus_and_term_v.lhs;
+                    let rhs = self.eval_term(&plus_or_minus_and_term_v.rhs)?;
+
+                    lhs = match plus_or_minus_v
+                        .as_internal()
+                        .expect("plus or minus")
+                        .value
+                        .0
+                    {
+                        Plus => lhs + rhs,
+                        Minus => lhs - rhs,
+                        _ => unreachable!(),
+                    };
                 }
+                // ()
+                Leaf(_) => return Ok(lhs),
             }
-            Choice::Second(second) => self.eval_term(&second.0),
         }
     }
 
     pub fn eval_term(&self, ast: &FunctionAST) -> Result<f64, ()> {
-        println!("{}", ast);
         let term_v = ast.as_first().unwrap();
 
         // TODO: Check whether variable is Term
@@ -133,17 +142,17 @@ impl FunctionInterpreter {
 
         let mut zero_or_more = &term_v.rhs;
 
-        // zero or more star or slash and term
+        // zero or more star or slash and factor
         loop {
             match &zero_or_more.node {
-                // StarOrSlashAndTerm ZeroOrMoreStarOrSlashAndTerm
+                // StarOrSlashAndFactor ZeroOrMoreStarOrSlashAndFactor
                 Internal(internal) => {
                     let first = internal.as_first().unwrap();
-                    let star_or_slash_and_term_v = first.lhs.as_first().unwrap();
+                    let star_or_slash_and_factor_v = first.lhs.as_first().unwrap();
                     zero_or_more = &first.rhs;
 
-                    let star_or_slash_v = &star_or_slash_and_term_v.lhs;
-                    let rhs = self.eval_factor(&star_or_slash_and_term_v.rhs)?;
+                    let star_or_slash_v = &star_or_slash_and_factor_v.lhs;
+                    let rhs = self.eval_factor(&star_or_slash_and_factor_v.rhs)?;
 
                     lhs = match star_or_slash_v
                         .as_internal()
@@ -203,24 +212,14 @@ impl FunctionInterpreter {
                 // ExpressionInParentheses
                 ExpressionInParentheses => {
                     let expression_and_close = ast.as_first().unwrap().rhs.as_first().unwrap();
-                    self.eval_plus_or_minus_expr(&expression_and_close.lhs)
+                    self.eval_sum(&expression_and_close.lhs)
                 }
                 // Functions
-                Sine => Ok(self
-                    .eval_plus_or_minus_expr(&ast.as_first().unwrap().rhs)?
-                    .sin()),
-                Cosine => Ok(self
-                    .eval_plus_or_minus_expr(&ast.as_first().unwrap().rhs)?
-                    .cos()),
-                Tangent => Ok(self
-                    .eval_plus_or_minus_expr(&ast.as_first().unwrap().rhs)?
-                    .tan()),
-                Ln => Ok(self
-                    .eval_plus_or_minus_expr(&ast.as_first().unwrap().rhs)?
-                    .ln()),
-                Lg => Ok(self
-                    .eval_plus_or_minus_expr(&ast.as_first().unwrap().rhs)?
-                    .log2()),
+                Sine => Ok(self.eval_sum(&ast.as_first().unwrap().rhs)?.sin()),
+                Cosine => Ok(self.eval_sum(&ast.as_first().unwrap().rhs)?.cos()),
+                Tangent => Ok(self.eval_sum(&ast.as_first().unwrap().rhs)?.tan()),
+                Ln => Ok(self.eval_sum(&ast.as_first().unwrap().rhs)?.ln()),
+                Lg => Ok(self.eval_sum(&ast.as_first().unwrap().rhs)?.log2()),
                 // Variables
                 UppercaseX => Ok(self.uppercase_x),
                 UppercaseY => Ok(self.uppercase_y),
@@ -348,138 +347,147 @@ mod tests {
     }
 
     #[test]
-    fn eval_plus_or_minus_expr() {
+    fn eval_sum() {
         let interpreter =
             FunctionInterpreter::new((-1.0, 1.0, 0.0), (2.0, 3.0, 4.0), 12.0, 3.0, 44100.0);
 
         // PlusOrMinusFactor
         let input: &[u8] = "-3".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(-3.0));
         let input: &[u8] = "++3".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(3.0));
         let input: &[u8] = "---3".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(-3.0));
         let input: &[u8] = "2-----1".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(1.0));
 
         // Functions
         let input: &[u8] = "sin(PI/2)".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(1.0));
         let input: &[u8] = "cos(PI/4)".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         let abs_difference = (result.unwrap() - 1.0 / 2.0_f64.sqrt()).abs();
         assert!(abs_difference < 1.0e-10);
         let input: &[u8] = "tan(PI/4)".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         let abs_difference = (result.unwrap() - 1.0).abs();
         assert!(abs_difference < 1.0e-10);
         let input: &[u8] = "ln(E*E)".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         let abs_difference = (result.unwrap() - 2.0).abs();
         assert!(abs_difference < 1.0e-10);
         let input: &[u8] = "lg8".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         let abs_difference = (result.unwrap() - 3.0).abs();
         assert!(abs_difference < 1.0e-10);
 
         // Variables
         let input: &[u8] = "X".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(-1.0));
         let input: &[u8] = "Y".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(1.0));
         let input: &[u8] = "Z".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(0.0));
         let input: &[u8] = "x".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(-3.0));
         let input: &[u8] = "y-z".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(2.0));
         let input: &[u8] = "44100+T/t".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(44104.0));
         let input: &[u8] = "E".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(2.71828182845904523536028747135266250));
         let input: &[u8] = "-PI".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(-3.14159265358979323846264338327950288));
 
         // Paren
         let input: &[u8] = "1+2*((5)-4/(2))-(3*(9/(8-5)))".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(-2.0));
         let input: &[u8] = "cos(2*PI)".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(1.0));
 
         let input: &[u8] = "1+2*3".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(7.0));
 
         // Power
         let input: &[u8] = "-2^2".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(-4.0));
         let input: &[u8] = "2^-2".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(0.25));
         let input: &[u8] = "(2+1)^(5-3)".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(9.0));
         let input: &[u8] = "(lg2)^2".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(1.0));
         let input: &[u8] = "2^lnE^2".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(4.0));
 
         // Term
         let input: &[u8] = "4/2*2".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(4.0));
         let input: &[u8] = "32/2/2/2/2/2".as_bytes();
-        let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        let result = interpreter.eval_plus_or_minus_expr(&ast);
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(1.0));
-        // TODO
-        // let input: &[u8] = "1+2*3.0+4+5*6-8/8+9".as_bytes();
-        // let ast = parse(&input, &FunctionVariable::PlusOrMinusExpression).unwrap();
-        // let result = interpreter.eval_plus_or_minus_expr(&ast);
-        // assert_eq!(result, Ok(49.0));
+
+        // Sum
+        let input: &[u8] = "1-8/8-9".as_bytes();
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
+        assert_eq!(result, Ok(-9.0));
+        let input: &[u8] = "sin(1/2*PI)".as_bytes();
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
+        assert_eq!(result, Ok(1.0));
+        let input: &[u8] = "1+2*3.0+4+5*6-8/8+9".as_bytes();
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
+        assert_eq!(result, Ok(49.0));
     }
 }

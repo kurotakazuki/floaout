@@ -62,19 +62,19 @@ impl<'a> FunctionRules {
     };
 
     // Comparsion Expression
-    /// ComparisonExpression = PlusOrMinusExpression ComparisonExpression1 / f
+    /// ComparisonExpression = Sum ComparisonExpression1 / f
     const COMPARISON_EXPRESSION_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::V(PlusOrMinusExpression),
+            lhs: E::V(Sum),
             rhs: E::V(ComparisonExpression1),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// ComparisonExpression1 = Comparison PlusOrMinusExpression / f
+    /// ComparisonExpression1 = Comparison Sum / f
     const COMPARISON_EXPRESSION1_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(Comparison),
-            rhs: E::V(PlusOrMinusExpression),
+            rhs: E::V(Sum),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
@@ -178,41 +178,51 @@ impl<'a> FunctionRules {
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
 
-    // PlusOrMinusExpression
-    const PLUS_OR_MINUS_EXPRESSION_RULE: Rule<'a> = RightRule {
+    // Sum
+    /// Sum = Term ZeroOrMorePlusOrMinusAndTerm / f
+    const SUM_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(Term),
-            rhs: E::V(PlusOrMinusExpression1),
+            rhs: E::V(ZeroOrMorePlusOrMinusAndTerm),
         },
-        second: Second(E::V(Term)),
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    const PLUS_OR_MINUS_EXPRESSION1_RULE: Rule<'a> = RightRule {
+    /// ZeroOrMorePlusOrMinusAndTerm = PlusOrMinusAndTerm ZeroOrMorePlusOrMinusAndTerm / ()
+    const ZERO_OR_MORE_PLUS_OR_MINUS_AND_TERM_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(PlusOrMinusAndTerm),
+            rhs: E::V(ZeroOrMorePlusOrMinusAndTerm),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Empty))),
+    };
+    /// PlusOrMinusAndTerm = PlusOrMinus Term / f
+    const PLUS_OR_MINUS_AND_TERM_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(PlusOrMinus),
-            rhs: E::V(PlusOrMinusExpression),
+            rhs: E::V(Term),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
 
     // Term
-    /// Term = Factor ZeroOrMoreStarOrSlashAndTerm / f
+    /// Term = Factor ZeroOrMoreStarOrSlashAndFactor / f
     const TERM_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(Factor),
-            rhs: E::V(ZeroOrMoreStarOrSlashAndTerm),
+            rhs: E::V(ZeroOrMoreStarOrSlashAndFactor),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// ZeroOrMoreStarOrSlashAndTerm = StarOrSlashAndTerm ZeroOrMoreStarOrSlashAndTerm / ()
-    const ZERO_OR_MORE_STAR_OR_SLASH_AND_TERM_RULE: Rule<'a> = RightRule {
+    /// ZeroOrMoreStarOrSlashAndFactor = StarOrSlashAndFactor ZeroOrMoreStarOrSlashAndFactor / ()
+    const ZERO_OR_MORE_STAR_OR_SLASH_AND_FACTOR_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::V(StarOrSlashAndTerm),
-            rhs: E::V(ZeroOrMoreStarOrSlashAndTerm),
+            lhs: E::V(StarOrSlashAndFactor),
+            rhs: E::V(ZeroOrMoreStarOrSlashAndFactor),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Empty))),
     };
-    /// StarOrSlashAndTerm = StarOrSlash Factor / f
-    const STAR_OR_SLASH_AND_TERM_RULE: Rule<'a> = RightRule {
+    /// StarOrSlashAndFactor = StarOrSlash Factor / f
+    const STAR_OR_SLASH_AND_FACTOR_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(StarOrSlash),
             rhs: E::V(Factor),
@@ -515,43 +525,43 @@ impl<'a> FunctionRules {
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// `Sine = "sin" PlusOrMinusExpression / f`
+    /// `Sine = "sin" Sum / f`
     const SINE_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::T(TerminalSymbol::Original(Str("sin"))),
-            rhs: E::V(PlusOrMinusExpression),
+            rhs: E::V(Sum),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// Cosine = "cos" PlusOrMinusExpression / f
+    /// Cosine = "cos" Sum / f
     const COSINE_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::T(TerminalSymbol::Original(Str("cos"))),
-            rhs: E::V(PlusOrMinusExpression),
+            rhs: E::V(Sum),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// Tangent = "tan" PlusOrMinusExpression / f
+    /// Tangent = "tan" Sum / f
     const TANGENT_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::T(TerminalSymbol::Original(Str("tan"))),
-            rhs: E::V(PlusOrMinusExpression),
+            rhs: E::V(Sum),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// Ln = "ln" PlusOrMinusExpression / f
+    /// Ln = "ln" Sum / f
     const LN_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::T(TerminalSymbol::Original(Str("ln"))),
-            rhs: E::V(PlusOrMinusExpression),
+            rhs: E::V(Sum),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// Lg = "lg" PlusOrMinusExpression / f
+    /// Lg = "lg" Sum / f
     const LG_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::T(TerminalSymbol::Original(Str("lg"))),
-            rhs: E::V(PlusOrMinusExpression),
+            rhs: E::V(Sum),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
@@ -568,7 +578,7 @@ impl<'a> FunctionRules {
     /// ExpressionAndClose = Expression ')' / f
     const EXPRESSION_AND_CLOSE_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::V(PlusOrMinusExpression),
+            lhs: E::V(Sum),
             rhs: E::T(TerminalSymbol::Original(Char(')'))),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
@@ -802,14 +812,15 @@ impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
             Gt => &Self::GT_RULE,
             Lt => &Self::LT_RULE,
 
-            // PlusOrMinusExpression
-            PlusOrMinusExpression => &Self::PLUS_OR_MINUS_EXPRESSION_RULE,
-            PlusOrMinusExpression1 => &Self::PLUS_OR_MINUS_EXPRESSION1_RULE,
+            // Sum
+            Sum => &Self::SUM_RULE,
+            ZeroOrMorePlusOrMinusAndTerm => &Self::ZERO_OR_MORE_PLUS_OR_MINUS_AND_TERM_RULE,
+            PlusOrMinusAndTerm => &Self::PLUS_OR_MINUS_AND_TERM_RULE,
 
             // Term
             Term => &Self::TERM_RULE,
-            ZeroOrMoreStarOrSlashAndTerm => &Self::ZERO_OR_MORE_STAR_OR_SLASH_AND_TERM_RULE,
-            StarOrSlashAndTerm => &Self::STAR_OR_SLASH_AND_TERM_RULE,
+            ZeroOrMoreStarOrSlashAndFactor => &Self::ZERO_OR_MORE_STAR_OR_SLASH_AND_FACTOR_RULE,
+            StarOrSlashAndFactor => &Self::STAR_OR_SLASH_AND_FACTOR_RULE,
 
             // Factor
             Factor => &Self::FACTOR_RULE,

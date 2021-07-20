@@ -45,15 +45,15 @@ Floaout is the next-generation audio format.
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
 | Connected, Ended and Functions size | `u16` (1) | Connected, Ended and Functions size |
-| Bubble's X coordinate | `PlusOrMinusExpression` | Bubble's X coordinate (X_0) |
+| Bubble's X coordinate | `Sum` | Bubble's X coordinate (X_0) |
 | Space | `char` (1) | ' ' |
-| Bubble's Y coordinate | `PlusOrMinusExpression` | Bubble's Y coordinate (Y_0) |
+| Bubble's Y coordinate | `Sum` | Bubble's Y coordinate (Y_0) |
 | Space | `char` (1) | ' ' |
-| Bubble's Z coordinate | `PlusOrMinusExpression` | Bubble's Z coordinate (Z_0) |
+| Bubble's Z coordinate | `Sum` | Bubble's Z coordinate (Z_0) |
 | Space | `char` (1) | ' ' |
 | Range | `OrOrExpression` |  |
 | Space | `char` (1) | ' ' |
-| Volume | `PlusOrMinusExpression` |  |
+| Volume | `Sum` |  |
 | Space or Semicolon | `char` (1) | ' ' if there is another |
 | Ending Relative Time | `u64` (8) | Number of frames at the end of function. |
 | Next Starting Relative Time | `u64` (8) | Number of frames at the start of the next function. Optional (!connected && !ended) |
@@ -79,7 +79,7 @@ Floaout is the next-generation audio format.
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
 | Expression Size | `u16` (2) | Expression Size |
-| Expression | `PlusOrMinusExpression` | Expression |
+| Expression | `Sum` | Expression |
 
 
 ### Keywords
@@ -156,8 +156,8 @@ AndAndExpression1 = AndAnd AndAndExpression / f
 AndAnd = "&&" () / f
 
 // Comparsion Expression
-ComparisonExpression = PlusOrMinusExpression ComparisonExpression1 / f
-ComparisonExpression1 = Comparison PlusOrMinusExpression / f
+ComparisonExpression = Sum ComparisonExpression1 / f
+ComparisonExpression1 = Comparison Sum / f
 
 Comparison = EqEq () / Comparison1
 Comparison1 = Ne () / Comparison2
@@ -173,14 +173,15 @@ Le = "<=" () / f
 Gt = '>' () / f
 Lt = '<' () / f
 
-// PlusOrMinusExpression
-PlusOrMinusExpression = Term PlusOrMinusExpression1 / Term
-PlusOrMinusExpression1 = PlusOrMinus PlusOrMinusExpression / f
+// Sum
+Sum = Term ZeroOrMorePlusOrMinusAndTerm / f
+ZeroOrMorePlusOrMinusAndTerm = PlusOrMinusAndTerm ZeroOrMorePlusOrMinusAndTerm / ()
+PlusOrMinusAndTerm = PlusOrMinus Term / f
 
 // Term
-Term = Factor ZeroOrMoreStarOrSlashAndTerm / f
-ZeroOrMoreStarOrSlashAndTerm = StarOrSlashAndTerm ZeroOrMoreStarOrSlashAndTerm / ()
-StarOrSlashAndTerm = StarOrSlash Factor / f
+Term = Factor ZeroOrMoreStarOrSlashAndFactor / f
+ZeroOrMoreStarOrSlashAndFactor = StarOrSlashAndFactor ZeroOrMoreStarOrSlashAndFactor / ()
+StarOrSlashAndFactor = StarOrSlash Factor / f
 
 // Factor
 Factor = PlusOrMinus Factor / Power
@@ -232,15 +233,15 @@ Function2 = Tangent () / Function3
 Function3 = Ln () / Function4
 Function4 = Lg () / f
 
-Sine = "sin" PlusOrMinusExpression / f
-Cosine = "cos" PlusOrMinusExpression / f
-Tangent = "tan" PlusOrMinusExpression / f
-Ln = "ln" PlusOrMinusExpression / f
-Lg = "lg" PlusOrMinusExpression / f
+Sine = "sin" Sum / f
+Cosine = "cos" Sum / f
+Tangent = "tan" Sum / f
+Ln = "ln" Sum / f
+Lg = "lg" Sum / f
 
 // Delimiters
 ExpressionInParentheses = '(' ExpressionAndClose / f
-ExpressionAndClose = PlusOrMinusExpression ')' / f
+ExpressionAndClose = Sum ')' / f
 
 // Integer
 IntegerLiteral = DecLiteral () / f

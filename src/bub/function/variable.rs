@@ -34,14 +34,15 @@ pub enum FunctionVariable {
     Gt,
     Lt,
 
-    // PlusOrMinusExpression
-    PlusOrMinusExpression,
-    PlusOrMinusExpression1,
+    // Sum
+    Sum,
+    ZeroOrMorePlusOrMinusAndTerm,
+    PlusOrMinusAndTerm,
 
     // Term
     Term,
-    ZeroOrMoreStarOrSlashAndTerm,
-    StarOrSlashAndTerm,
+    ZeroOrMoreStarOrSlashAndFactor,
+    StarOrSlashAndFactor,
 
     // Factor
     Factor,

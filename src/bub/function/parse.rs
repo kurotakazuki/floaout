@@ -48,60 +48,60 @@ mod tests {
     }
 
     #[test]
-    fn plus_or_minus_expr() {
+    fn sum() {
         let input: &[u8] = "".as_bytes();
-        let result = parse(input, &FunctionVariable::PlusOrMinusExpression);
+        let result = parse(input, &FunctionVariable::Sum);
         assert!(result.is_err());
 
         let input: &[u8] = "()".as_bytes();
-        let result = parse(input, &FunctionVariable::PlusOrMinusExpression);
+        let result = parse(input, &FunctionVariable::Sum);
         assert!(result.is_err());
 
         let input: &[u8] = "1**2".as_bytes();
-        let result = parse(input, &FunctionVariable::PlusOrMinusExpression);
+        let result = parse(input, &FunctionVariable::Sum);
         assert!(result.is_err());
 
         let input: &[u8] = "9".as_bytes();
-        let result = parse(input, &FunctionVariable::PlusOrMinusExpression);
+        let result = parse(input, &FunctionVariable::Sum);
         assert!(result.is_ok());
 
         let input: &[u8] = "-1".as_bytes();
-        let result = parse(input, &FunctionVariable::PlusOrMinusExpression);
+        let result = parse(input, &FunctionVariable::Sum);
         assert!(result.is_ok());
 
         let input: &[u8] = "E".as_bytes();
-        let result = parse(input, &FunctionVariable::PlusOrMinusExpression);
+        let result = parse(input, &FunctionVariable::Sum);
         assert!(result.is_ok());
 
         let input: &[u8] = "1+2".as_bytes();
-        let result = parse(input, &FunctionVariable::PlusOrMinusExpression);
+        let result = parse(input, &FunctionVariable::Sum);
         assert!(result.is_ok());
 
         let input: &[u8] = "1.0-2.0+3.5".as_bytes();
-        let result = parse(input, &FunctionVariable::PlusOrMinusExpression);
+        let result = parse(input, &FunctionVariable::Sum);
         assert!(result.is_ok());
 
         let input: &[u8] = "1.0-2.0+3.5*4.2*lg5".as_bytes();
-        let result = parse(input, &FunctionVariable::PlusOrMinusExpression);
+        let result = parse(input, &FunctionVariable::Sum);
         assert!(result.is_ok());
 
         let input: &[u8] = "sin(2*PI*440*t/F)".as_bytes();
-        let result = parse(input, &FunctionVariable::PlusOrMinusExpression);
+        let result = parse(input, &FunctionVariable::Sum);
         assert!(result.is_ok());
 
         let input: &[u8] = "1.2*(5+-+98.76543210)/sin(t/F)/1000".as_bytes();
-        let result = parse(input, &FunctionVariable::PlusOrMinusExpression);
+        let result = parse(input, &FunctionVariable::Sum);
         assert!(result.is_ok());
 
         let input: &[u8] = "X-Y+Z*x/y*(z)+tanPI-(cos((E+t-T)/F)+ln2+lg(5))+-1.0".as_bytes();
-        let result = parse(input, &FunctionVariable::PlusOrMinusExpression);
+        let result = parse(input, &FunctionVariable::Sum);
         assert!(result.is_ok());
 
         let input: &[u8] = "4*(23-21)+54+(2343+t*(F-2))+sinPI".as_bytes();
-        let result = parse(input, &FunctionVariable::PlusOrMinusExpression);
+        let result = parse(input, &FunctionVariable::Sum);
         assert!(result.is_ok());
         let input: &[u8] = "4*(23-21)+54+(2343+t*(F-2)+sinPI".as_bytes();
-        let result = parse(input, &FunctionVariable::PlusOrMinusExpression);
+        let result = parse(input, &FunctionVariable::Sum);
         assert!(result.is_err());
 
         let input = &[
@@ -110,7 +110,7 @@ mod tests {
             "+cos(PI)+1".as_bytes(),
         ]
         .concat();
-        let result = parse(input, &FunctionVariable::PlusOrMinusExpression);
+        let result = parse(input, &FunctionVariable::Sum);
         assert!(result.is_ok());
     }
 }
