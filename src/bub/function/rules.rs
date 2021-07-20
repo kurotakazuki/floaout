@@ -525,43 +525,43 @@ impl<'a> FunctionRules {
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// `Sine = "sin" Sum / f`
+    /// `Sine = "sin" Factor / f`
     const SINE_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::T(TerminalSymbol::Original(Str("sin"))),
-            rhs: E::V(Sum),
+            rhs: E::V(Factor),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// Cosine = "cos" Sum / f
+    /// Cosine = "cos" Factor / f
     const COSINE_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::T(TerminalSymbol::Original(Str("cos"))),
-            rhs: E::V(Sum),
+            rhs: E::V(Factor),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// Tangent = "tan" Sum / f
+    /// Tangent = "tan" Factor / f
     const TANGENT_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::T(TerminalSymbol::Original(Str("tan"))),
-            rhs: E::V(Sum),
+            rhs: E::V(Factor),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// Ln = "ln" Sum / f
+    /// Ln = "ln" Factor / f
     const LN_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::T(TerminalSymbol::Original(Str("ln"))),
-            rhs: E::V(Sum),
+            rhs: E::V(Factor),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// Lg = "lg" Sum / f
+    /// Lg = "lg" Factor / f
     const LG_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::T(TerminalSymbol::Original(Str("lg"))),
-            rhs: E::V(Sum),
+            rhs: E::V(Factor),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };

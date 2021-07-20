@@ -215,11 +215,11 @@ impl FunctionInterpreter {
                     self.eval_sum(&expression_and_close.lhs)
                 }
                 // Functions
-                Sine => Ok(self.eval_sum(&ast.as_first().unwrap().rhs)?.sin()),
-                Cosine => Ok(self.eval_sum(&ast.as_first().unwrap().rhs)?.cos()),
-                Tangent => Ok(self.eval_sum(&ast.as_first().unwrap().rhs)?.tan()),
-                Ln => Ok(self.eval_sum(&ast.as_first().unwrap().rhs)?.ln()),
-                Lg => Ok(self.eval_sum(&ast.as_first().unwrap().rhs)?.log2()),
+                Sine => Ok(self.eval_factor(&ast.as_first().unwrap().rhs)?.sin()),
+                Cosine => Ok(self.eval_factor(&ast.as_first().unwrap().rhs)?.cos()),
+                Tangent => Ok(self.eval_factor(&ast.as_first().unwrap().rhs)?.tan()),
+                Ln => Ok(self.eval_factor(&ast.as_first().unwrap().rhs)?.ln()),
+                Lg => Ok(self.eval_factor(&ast.as_first().unwrap().rhs)?.log2()),
                 // Variables
                 UppercaseX => Ok(self.uppercase_x),
                 UppercaseY => Ok(self.uppercase_y),
@@ -489,5 +489,16 @@ mod tests {
         let ast = parse(&input, &FunctionVariable::Sum).unwrap();
         let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(49.0));
+
+        // Sum
+        let input: &[u8] = "lnE^2^3".as_bytes();
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
+        assert_eq!(result, Ok(7.999999999999999));
+
+        let input: &[u8] = "lg2+1".as_bytes();
+        let ast = parse(&input, &FunctionVariable::Sum).unwrap();
+        let result = interpreter.eval_sum(&ast);
+        assert_eq!(result, Ok(2.0));
     }
 }

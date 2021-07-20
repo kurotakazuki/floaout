@@ -3,9 +3,6 @@ Floaout is the next-generation audio format.
 
 # TODO
 - error handling
-- Change syntax
-    - Does "1-8/8-9" should be -9 ?
-    - Does "sin(1/2*PI)" should be 1 ?
 - Clarify whether #[derive(Order)] is needed
 - Add Functions like pow, sinh, ...
 
@@ -233,11 +230,11 @@ Function2 = Tangent () / Function3
 Function3 = Ln () / Function4
 Function4 = Lg () / f
 
-Sine = "sin" Sum / f
-Cosine = "cos" Sum / f
-Tangent = "tan" Sum / f
-Ln = "ln" Sum / f
-Lg = "lg" Sum / f
+Sine = "sin" Factor / f
+Cosine = "cos" Factor / f
+Tangent = "tan" Factor / f
+Ln = "ln" Factor / f
+Lg = "lg" Factor / f
 
 // Delimiters
 ExpressionInParentheses = '(' ExpressionAndClose / f
