@@ -264,19 +264,19 @@ impl<'a> FunctionRules {
     };
 
     // Sum
-    /// Sum = Term ZeroOrMorePlusOrMinusAndTerm / f
+    /// Sum = Term ZeroOrMorePlusOrMinusAndTerms / f
     const SUM_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(Term),
-            rhs: E::V(ZeroOrMorePlusOrMinusAndTerm),
+            rhs: E::V(ZeroOrMorePlusOrMinusAndTerms),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// ZeroOrMorePlusOrMinusAndTerm = PlusOrMinusAndTerm ZeroOrMorePlusOrMinusAndTerm / ()
+    /// ZeroOrMorePlusOrMinusAndTerms = PlusOrMinusAndTerm ZeroOrMorePlusOrMinusAndTerms / ()
     const ZERO_OR_MORE_PLUS_OR_MINUS_AND_TERM_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(PlusOrMinusAndTerm),
-            rhs: E::V(ZeroOrMorePlusOrMinusAndTerm),
+            rhs: E::V(ZeroOrMorePlusOrMinusAndTerms),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Empty))),
     };
@@ -290,19 +290,19 @@ impl<'a> FunctionRules {
     };
 
     // Term
-    /// Term = Factor ZeroOrMoreStarOrSlashAndFactor / f
+    /// Term = Factor ZeroOrMoreStarOrSlashAndFactors / f
     const TERM_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(Factor),
-            rhs: E::V(ZeroOrMoreStarOrSlashAndFactor),
+            rhs: E::V(ZeroOrMoreStarOrSlashAndFactors),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// ZeroOrMoreStarOrSlashAndFactor = StarOrSlashAndFactor ZeroOrMoreStarOrSlashAndFactor / ()
+    /// ZeroOrMoreStarOrSlashAndFactors = StarOrSlashAndFactor ZeroOrMoreStarOrSlashAndFactors / ()
     const ZERO_OR_MORE_STAR_OR_SLASH_AND_FACTOR_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(StarOrSlashAndFactor),
-            rhs: E::V(ZeroOrMoreStarOrSlashAndFactor),
+            rhs: E::V(ZeroOrMoreStarOrSlashAndFactors),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Empty))),
     };
@@ -706,19 +706,19 @@ impl<'a> FunctionRules {
     };
 
     // Dec
-    /// DecLiteral = DecDigit ZeroOrDecLiteral / f
+    /// DecLiteral = DecDigit ZeroOrMoreDecDigits / f
     const DEC_LITERAL_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(DecDigit),
-            rhs: E::V(ZeroOrDecLiteral),
+            rhs: E::V(ZeroOrMoreDecDigits),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// ZeroOrDecLiteral = DecDigit ZeroOrDecLiteral / ()
+    /// ZeroOrMoreDecDigits = DecDigit ZeroOrMoreDecDigits / ()
     const ZERO_OR_DEC_LITERAL_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(DecDigit),
-            rhs: E::V(ZeroOrDecLiteral),
+            rhs: E::V(ZeroOrMoreDecDigits),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Empty))),
     };
@@ -932,12 +932,12 @@ impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
 
             // Sum
             Sum => &Self::SUM_RULE,
-            ZeroOrMorePlusOrMinusAndTerm => &Self::ZERO_OR_MORE_PLUS_OR_MINUS_AND_TERM_RULE,
+            ZeroOrMorePlusOrMinusAndTerms => &Self::ZERO_OR_MORE_PLUS_OR_MINUS_AND_TERM_RULE,
             PlusOrMinusAndTerm => &Self::PLUS_OR_MINUS_AND_TERM_RULE,
 
             // Term
             Term => &Self::TERM_RULE,
-            ZeroOrMoreStarOrSlashAndFactor => &Self::ZERO_OR_MORE_STAR_OR_SLASH_AND_FACTOR_RULE,
+            ZeroOrMoreStarOrSlashAndFactors => &Self::ZERO_OR_MORE_STAR_OR_SLASH_AND_FACTOR_RULE,
             StarOrSlashAndFactor => &Self::STAR_OR_SLASH_AND_FACTOR_RULE,
 
             // Factor
@@ -1010,7 +1010,7 @@ impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
             BytesF64Literal => &Self::BYTES_F64_LITERAL_RULE,
 
             DecLiteral => &Self::DEC_LITERAL_RULE,
-            ZeroOrDecLiteral => &Self::ZERO_OR_DEC_LITERAL_RULE,
+            ZeroOrMoreDecDigits => &Self::ZERO_OR_DEC_LITERAL_RULE,
 
             DecDigit => &Self::DEC_DIGIT_RULE,
             DecDigit1 => &Self::DEC_DIGIT1_RULE,

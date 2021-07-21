@@ -52,12 +52,12 @@ pub enum FunctionVariable {
 
     // Sum
     Sum,
-    ZeroOrMorePlusOrMinusAndTerm,
+    ZeroOrMorePlusOrMinusAndTerms,
     PlusOrMinusAndTerm,
 
     // Term
     Term,
-    ZeroOrMoreStarOrSlashAndFactor,
+    ZeroOrMoreStarOrSlashAndFactors,
     StarOrSlashAndFactor,
 
     // Factor
@@ -129,7 +129,7 @@ pub enum FunctionVariable {
     BytesF64Literal,
 
     DecLiteral,
-    ZeroOrDecLiteral,
+    ZeroOrMoreDecDigits,
 
     DecDigit,
     DecDigit1,

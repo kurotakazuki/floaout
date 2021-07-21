@@ -107,7 +107,7 @@ impl FunctionInterpreter {
         // zero or more plus or minus and term
         loop {
             match &zero_or_more.node {
-                // PlusOrMinusAndTerm ZeroOrMorePlusOrMinusAndTerm
+                // PlusOrMinusAndTerm ZeroOrMorePlusOrMinusAndTerms
                 Internal(internal) => {
                     let first = internal.as_first().unwrap();
                     let plus_or_minus_and_term_v = first.lhs.as_first().unwrap();
@@ -145,7 +145,7 @@ impl FunctionInterpreter {
         // zero or more star or slash and factor
         loop {
             match &zero_or_more.node {
-                // StarOrSlashAndFactor ZeroOrMoreStarOrSlashAndFactor
+                // StarOrSlashAndFactor ZeroOrMoreStarOrSlashAndFactors
                 Internal(internal) => {
                     let first = internal.as_first().unwrap();
                     let star_or_slash_and_factor_v = first.lhs.as_first().unwrap();

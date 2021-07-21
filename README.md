@@ -188,13 +188,13 @@ Gt = '>' () / f
 Lt = '<' () / f
 
 // Sum
-Sum = Term ZeroOrMorePlusOrMinusAndTerm / f
-ZeroOrMorePlusOrMinusAndTerm = PlusOrMinusAndTerm ZeroOrMorePlusOrMinusAndTerm / ()
+Sum = Term ZeroOrMorePlusOrMinusAndTerms / f
+ZeroOrMorePlusOrMinusAndTerms = PlusOrMinusAndTerm ZeroOrMorePlusOrMinusAndTerms / ()
 PlusOrMinusAndTerm = PlusOrMinus Term / f
 
 // Term
-Term = Factor ZeroOrMoreStarOrSlashAndFactor / f
-ZeroOrMoreStarOrSlashAndFactor = StarOrSlashAndFactor ZeroOrMoreStarOrSlashAndFactor / ()
+Term = Factor ZeroOrMoreStarOrSlashAndFactors / f
+ZeroOrMoreStarOrSlashAndFactors = StarOrSlashAndFactor ZeroOrMoreStarOrSlashAndFactors / ()
 StarOrSlashAndFactor = StarOrSlash Factor / f
 
 // Factor
@@ -267,8 +267,8 @@ PointAndDecLiteral = '.' DecLiteral / f
 BytesF64Literal = 'f' ???????? / f
 
 // Dec
-DecLiteral = DecDigit ZeroOrDecLiteral / f
-ZeroOrDecLiteral = DecDigit ZeroOrDecLiteral / ()
+DecLiteral = DecDigit ZeroOrMoreDecDigits / f
+ZeroOrMoreDecDigits = DecDigit ZeroOrMoreDecDigits / ()
 
 DecDigit = '0' () / DecDigit1
 DecDigit1 = '1' () / DecDigit2
