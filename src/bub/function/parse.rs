@@ -15,6 +15,41 @@ mod tests {
     use super::*;
 
     #[test]
+    fn bubble_functions() {
+        // Bubble Function
+        let input: &[u8] = "1 2 3 0!=1 sin(2*PI*440*t/F)".as_bytes();
+        let result = parse(&input, &FunctionVariable::BubbleFunction);
+        assert!(result.is_ok());
+
+        // Bubble Functions
+        let input: &[u8] = ";".as_bytes();
+        let result = parse(&input, &FunctionVariable::BubbleFunctions);
+        assert!(result.is_err());
+
+        let input: &[u8] = "    ;".as_bytes();
+        let result = parse(&input, &FunctionVariable::BubbleFunctions);
+        assert!(result.is_err());
+
+        let input: &[u8] = "1;".as_bytes();
+        let result = parse(&input, &FunctionVariable::BubbleFunctions);
+        assert!(result.is_err());
+
+        let input: &[u8] = "1 2 3 0!=1;".as_bytes();
+        let result = parse(&input, &FunctionVariable::BubbleFunctions);
+        assert!(result.is_err());
+
+        let input: &[u8] = "1 2 3 0!=1 sin(2*PI*440*t/F);".as_bytes();
+        let result = parse(&input, &FunctionVariable::BubbleFunctions);
+        assert!(result.is_ok());
+        let input: &[u8] = "1 2 3 0!=1 sin(2*PI*440*t/F) 1 2 3 0!=1 sin(2*PI*440*t/F);".as_bytes();
+        let result = parse(&input, &FunctionVariable::BubbleFunctions);
+        assert!(result.is_ok());
+        let input: &[u8] = "1 2 3 4!=5 6 1 2 3 4!=5 6 1 2 3 4!=5 6 1 2 3 4!=5 6;".as_bytes();
+        let result = parse(&input, &FunctionVariable::BubbleFunctions);
+        assert!(result.is_ok());
+    }
+
+    #[test]
     fn expr() {
         let input: &[u8] = "".as_bytes();
         let result = parse(input, &FunctionVariable::OrOrExpression);

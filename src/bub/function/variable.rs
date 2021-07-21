@@ -4,6 +4,22 @@ impl Variable for FunctionVariable {}
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum FunctionVariable {
+    // BubbleFunctions
+    BubbleFunctions,
+    ZeroOrMoreBubbleFunctions,
+
+    SpaceAndBubbleFunction,
+
+    // BubbleFunction
+    BubbleFunction,
+    BubbleFunction1,
+    BubbleFunction2,
+    BubbleFunction3,
+    BubbleFunction4,
+
+    SumAndSpace,
+    OrOrExpressionAndSpace,
+
     // OrOr Expression
     OrOrExpression,
     OrOrExpression1,
@@ -16,7 +32,7 @@ pub enum FunctionVariable {
 
     AndAnd,
 
-    // Comparsion Expression
+    // Comparison Expression
     ComparisonExpression,
     ComparisonExpression1,
 
@@ -135,4 +151,7 @@ pub enum FunctionVariable {
     StarOrSlash1,
     Star,
     Slash,
+
+    Semicolon,
+    Space,
 }

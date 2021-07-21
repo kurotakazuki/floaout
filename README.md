@@ -140,6 +140,23 @@ Floaout is the next-generation audio format.
 
 ### Syntax
 ```rust
+// BubbleFunctions
+BubbleFunctions = BubbleFunction ZeroOrMoreBubbleFunctions / f
+ZeroOrMoreBubbleFunctions = SpaceAndBubbleFunction ZeroOrMoreBubbleFunctions / Semicolon
+
+SpaceAndBubbleFunction = Space BubbleFunction / f
+
+// BubbleFunction
+// BubbleFunction = Sum Space Sum Space Sum Space OrOrExpression Space Sum
+BubbleFunction = SumAndSpace BubbleFunction1 / f
+BubbleFunction1 = SumAndSpace BubbleFunction2 / f
+BubbleFunction2 = SumAndSpace BubbleFunction3 / f
+BubbleFunction3 = OrOrExpressionAndSpace BubbleFunction4 / f
+BubbleFunction4 = Sum () / f
+
+SumAndSpace = Sum Space / f
+OrOrExpressionAndSpace = OrOrExpression Space / f
+
 // OrOr Expression
 OrOrExpression = AndAndExpression OrOrExpression1 / AndAndExpression
 OrOrExpression1 = OrOr OrOrExpression / f
@@ -152,7 +169,7 @@ AndAndExpression1 = AndAnd AndAndExpression / f
 
 AndAnd = "&&" () / f
 
-// Comparsion Expression
+// Comparison Expression
 ComparisonExpression = Sum ComparisonExpression1 / f
 ComparisonExpression1 = Comparison Sum / f
 
@@ -273,4 +290,7 @@ StarOrSlash = Star () / StarOrSlash1
 StarOrSlash1 = Slash () / f
 Star = '*' () / f
 Slash = '/' () / f
+
+Semicolon = ';' () / f
+Space = ' ' () / f
 ```

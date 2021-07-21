@@ -9,6 +9,91 @@ pub struct FunctionRules;
 type Rule<'a> = RightRule<U8SliceTerminal<'a>, FunctionVariable>;
 
 impl<'a> FunctionRules {
+    // BubbleFunctions
+    /// BubbleFunctions = BubbleFunction ZeroOrMoreBubbleFunctions / f
+    const BUBBLE_FUNCTIONS_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(BubbleFunction),
+            rhs: E::V(ZeroOrMoreBubbleFunctions),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// ZeroOrMoreBubbleFunctions = SpaceAndBubbleFunction ZeroOrMoreBubbleFunctions / Semicolon
+    const ZERO_OR_MORE_BUBBLE_FUNCTIONS_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(SpaceAndBubbleFunction),
+            rhs: E::V(ZeroOrMoreBubbleFunctions),
+        },
+        second: Second(E::V(Semicolon)),
+    };
+    /// SpaceAndBubbleFunction = Space BubbleFunction / f
+    const SPACE_AND_BUBBLE_FUNCTION_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(Space),
+            rhs: E::V(BubbleFunction),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+
+    // BubbleFunction
+    /// BubbleFunction = SumAndSpace BubbleFunction1 / f
+    const BUBBLE_FUNCTION_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(SumAndSpace),
+            rhs: E::V(BubbleFunction1),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// BubbleFunction1 = SumAndSpace BubbleFunction2 / f
+    const BUBBLE_FUNCTION1_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(SumAndSpace),
+            rhs: E::V(BubbleFunction2),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// BubbleFunction2 = SumAndSpace BubbleFunction3 / f
+    const BUBBLE_FUNCTION2_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(SumAndSpace),
+            rhs: E::V(BubbleFunction3),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// BubbleFunction3 = OrOrExpressionAndSpace BubbleFunction4 / f
+    const BUBBLE_FUNCTION3_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(OrOrExpressionAndSpace),
+            rhs: E::V(BubbleFunction4),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// BubbleFunction4 = Sum () / f
+    const BUBBLE_FUNCTION4_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(Sum),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+
+    /// SumAndSpace = Sum Space / f
+    const SUM_AND_SPACE_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(Sum),
+            rhs: E::V(Space),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// OrOrExpressionAndSpace = OrOrExpression Space / f
+    const OR_OR_EXPRESSION_AND_SPACE_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(OrOrExpression),
+            rhs: E::V(Space),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+
     // OrOr Expression
     /// OrOrExpression = AndAndExpression OrOrExpression1 / AndAndExpression
     const OR_OR_EXPRESSION_RULE: Rule<'a> = RightRule {
@@ -61,7 +146,7 @@ impl<'a> FunctionRules {
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
 
-    // Comparsion Expression
+    // Comparison Expression
     /// ComparisonExpression = Sum ComparisonExpression1 / f
     const COMPARISON_EXPRESSION_RULE: Rule<'a> = RightRule {
         first: First {
@@ -79,7 +164,7 @@ impl<'a> FunctionRules {
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
 
-    // Comparsion
+    // Comparison
     /// Comparison = EqEq () / Comparison1
     const COMPARISON_RULE: Rule<'a> = RightRule {
         first: First {
@@ -777,11 +862,44 @@ impl<'a> FunctionRules {
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
+
+    /// Semicolon = ';' () / f
+    const SEMICOLON_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Char(';'))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// Space = ' ' () / f
+    const SPACE_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Char(' '))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
 }
 
 impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
     fn get(&self, variable: &FunctionVariable) -> Option<&Rule<'a>> {
         Some(match variable {
+            // BubbleFunctions
+            BubbleFunctions => &Self::BUBBLE_FUNCTIONS_RULE,
+            ZeroOrMoreBubbleFunctions => &Self::ZERO_OR_MORE_BUBBLE_FUNCTIONS_RULE,
+
+            SpaceAndBubbleFunction => &Self::SPACE_AND_BUBBLE_FUNCTION_RULE,
+
+            // BubbleFunction
+            BubbleFunction => &Self::BUBBLE_FUNCTION_RULE,
+            BubbleFunction1 => &Self::BUBBLE_FUNCTION1_RULE,
+            BubbleFunction2 => &Self::BUBBLE_FUNCTION2_RULE,
+            BubbleFunction3 => &Self::BUBBLE_FUNCTION3_RULE,
+            BubbleFunction4 => &Self::BUBBLE_FUNCTION4_RULE,
+
+            SumAndSpace => &Self::SUM_AND_SPACE_RULE,
+            OrOrExpressionAndSpace => &Self::OR_OR_EXPRESSION_AND_SPACE_RULE,
+
             // OrOr Expression
             OrOrExpression => &Self::OR_OR_EXPRESSION_RULE,
             OrOrExpression1 => &Self::OR_OR_EXPRESSION1_RULE,
@@ -794,7 +912,7 @@ impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
 
             AndAnd => &Self::AND_AND_RULE,
 
-            // Comparsion Expression
+            // Comparison Expression
             ComparisonExpression => &Self::COMPARISON_EXPRESSION_RULE,
             ComparisonExpression1 => &Self::COMPARISON_EXPRESSION1_RULE,
 
@@ -914,6 +1032,9 @@ impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
             StarOrSlash1 => &Self::STAR_OR_SLASH1_RULE,
             Star => &Self::STAR_RULE,
             Slash => &Self::SLASH_RULE,
+
+            Semicolon => &Self::SEMICOLON_RULE,
+            Space => &Self::SPACE_RULE,
         })
     }
 }
