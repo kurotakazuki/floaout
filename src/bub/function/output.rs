@@ -54,12 +54,8 @@ impl<'input> Output<'input, [u8], FunctionVariable, StartAndLenSpan<u16, u16>> f
                 AST::from_leaf(TerminalSymbol::from_original(n), cst.span)
             }
             Constant => match cst.node.equal {
-                Choice::First(first) => {
-                    return first.lhs;
-                }
-                Choice::Second(second) => {
-                    return second.0;
-                }
+                Choice::First(first) => first.lhs,
+                Choice::Second(second) => second.0,
             },
             Constant1 => {
                 let o = cst
