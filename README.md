@@ -48,7 +48,7 @@ Floaout is the next-generation audio format.
 | Space | `char` (1) | ' ' |
 | Bubble's Z coordinate | `Sum` | Bubble's Z coordinate (Z_0) |
 | Space | `char` (1) | ' ' |
-| Range | `OrOrExpression` |  |
+| Domain | `OrOrExpression` |  |
 | Space | `char` (1) | ' ' |
 | Volume | `Sum` |  |
 | Space or Semicolon | `char` (1) | ' ' if there is another |

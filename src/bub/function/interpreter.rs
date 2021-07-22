@@ -207,7 +207,7 @@ impl FunctionInterpreter {
     pub fn eval_atom(&self, ast: &FunctionAST) -> Result<f64, ()> {
         match &ast.node {
             // FloatLiteral Or IntegerLiteral
-            Leaf(leaf) => leaf.as_original().copied().ok_or(()),
+            Leaf(leaf) => leaf.as_original().unwrap().as_f64().copied().ok_or(()),
             Internal(internal) => match internal.value.0 {
                 // ExpressionInParentheses
                 ExpressionInParentheses => {
