@@ -15,6 +15,12 @@ pub enum FunctionOutput {
     F64(f64),
 }
 
+impl From<BubbleFunction> for FunctionOutput {
+    fn from(n: BubbleFunction) -> Self {
+        Self::BubbleFunction(Box::new(n))
+    }
+}
+
 impl From<f64> for FunctionOutput {
     fn from(n: f64) -> Self {
         Self::F64(n)
@@ -71,6 +77,39 @@ impl<'input> Output<'input, [u8], FunctionVariable, StartAndLenSpan<u16, u16>> f
         mut cst: CST<FunctionVariable, StartAndLenSpan<u16, u16>, Self>,
     ) -> AST<FunctionVariable, StartAndLenSpan<u16, u16>, Self> {
         match cst.node.value {
+            BubbleFunction => {
+                let span = cst.span;
+                let bubble_function_equal = cst.node.equal.into_first().unwrap();
+                let x0 = bubble_function_equal.lhs;
+
+                let bubble_function1_equal = bubble_function_equal.rhs.into_first().unwrap();
+                let y0 = bubble_function1_equal.lhs;
+
+                let bubble_function2_equal = bubble_function1_equal.rhs.into_first().unwrap();
+                let z0 = bubble_function2_equal.lhs;
+
+                let bubble_function3_equal = bubble_function2_equal.rhs.into_first().unwrap();
+                let domain = bubble_function3_equal.lhs;
+
+                let bubble_function4_equal = bubble_function3_equal.rhs.into_second().unwrap();
+                let volume = bubble_function4_equal.0;
+
+                let bubble_function = BubbleFunction {
+                    bubble_absolute_coordinates: (x0, y0, z0),
+                    domain,
+                    volume,
+                };
+
+                AST::from_leaf(TerminalSymbol::Original(bubble_function.into()), span)
+            }
+            // Into First lhs Child Node
+            SumAndSpace | OrOrExpressionAndSpace => {
+                let span = cst.span;
+                let mut lhs_child = cst.node.equal.into_first().unwrap().lhs;
+                lhs_child.span = span;
+
+                lhs_child
+            }
             Comparison | Atom | PlusOrMinus | StarOrSlash | Function | Variable => {
                 let mut equal = cst.node.equal;
                 loop {
@@ -136,10 +175,12 @@ impl<'input> Output<'input, [u8], FunctionVariable, StartAndLenSpan<u16, u16>> f
                 TerminalSymbol::from_original(std::f64::consts::PI.into()),
                 cst.span,
             ),
-            // Into Second
-            OrOr | AndAnd | EqEq | Ne | Ge | Le | Gt | Lt | UppercaseX | UppercaseY
-            | UppercaseZ | LowercaseX | LowercaseY | LowercaseZ | UppercaseT | LowercaseT
-            | UppercaseF | Plus | Minus | Star | Slash | Semicolon | Space => {
+            // First lhs into Second
+            // A = B () / f
+            // A = B
+            BubbleFunction4 | OrOr | AndAnd | EqEq | Ne | Ge | Le | Gt | Lt | UppercaseX
+            | UppercaseY | UppercaseZ | LowercaseX | LowercaseY | LowercaseZ | UppercaseT
+            | LowercaseT | UppercaseF | Plus | Minus | Star | Slash | Semicolon | Space => {
                 if let Choice::First(first) = cst.node.equal {
                     cst.node.equal = first.lhs.into();
                     AST::from_cst(cst)
