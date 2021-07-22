@@ -18,11 +18,11 @@ pub type FunctionAST = AST<FunctionVariable, StartAndLenSpan<u16, u16>, Function
 #[derive(Clone, Debug, PartialEq)]
 pub struct BubbleFunction {
     // The root node variable is `Sum`.
-    bubble_absolute_coordinates: (FunctionAST, FunctionAST, FunctionAST),
+    pub bubble_absolute_coordinates: (FunctionAST, FunctionAST, FunctionAST),
     // The root node variable is `OrOrExpression`.
-    domain: FunctionAST,
+    pub domain: FunctionAST,
     // The root node variable is `Sum`.
-    volume: FunctionAST,
+    pub volume: FunctionAST,
 }
 
 pub type BubbleFunctions = Vec<BubbleFunction>;

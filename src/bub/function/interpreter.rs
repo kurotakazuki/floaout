@@ -3,17 +3,17 @@ use mpl::choices::Choice;
 use mpl::trees::Node::*;
 
 pub struct FunctionInterpreter {
-    uppercase_x: f64,
-    uppercase_y: f64,
-    uppercase_z: f64,
-    lowercase_x: f64,
-    lowercase_y: f64,
-    lowercase_z: f64,
+    pub uppercase_x: f64,
+    pub uppercase_y: f64,
+    pub uppercase_z: f64,
+    pub lowercase_x: f64,
+    pub lowercase_y: f64,
+    pub lowercase_z: f64,
     /// Number of frames starting from the file. Absolute Time
-    uppercase_t: f64,
+    pub uppercase_t: f64,
     /// Number of frames starting from the function. Relative Time
-    lowercase_t: f64,
-    uppercase_f: f64,
+    pub lowercase_t: f64,
+    pub uppercase_f: f64,
 }
 
 impl FunctionInterpreter {
@@ -240,6 +240,56 @@ impl FunctionInterpreter {
 mod tests {
     use super::*;
     use crate::bub::{function::parse, FunctionVariable};
+
+    #[test]
+    fn bubble_functions() {
+        let input: &[u8] = "1 2 3 0!=1 sin(2*PI*440*t/F) 1 2 3 0!=1 sin(2*PI*440*t/F) 1 2 3 0!=1 sin(2*PI*440*t/F);".as_bytes();
+        let result = parse(&input, &FunctionVariable::BubbleFunctions).unwrap();
+        let bubble_functions = result
+            .into_original()
+            .unwrap()
+            .into_bubble_functions()
+            .unwrap();
+
+        for bubble_function in bubble_functions {
+            let speaker_absolute_coordinates = (-1.0, 1.0, 0.0);
+            let bubble_absolute_coordinates = (0.0, 0.0, 0.0);
+            let absolute_time = 12.0;
+            let relative_time = 0.0;
+            let samples_per_sec = 44100.0;
+            let mut interpreter = FunctionInterpreter::new(
+                speaker_absolute_coordinates,
+                bubble_absolute_coordinates,
+                absolute_time,
+                relative_time,
+                samples_per_sec,
+            );
+
+            interpreter.lowercase_x = interpreter.uppercase_x
+                - interpreter
+                    .eval_sum(&bubble_function.bubble_absolute_coordinates.0)
+                    .unwrap();
+            interpreter.lowercase_y = interpreter.uppercase_y
+                - interpreter
+                    .eval_sum(&bubble_function.bubble_absolute_coordinates.1)
+                    .unwrap();
+            interpreter.lowercase_z = interpreter.uppercase_z
+                - interpreter
+                    .eval_sum(&bubble_function.bubble_absolute_coordinates.2)
+                    .unwrap();
+
+            let domain = interpreter
+                .eval_or_or_expr(&bubble_function.domain)
+                .unwrap();
+            let volume = interpreter.eval_sum(&bubble_function.volume).unwrap();
+
+            assert_eq!(interpreter.lowercase_x, -2.0);
+            assert_eq!(interpreter.lowercase_y, -1.0);
+            assert_eq!(interpreter.lowercase_z, -3.0);
+            assert_eq!(domain, true);
+            assert_eq!(volume, 0.0);
+        }
+    }
 
     #[test]
     fn eval_or_or_expr() {
