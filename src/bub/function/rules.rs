@@ -18,13 +18,13 @@ impl<'a> FunctionRules {
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// ZeroOrMoreBubbleFunctions = SpaceAndBubbleFunction ZeroOrMoreBubbleFunctions / Semicolon
+    /// ZeroOrMoreBubbleFunctions = SpaceAndBubbleFunction ZeroOrMoreBubbleFunctions / ()
     const ZERO_OR_MORE_BUBBLE_FUNCTIONS_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(SpaceAndBubbleFunction),
             rhs: E::V(ZeroOrMoreBubbleFunctions),
         },
-        second: Second(E::V(Semicolon)),
+        second: Second(E::T(TerminalSymbol::Metasymbol(Empty))),
     };
     /// SpaceAndBubbleFunction = Space BubbleFunction / f
     const SPACE_AND_BUBBLE_FUNCTION_RULE: Rule<'a> = RightRule {
@@ -863,14 +863,6 @@ impl<'a> FunctionRules {
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
 
-    /// Semicolon = ';' () / f
-    const SEMICOLON_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char(';'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
     /// Space = ' ' () / f
     const SPACE_RULE: Rule<'a> = RightRule {
         first: First {
@@ -1033,7 +1025,6 @@ impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
             Star => &Self::STAR_RULE,
             Slash => &Self::SLASH_RULE,
 
-            Semicolon => &Self::SEMICOLON_RULE,
             Space => &Self::SPACE_RULE,
         })
     }

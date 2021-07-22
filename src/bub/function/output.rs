@@ -5,7 +5,7 @@ use mpl::choices::Choice;
 use mpl::output::Output;
 use mpl::span::{Span, StartAndLenSpan};
 use mpl::symbols::TerminalSymbol;
-use mpl::trees::{AST, CST};
+use mpl::trees::{Node, AST, CST};
 use std::convert::TryInto;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -86,21 +86,23 @@ impl<'input> Output<'input, [u8], FunctionVariable, StartAndLenSpan<u16, u16>> f
             BubbleFunctions => {
                 let span = cst.span;
                 let mut bubble_functions = Vec::new();
-                let mut equal = cst.node.equal;
+                let mut first = cst.node.equal.into_first().unwrap();
                 loop {
-                    match equal {
-                        Choice::First(first) => {
-                            bubble_functions.push(
-                                *first
-                                    .lhs
-                                    .into_original()
-                                    .unwrap()
-                                    .into_bubble_function()
-                                    .unwrap(),
-                            );
-                            equal = *first.rhs.into_internal().unwrap().equal;
+                    bubble_functions.push(
+                        *first
+                            .lhs
+                            .into_original()
+                            .unwrap()
+                            .into_bubble_function()
+                            .unwrap(),
+                    );
+                    match first.rhs.node {
+                        // ZeroOrMoreBubbleFunctions
+                        Node::Internal(internal) => {
+                            first = internal.into_first().unwrap();
                         }
-                        Choice::Second(_) => {
+                        // ()
+                        Node::Leaf(_) => {
                             return AST::from_leaf(
                                 TerminalSymbol::Original(bubble_functions.into()),
                                 span,
@@ -220,7 +222,7 @@ impl<'input> Output<'input, [u8], FunctionVariable, StartAndLenSpan<u16, u16>> f
             // A = B
             BubbleFunction4 | OrOr | AndAnd | EqEq | Ne | Ge | Le | Gt | Lt | UppercaseX
             | UppercaseY | UppercaseZ | LowercaseX | LowercaseY | LowercaseZ | UppercaseT
-            | LowercaseT | UppercaseF | Plus | Minus | Star | Slash | Semicolon | Space => {
+            | LowercaseT | UppercaseF | Plus | Minus | Star | Slash | Space => {
                 if let Choice::First(first) = cst.node.equal {
                     cst.node.equal = first.lhs.into();
                     AST::from_cst(cst)

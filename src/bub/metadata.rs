@@ -1,4 +1,4 @@
-use crate::bub::{BubbleID, FunctionAST};
+use crate::bub::{function::BubbleFunctions, BubbleID};
 use crate::io::{ReadExt, WriteExt};
 use crate::utils::return_invalid_data_if_not_equal;
 use crate::{Metadata, SampleKind};
@@ -58,9 +58,9 @@ pub struct BubbleMetadata {
     /// Bubble ID
     pub bubble_id: BubbleID,
     /// Frames
-    frames: u64,
+    pub frames: u64,
     /// Samples Per Sec
-    samples_per_sec: f64,
+    pub samples_per_sec: f64,
     /// Bits Per Sample
     sample_kind: SampleKind,
     /// Bubble Sample Kind
@@ -76,7 +76,7 @@ pub struct BubbleMetadata {
     /// Absolute Time
     pub absolute_time: u64,
     /// Functions
-    pub functions: Vec<(FunctionAST, FunctionAST)>,
+    pub functions: BubbleFunctions,
     /// Connected or Not Flag
     /// | Value | Contents |
     /// | ---------------- |

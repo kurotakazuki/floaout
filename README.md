@@ -51,7 +51,7 @@ Floaout is the next-generation audio format.
 | Domain | `OrOrExpression` |  |
 | Space | `char` (1) | ' ' |
 | Volume | `Sum` |  |
-| Space or Semicolon | `char` (1) | ' ' if there is another |
+| Space or Empty | `char` (1) | ' ' if there is another |
 | Ending Relative Time | `u64` (8) | Number of frames at the end of function. |
 | Next Starting Relative Time | `u64` (8) | Number of frames at the start of the next function. Optional (!connected && !ended) |
 | Sample Data |  | Sample Data |
@@ -135,14 +135,13 @@ Floaout is the next-generation audio format.
 | ------------- | ------------- |
 |   | Space |
 | , | Comma |
-| ; | Semicolon |
 | ( ) | Parentheses |
 
 ### Syntax
 ```rust
 // BubbleFunctions
 BubbleFunctions = BubbleFunction ZeroOrMoreBubbleFunctions / f
-ZeroOrMoreBubbleFunctions = SpaceAndBubbleFunction ZeroOrMoreBubbleFunctions / Semicolon
+ZeroOrMoreBubbleFunctions = SpaceAndBubbleFunction ZeroOrMoreBubbleFunctions / ()
 
 SpaceAndBubbleFunction = Space BubbleFunction / f
 
@@ -291,6 +290,5 @@ StarOrSlash1 = Slash () / f
 Star = '*' () / f
 Slash = '/' () / f
 
-Semicolon = ';' () / f
 Space = ' ' () / f
 ```

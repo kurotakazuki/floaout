@@ -113,25 +113,26 @@
 //     //     self.bubble_state
 //     // }
 
-//     // TODO Use function or macro
-//     pub fn read_connected_and_ended<R: Read>(&mut self, reader: &mut BubbleFrameReader<R, S>) -> Result<()> {
-//         let mut read_connected_and_ended: u8 = reader.inner.read_le()?;
+//     pub fn read_flags_and_function_size<R: Read>(&mut self, reader: &mut BubbleFrameReader<R, S>) -> Result<u16> {
+//         let mut read_flags_and_function_size: u16 = reader.inner.read_le()?;
 
 //         // connected
-//         reader.metadata.connected = if read_connected_and_ended & (1 << 15) != 0 {
+//         reader.metadata.connected = if read_flags_and_function_size & (1 << 15) != 0 {
+//             read_flags_and_function_size &= 0x7FFF;
 //             true
 //         } else {
 //             false
 //         };
 
 //         // ended
-//         reader.metadata.ended = if read_connected_and_ended & (1 << 14) != 0 {
+//         reader.metadata.connected = if read_flags_and_function_size & (1 << 14) != 0 {
+//             read_flags_and_function_size &= 0xBFFF;
 //             true
 //         } else {
 //             false
 //         };
 
-//         Ok(())
+//         Ok(read_flags_and_function_size)
 //     }
 
 //     pub fn read<R: Read>(
@@ -141,6 +142,8 @@
 //     ) -> Result<S> {
 //         match reader.metadata.bubble_state {
 //             BubbleState::Starting => {
+//                 let function_size = self.read_flags_and_function_size(reader)?;
+
 //                 // Bubble's coordinates
 
 //                 self.function_string = reader.read_to_string_for(self.function_size as usize)?;

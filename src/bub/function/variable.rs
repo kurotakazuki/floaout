@@ -152,6 +152,5 @@ pub enum FunctionVariable {
     Star,
     Slash,
 
-    Semicolon,
     Space,
 }

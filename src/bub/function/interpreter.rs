@@ -243,7 +243,7 @@ mod tests {
 
     #[test]
     fn bubble_functions() {
-        let input: &[u8] = "1 2 3 0!=1 sin(2*PI*440*t/F) 1 2 3 0!=1 sin(2*PI*440*t/F) 1 2 3 0!=1 sin(2*PI*440*t/F);".as_bytes();
+        let input: &[u8] = "1 2 3 0!=1 sin(2*PI*440*t/F) 1 2 3 0!=1 sin(2*PI*440*t/F) 1 2 3 0!=1 sin(2*PI*440*t/F)".as_bytes();
         let result = parse(&input, &FunctionVariable::BubbleFunctions).unwrap();
         let bubble_functions = result
             .into_original()
