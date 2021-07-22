@@ -15,9 +15,15 @@ pub enum FunctionOutput {
     F64(f64),
 }
 
+impl From<BubbleFunctions> for FunctionOutput {
+    fn from(value: BubbleFunctions) -> Self {
+        Self::BubbleFunctions(value)
+    }
+}
+
 impl From<BubbleFunction> for FunctionOutput {
-    fn from(n: BubbleFunction) -> Self {
-        Self::BubbleFunction(Box::new(n))
+    fn from(value: BubbleFunction) -> Self {
+        Self::BubbleFunction(Box::new(value))
     }
 }
 
@@ -77,6 +83,40 @@ impl<'input> Output<'input, [u8], FunctionVariable, StartAndLenSpan<u16, u16>> f
         mut cst: CST<FunctionVariable, StartAndLenSpan<u16, u16>, Self>,
     ) -> AST<FunctionVariable, StartAndLenSpan<u16, u16>, Self> {
         match cst.node.value {
+            BubbleFunctions => {
+                let span = cst.span;
+                let mut bubble_functions = Vec::new();
+                let mut equal = cst.node.equal;
+                loop {
+                    match equal {
+                        Choice::First(first) => {
+                            bubble_functions.push(
+                                *first
+                                    .lhs
+                                    .into_original()
+                                    .unwrap()
+                                    .into_bubble_function()
+                                    .unwrap(),
+                            );
+                            equal = *first.rhs.into_internal().unwrap().equal;
+                        }
+                        Choice::Second(_) => {
+                            return AST::from_leaf(
+                                TerminalSymbol::Original(bubble_functions.into()),
+                                span,
+                            );
+                        }
+                    }
+                }
+            }
+            // Into First rhs Child Node
+            SpaceAndBubbleFunction => {
+                let span = cst.span;
+                let mut rhs_child = cst.node.equal.into_first().unwrap().rhs;
+                rhs_child.span = span;
+
+                rhs_child
+            }
             BubbleFunction => {
                 let span = cst.span;
                 let bubble_function_equal = cst.node.equal.into_first().unwrap();
