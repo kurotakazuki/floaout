@@ -6,7 +6,7 @@ use std::io::{ErrorKind, Read, Result, Write};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum BubbleState {
-    Starting,
+    Head,
     Normal,
     Stopped,
     Ended,
@@ -51,7 +51,7 @@ impl BubbleSampleKind {
 #[derive(Clone, Debug, PartialEq)]
 pub struct BubbleMetadata {
     // In File Header
-    /// Starting Sample
+    /// Head Sample
     pub starting_sample: u64,
     /// This is the number of `Bubble` version.
     pub version: u8,
@@ -73,10 +73,9 @@ pub struct BubbleMetadata {
 
     /// Bubble State
     pub bubble_state: BubbleState,
-    /// Absolute Time
-    pub absolute_time: u64,
-    /// Functions
-    pub functions: BubbleFunctions,
+    /// Head Absolute Frame
+    pub head_frame: u64,
+
     /// Connected or Not Flag
     /// | Value | Contents |
     /// | ---------------- |
@@ -89,13 +88,13 @@ pub struct BubbleMetadata {
     /// | 0 | Not Ended |
     /// | 1 | Ended |
     pub ended: bool,
-    /// Ending Time which means "Sample length"
-    /// If `self.ending_time_is_0` is `true', this won't exist.
-    pub ending_time: u64,
-    /// Next Starting Sample
-    /// If `self.connected` is `true', this won't exist.
-    /// If `self.ended` is `true', this won't exist.
-    pub next_starting_sample: u64,
+    /// Bubble Functions
+    pub bubble_functions: BubbleFunctions,
+    /// Tail Relative Frame
+    pub tail_frame: u64,
+    /// Next Head Relative Frame
+    /// If `self.connected` or `self.ended` is `true', this won't exist.
+    pub next_head_frame: u64,
 }
 
 impl BubbleMetadata {
@@ -142,13 +141,13 @@ impl Metadata for BubbleMetadata {
             name,
 
             speakers_absolute_coordinates: Vec::new(),
-            bubble_state: BubbleState::Starting,
-            absolute_time: 0,
-            functions: Vec::new(),
+            bubble_state: BubbleState::Head,
+            head_frame: 0,
+            bubble_functions: Vec::new(),
             connected: false,
             ended: false,
-            ending_time: 0,
-            next_starting_sample: 0,
+            tail_frame: 0,
+            next_head_frame: 0,
         })
     }
     fn write<W: std::io::Write>(self, writer: &mut W) -> Result<()> {
@@ -183,13 +182,13 @@ mod tests {
             name: String::from("Vocal"),
 
             speakers_absolute_coordinates: Vec::new(),
-            bubble_state: BubbleState::Starting,
-            absolute_time: 0,
-            functions: Vec::new(),
+            bubble_state: BubbleState::Head,
+            head_frame: 0,
+            bubble_functions: Vec::new(),
             connected: false,
             ended: false,
-            ending_time: 0,
-            next_starting_sample: 0,
+            tail_frame: 0,
+            next_head_frame: 0,
         };
         let expected = bubble_metadata.clone();
 

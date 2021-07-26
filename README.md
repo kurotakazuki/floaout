@@ -52,8 +52,8 @@ Floaout is the next-generation audio format.
 | Space | `char` (1) | ' ' |
 | Volume | `Sum` |  |
 | Space or Empty | `char` (1) | ' ' if there is another |
-| Ending Relative Time | `u64` (8) | Number of frames at the end of function. |
-| Next Starting Relative Time | `u64` (8) | Number of frames at the start of the next function. Optional (!connected && !ended) |
+| Tail Frame | `u64` (8) | Number of frames at the end of function. |
+| Next Head Relative Frame | `u64` (8) | Number of frames at the start of the next function. Optional (!connected && !ended) |
 | Sample Data |  | Sample Data |
 
 ### Connected, Ended and Functions size

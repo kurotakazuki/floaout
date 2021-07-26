@@ -5,7 +5,7 @@ use std::io::{Read, Result, Write};
 impl Sample for f32 {}
 impl Sample for f64 {}
 
-pub trait WavSample: Sample {
+pub trait WavSample: Sample + Default {
     fn read<R: Read>(reader: &mut R) -> Result<Self>;
     fn write<W: Write>(self, writer: &mut W) -> Result<()>;
 }
