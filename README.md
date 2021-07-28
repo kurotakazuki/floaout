@@ -2,6 +2,8 @@
 Floaout is the next-generation audio format.
 
 # TODO
+- Decide 
+- Create LPCM trait
 - error handling
 - Clarify whether #[derive(Order)] is needed
 - Add Functions like pow, sinh, ...
@@ -52,7 +54,7 @@ Floaout is the next-generation audio format.
 | Space | `char` (1) | ' ' |
 | Volume | `Sum` |  |
 | Space or Empty | `char` (1) | ' ' if there is another |
-| Tail Frame | `u64` (8) | Number of frames at the end of function. |
+| Tail Relative Frame | `u64` (8) | Number of frames at the end of function. |
 | Next Head Relative Frame | `u64` (8) | Number of frames at the start of the next function. Optional (!connected && !ended) |
 | Sample Data |  | Sample Data |
 
@@ -63,8 +65,8 @@ Floaout is the next-generation audio format.
 
 | ended \ connected | 0?????????????? | 1?????????????? |
 | ------------- | ------------- | ------------- |
-| ?0????????????? | Stopped (NST) | Normal |
-| ?1????????????? | Ended | Ended |
+| ?0????????????? | Stopped (NST) | Head |
+| ?1????????????? | Ended | x |
 
 ### Sample Data
 #### LPCM

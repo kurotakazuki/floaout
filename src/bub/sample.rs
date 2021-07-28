@@ -1,123 +1,19 @@
 use crate::bub::{
     function::{parse, FunctionVariable},
-    BubbleFrameReader, BubbleSampleKind, BubbleState, FunctionInterpreter,
+    BubbleFrameReader, BubbleSampleKind, BubbleState,
 };
 use crate::io::{ReadExt, WriteExt};
 use crate::wav::WavSample;
 use crate::Sample;
 use std::io::{Read, Result, Write};
-use std::marker::PhantomData;
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct BubbleSample<S: WavSample> {
-    _phantom_sample: PhantomData<S>,
-}
+pub struct BubbleSample;
 
-impl<S: WavSample> Sample for BubbleSample<S> {}
+impl Sample for BubbleSample {}
 
-impl<S: WavSample> BubbleSample<S> {
-    // pub fn with_starting_sample(next_head_frame: u64) -> Self {
-    //     Self {
-    //         next_head_frame,
-    //         ..Default::default()
-    //     }
-    // }
-
-    // pub fn increment_time(&mut self) {
-    //     match self.bubble_state {
-    //         BubbleState::Head | BubbleState::Normal => self.time += 1,
-    //         _ => (),
-    //     }
-    // }
-
-    // pub fn set_as_starting(&mut self) {
-    //     // self = &mut (Self::default());
-    //     self.bubble_state = BubbleState::Head;
-
-    //     self.time = 0;
-    //     self.tail_frame_is_0 = false;
-    //     self.connected = false;
-    //     self.ended = false;
-    //     self.function_size = 0;
-    //     self.function_string.clear();
-    //     // self.cbub_functions.clear();
-    //     self.tail_frame = 0;
-    //     self.next_head_frame = 0;
-    //     self.waveform_sample = 0.0.into();
-    // }
-
-    // pub fn set_as_stopped(&mut self) {
-    //     // self = &mut (Self::default());
-    //     self.bubble_state = BubbleState::Stopped;
-
-    //     self.time = 0;
-    //     self.tail_frame_is_0 = false;
-    //     self.connected = false;
-    //     self.ended = false;
-    //     self.function_size = 0;
-    //     self.function_string.clear();
-    //     // self.cbub_functions.clear();
-    //     self.tail_frame = 0;
-    //     self.next_head_frame = 0;
-    //     self.waveform_sample = 0.0.into();
-    // }
-
-    // pub fn set_as_ended(&mut self) {
-    //     // self = &mut (Self::default());
-    //     self.bubble_state = BubbleState::Ended;
-
-    //     self.time = 0;
-    //     self.tail_frame_is_0 = false;
-    //     self.connected = false;
-    //     self.ended = false;
-    //     self.function_size = 0;
-    //     self.function_string.clear();
-    //     // self.cbub_functions.clear();
-    //     self.tail_frame = 0;
-    //     self.next_head_frame = 0;
-    //     self.waveform_sample = 0.0.into();
-    // }
-
-    // // TODO Error Handling
-    // pub fn init_with_pos(&mut self, pos: u64) -> BubbleState {
-    //     match self.bubble_state {
-    //         BubbleState::Head => {
-    //             if self.time == self.tail_frame {
-    //                 if self.connected {
-    //                     self.set_as_starting();
-    //                 } else if self.ended {
-    //                     self.set_as_ended();
-    //                 } else {
-    //                     self.set_as_stopped();
-    //                 }
-    //             } else {
-    //                 self.bubble_state = BubbleState::Normal;
-    //             }
-    //         }
-    //         BubbleState::Normal => {
-    //             if self.time == self.tail_frame {
-    //                 if self.connected {
-    //                     self.set_as_starting();
-    //                 } else if self.ended {
-    //                     self.set_as_ended();
-    //                 } else {
-    //                     self.set_as_stopped();
-    //                 }
-    //             }
-    //         }
-    //         BubbleState::Stopped => {
-    //             if self.next_head_frame == pos - 1 {
-    //                 self.set_as_starting();
-    //             }
-    //         }
-    //         BubbleState::Ended => (),
-    //     };
-
-    //     self.bubble_state
-    // }
-
-    pub fn read_flags_and_function_size<R: Read>(
-        &mut self,
+impl BubbleSample {
+    fn read_flags_and_function_size<R: Read, S: WavSample>(
         reader: &mut BubbleFrameReader<R, S>,
     ) -> Result<u16> {
         let mut read_flags_and_function_size: u16 = reader.inner.read_le()?;
@@ -141,14 +37,15 @@ impl<S: WavSample> BubbleSample<S> {
         Ok(read_flags_and_function_size)
     }
 
-    pub fn read<R: Read>(
-        &mut self,
+    pub fn read<R: Read, S: WavSample>(
         reader: &mut BubbleFrameReader<R, S>,
         speaker_absolute_coordinates: (f64, f64, f64),
     ) -> Result<S> {
+        reader.metadata.init_with_pos(reader.pos);
+
         match reader.metadata.bubble_state {
             BubbleState::Head => {
-                let function_size = self.read_flags_and_function_size(reader)?;
+                let function_size = Self::read_flags_and_function_size(reader)?;
 
                 let bubble_functions_vec = reader.inner.read_vec_for(function_size as usize)?;
                 reader.metadata.bubble_functions =
@@ -159,30 +56,49 @@ impl<S: WavSample> BubbleSample<S> {
                         .into_bubble_functions()
                         .unwrap();
 
-                reader.metadata.tail_frame = reader.inner.read_le()?;
+                reader.metadata.tail_frame = reader.pos + reader.inner.read_le::<u64>()? - 1;
 
                 if !(reader.metadata.connected || reader.metadata.ended) {
-                    reader.metadata.next_head_frame = reader.inner.read_le()?;
+                    reader.metadata.next_head_frame =
+                        reader.pos + reader.inner.read_le::<u64>()? - 1;
                 }
 
                 // Read Sample
-                match reader.metadata.bubble_sample_kind {
-                    BubbleSampleKind::LPCM => S::read(&mut reader.inner),
-                    BubbleSampleKind::Expression => todo!(),
+                if let Some(volume) = reader.metadata.bubble_functions.to_volume(
+                    speaker_absolute_coordinates,
+                    reader.pos as f64,
+                    (reader.pos - reader.metadata.head_frame) as f64,
+                    reader.metadata.samples_per_sec,
+                ) {
+                    match reader.metadata.bubble_sample_kind {
+                        BubbleSampleKind::LPCM => {
+                            return Ok(S::from_f64(volume) * S::read(&mut reader.inner)?)
+                        }
+                        BubbleSampleKind::Expression => todo!(),
+                    }
                 }
             }
             BubbleState::Normal => {
-                if reader.metadata.tail_frame == reader.pos {}
-
                 // Read Sample
-                match reader.metadata.bubble_sample_kind {
-                    BubbleSampleKind::LPCM => S::read(&mut reader.inner),
-                    BubbleSampleKind::Expression => todo!(),
+                if let Some(volume) = reader.metadata.bubble_functions.to_volume(
+                    speaker_absolute_coordinates,
+                    reader.pos as f64,
+                    (reader.pos - reader.metadata.head_frame) as f64,
+                    reader.metadata.samples_per_sec,
+                ) {
+                    match reader.metadata.bubble_sample_kind {
+                        BubbleSampleKind::LPCM => {
+                            return Ok(S::from_f64(volume) * S::read(&mut reader.inner)?)
+                        }
+                        BubbleSampleKind::Expression => todo!(),
+                    }
                 }
             }
-            BubbleState::Stopped => Ok(S::default()),
-            BubbleState::Ended => Ok(S::default()),
+            BubbleState::Stopped => (),
+            BubbleState::Ended => (),
         }
+
+        Ok(S::default())
     }
 
     // pub fn write_flags_and_function_size<W: WriteExt>(&self, writer: &mut W) -> Result<()> {

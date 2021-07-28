@@ -19,8 +19,10 @@ impl<R: Read, S: WavSample> Iterator for BubbleFrameReader<R, S> {
 
         let mut buf: WavFrame<S> = Vec::with_capacity(channels);
 
-        for _ in 0..channels as usize {
-            let bub_sample = S::read(self.get_mut());
+        for i in 0..channels as usize {
+            let bub_sample =
+                BubbleSample::read(self, self.metadata.speakers_absolute_coordinates[i]);
+
             match bub_sample {
                 Ok(s) => buf.push(s),
                 Err(e) => return Some(Err(e)),

@@ -1,6 +1,4 @@
-use crate::bub::function::{
-    BubbleFunction, BubbleFunctions, FunctionVariable, FunctionVariable::*,
-};
+use crate::bub::function::{BubbleFunction, BubbleFunctions, FunctionVariable};
 use mpl::choices::Choice;
 use mpl::output::Output;
 use mpl::span::{Span, StartAndLenSpan};
@@ -83,9 +81,9 @@ impl<'input> Output<'input, [u8], FunctionVariable, StartAndLenSpan<u16, u16>> f
         mut cst: CST<FunctionVariable, StartAndLenSpan<u16, u16>, Self>,
     ) -> AST<FunctionVariable, StartAndLenSpan<u16, u16>, Self> {
         match cst.node.value {
-            BubbleFunctions => {
+            FunctionVariable::BubbleFunctions => {
                 let span = cst.span;
-                let mut bubble_functions = Vec::new();
+                let mut bubble_functions = BubbleFunctions::new();
                 let mut first = cst.node.equal.into_first().unwrap();
                 loop {
                     bubble_functions.push(
@@ -112,14 +110,14 @@ impl<'input> Output<'input, [u8], FunctionVariable, StartAndLenSpan<u16, u16>> f
                 }
             }
             // Into First rhs Child Node
-            SpaceAndBubbleFunction => {
+            FunctionVariable::SpaceAndBubbleFunction => {
                 let span = cst.span;
                 let mut rhs_child = cst.node.equal.into_first().unwrap().rhs;
                 rhs_child.span = span;
 
                 rhs_child
             }
-            BubbleFunction => {
+            FunctionVariable::BubbleFunction => {
                 let span = cst.span;
                 let bubble_function_equal = cst.node.equal.into_first().unwrap();
                 let x0 = bubble_function_equal.lhs;
@@ -145,14 +143,19 @@ impl<'input> Output<'input, [u8], FunctionVariable, StartAndLenSpan<u16, u16>> f
                 AST::from_leaf(TerminalSymbol::Original(bubble_function.into()), span)
             }
             // Into First lhs Child Node
-            SumAndSpace | OrOrExpressionAndSpace => {
+            FunctionVariable::SumAndSpace | FunctionVariable::OrOrExpressionAndSpace => {
                 let span = cst.span;
                 let mut lhs_child = cst.node.equal.into_first().unwrap().lhs;
                 lhs_child.span = span;
 
                 lhs_child
             }
-            Comparison | Atom | PlusOrMinus | StarOrSlash | Function | Variable => {
+            FunctionVariable::Comparison
+            | FunctionVariable::Atom
+            | FunctionVariable::PlusOrMinus
+            | FunctionVariable::StarOrSlash
+            | FunctionVariable::Function
+            | FunctionVariable::Variable => {
                 let mut equal = cst.node.equal;
                 loop {
                     match equal {
@@ -165,7 +168,7 @@ impl<'input> Output<'input, [u8], FunctionVariable, StartAndLenSpan<u16, u16>> f
                     }
                 }
             }
-            FloatLiteral | IntegerLiteral => {
+            FunctionVariable::FloatLiteral | FunctionVariable::IntegerLiteral => {
                 let n = match cst.node.equal {
                     Choice::First(_) => {
                         let lo = cst.span.start as usize;
@@ -182,7 +185,7 @@ impl<'input> Output<'input, [u8], FunctionVariable, StartAndLenSpan<u16, u16>> f
 
                 AST::from_leaf(TerminalSymbol::from_original(n), cst.span)
             }
-            BytesF64Literal => {
+            FunctionVariable::BytesF64Literal => {
                 let lo = cst.span.start as usize + 1;
                 let hi = cst.span.hi(input) as usize;
 
@@ -194,11 +197,11 @@ impl<'input> Output<'input, [u8], FunctionVariable, StartAndLenSpan<u16, u16>> f
 
                 AST::from_leaf(TerminalSymbol::from_original(n.into()), cst.span)
             }
-            Constant => match cst.node.equal {
+            FunctionVariable::Constant => match cst.node.equal {
                 Choice::First(first) => first.lhs,
                 Choice::Second(second) => second.0,
             },
-            Constant1 => {
+            FunctionVariable::Constant1 => {
                 let o = cst
                     .node
                     .equal
@@ -209,20 +212,40 @@ impl<'input> Output<'input, [u8], FunctionVariable, StartAndLenSpan<u16, u16>> f
                     .unwrap();
                 AST::from_leaf(TerminalSymbol::from_original(o), cst.span)
             }
-            E => AST::from_leaf(
+            FunctionVariable::E => AST::from_leaf(
                 TerminalSymbol::from_original(std::f64::consts::E.into()),
                 cst.span,
             ),
-            Pi => AST::from_leaf(
+            FunctionVariable::Pi => AST::from_leaf(
                 TerminalSymbol::from_original(std::f64::consts::PI.into()),
                 cst.span,
             ),
             // First lhs into Second
             // A = B () / f
             // A = B
-            BubbleFunction4 | OrOr | AndAnd | EqEq | Ne | Ge | Le | Gt | Lt | UppercaseX
-            | UppercaseY | UppercaseZ | LowercaseX | LowercaseY | LowercaseZ | UppercaseT
-            | LowercaseT | UppercaseF | Plus | Minus | Star | Slash | Space => {
+            FunctionVariable::BubbleFunction4
+            | FunctionVariable::OrOr
+            | FunctionVariable::AndAnd
+            | FunctionVariable::EqEq
+            | FunctionVariable::Ne
+            | FunctionVariable::Ge
+            | FunctionVariable::Le
+            | FunctionVariable::Gt
+            | FunctionVariable::Lt
+            | FunctionVariable::UppercaseX
+            | FunctionVariable::UppercaseY
+            | FunctionVariable::UppercaseZ
+            | FunctionVariable::LowercaseX
+            | FunctionVariable::LowercaseY
+            | FunctionVariable::LowercaseZ
+            | FunctionVariable::UppercaseT
+            | FunctionVariable::LowercaseT
+            | FunctionVariable::UppercaseF
+            | FunctionVariable::Plus
+            | FunctionVariable::Minus
+            | FunctionVariable::Star
+            | FunctionVariable::Slash
+            | FunctionVariable::Space => {
                 if let Choice::First(first) = cst.node.equal {
                     cst.node.equal = first.lhs.into();
                     AST::from_cst(cst)

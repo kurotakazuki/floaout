@@ -90,9 +90,9 @@ pub struct BubbleMetadata {
     pub ended: bool,
     /// Bubble Functions
     pub bubble_functions: BubbleFunctions,
-    /// Tail Relative Frame
+    /// Tail Absolute Frame
     pub tail_frame: u64,
-    /// Next Head Relative Frame
+    /// Next Head Absolute Frame
     /// If `self.connected` or `self.ended` is `true', this won't exist.
     pub next_head_frame: u64,
 }
@@ -108,6 +108,40 @@ impl BubbleMetadata {
 
     pub const fn samples_per_sec(&self) -> f64 {
         self.samples_per_sec
+    }
+
+    pub fn set_bubble_state_from_connected_and_ended(&mut self) {
+        self.bubble_state = if self.ended {
+            BubbleState::Ended
+        } else if self.connected {
+            BubbleState::Head
+        } else {
+            BubbleState::Stopped
+        };
+    }
+
+    pub fn init_with_pos(&mut self, pos: u64) {
+        match self.bubble_state {
+            BubbleState::Head => {
+                self.head_frame = pos;
+                if self.tail_frame == pos {
+                    self.set_bubble_state_from_connected_and_ended();
+                } else {
+                    self.bubble_state = BubbleState::Normal;
+                }
+            }
+            BubbleState::Normal => {
+                if self.tail_frame == pos {
+                    self.set_bubble_state_from_connected_and_ended();
+                }
+            }
+            BubbleState::Stopped => {
+                if self.next_head_frame == pos {
+                    self.bubble_state = BubbleState::Head;
+                }
+            }
+            BubbleState::Ended => (),
+        }
     }
 }
 
@@ -141,9 +175,11 @@ impl Metadata for BubbleMetadata {
             name,
 
             speakers_absolute_coordinates: Vec::new(),
+
             bubble_state: BubbleState::Head,
             head_frame: 0,
-            bubble_functions: Vec::new(),
+
+            bubble_functions: BubbleFunctions::new(),
             connected: false,
             ended: false,
             tail_frame: 0,
@@ -182,9 +218,11 @@ mod tests {
             name: String::from("Vocal"),
 
             speakers_absolute_coordinates: Vec::new(),
+
             bubble_state: BubbleState::Head,
             head_frame: 0,
-            bubble_functions: Vec::new(),
+
+            bubble_functions: BubbleFunctions::new(),
             connected: false,
             ended: false,
             tail_frame: 0,

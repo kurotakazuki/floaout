@@ -251,7 +251,7 @@ mod tests {
             .into_bubble_functions()
             .unwrap();
 
-        for bubble_function in bubble_functions {
+        for bubble_function in bubble_functions.0 {
             let speaker_absolute_coordinates = (-1.0, 1.0, 0.0);
             let bubble_absolute_coordinates = (0.0, 0.0, 0.0);
             let absolute_time = 12.0;
