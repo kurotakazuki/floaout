@@ -1,9 +1,59 @@
-use crate::bub::{BubbleMetadata, BubbleSample};
+use crate::bub::{
+    function::{parse, FunctionVariable},
+    BubbleMetadata, BubbleSampleKind, BubbleState,
+};
+use crate::io::ReadExt;
 use crate::wav::{WavFrame, WavSample};
 use crate::{FrameReader, SampleKind};
 use std::io::{Error, ErrorKind, Read, Result};
 
 pub type BubbleFrameReader<R, S> = FrameReader<R, BubbleMetadata, S>;
+
+impl<R: Read, S: WavSample> BubbleFrameReader<R, S> {
+    fn read_flags_and_function_size(&mut self) -> Result<u16> {
+        let mut read_flags_and_function_size: u16 = self.inner.read_le()?;
+
+        // connected
+        self.metadata.connected = if read_flags_and_function_size & (1 << 15) != 0 {
+            read_flags_and_function_size &= 0x7FFF;
+            true
+        } else {
+            false
+        };
+
+        // ended
+        self.metadata.ended = if read_flags_and_function_size & (1 << 14) != 0 {
+            read_flags_and_function_size &= 0xBFFF;
+            true
+        } else {
+            false
+        };
+
+        Ok(read_flags_and_function_size)
+    }
+
+    fn read_head_metadata(&mut self) -> Result<()> {
+        let function_size = self.read_flags_and_function_size()?;
+
+        let bubble_functions_vec = self.inner.read_vec_for(function_size as usize)?;
+
+        self.metadata.bubble_functions =
+            parse(&bubble_functions_vec, &FunctionVariable::BubbleFunctions)
+                .unwrap()
+                .into_original()
+                .unwrap()
+                .into_bubble_functions()
+                .unwrap();
+
+        self.metadata.tail_absolute_frame_plus_one = self.pos + self.inner.read_le::<u64>()?;
+
+        if !(self.metadata.connected || self.metadata.ended) {
+            self.metadata.next_head_frame = self.pos + self.inner.read_le::<u64>()? - 1;
+        }
+
+        Ok(())
+    }
+}
 
 impl<R: Read, S: WavSample> Iterator for BubbleFrameReader<R, S> {
     type Item = Result<WavFrame<S>>;
@@ -15,21 +65,76 @@ impl<R: Read, S: WavSample> Iterator for BubbleFrameReader<R, S> {
             self.pos += 1;
         }
 
+        self.metadata.init_with_pos(self.pos);
+
         let channels = self.metadata.speakers_absolute_coordinates.len();
 
-        let mut buf: WavFrame<S> = Vec::with_capacity(channels);
+        let mut frame: WavFrame<S> = vec![S::default(); channels];
 
-        for i in 0..channels as usize {
-            let bub_sample =
-                BubbleSample::read(self, self.metadata.speakers_absolute_coordinates[i]);
+        match self.metadata.bubble_state {
+            BubbleState::Head => {
+                if let Err(e) = self.read_head_metadata() {
+                    return Some(Err(e));
+                }
 
-            match bub_sample {
-                Ok(s) => buf.push(s),
-                Err(e) => return Some(Err(e)),
+                // Read Sample
+                let sample: S = match self.metadata.bubble_sample_kind {
+                    BubbleSampleKind::LPCM => match S::read(&mut self.inner) {
+                        Ok(n) => n,
+                        Err(e) => return Some(Err(e)),
+                    },
+                    BubbleSampleKind::Expression => todo!(),
+                };
+                if sample != S::default() {
+                    for (i, speaker_absolute_coordinates) in self
+                        .metadata
+                        .speakers_absolute_coordinates
+                        .iter()
+                        .enumerate()
+                    {
+                        if let Some(volume) = self.metadata.bubble_functions.to_volume(
+                            *speaker_absolute_coordinates,
+                            self.pos as f64,
+                            (self.pos - self.metadata.head_frame + 1) as f64,
+                            self.metadata.samples_per_sec,
+                        ) {
+                            frame[i] = sample * S::from_f64(volume);
+                        }
+                    }
+                }
             }
+            BubbleState::Normal => {
+                // Read Sample
+                let sample: S = match self.metadata.bubble_sample_kind {
+                    BubbleSampleKind::LPCM => match S::read(&mut self.inner) {
+                        Ok(n) => n,
+                        Err(e) => return Some(Err(e)),
+                    },
+                    BubbleSampleKind::Expression => todo!(),
+                };
+                if sample != S::default() {
+                    for (i, speaker_absolute_coordinates) in self
+                        .metadata
+                        .speakers_absolute_coordinates
+                        .iter()
+                        .enumerate()
+                    {
+                        if let Some(volume) = self.metadata.bubble_functions.to_volume(
+                            *speaker_absolute_coordinates,
+                            self.pos as f64,
+                            (self.pos - self.metadata.head_frame + 1) as f64,
+                            self.metadata.samples_per_sec,
+                        ) {
+                            frame[i] = sample * S::from_f64(volume);
+                        }
+                    }
+                }
+            }
+            BubbleState::Stopped => (),
+            BubbleState::Ended => (),
         }
 
-        Some(Ok(buf))
+        Some(Ok(frame))
     }
 }
 
@@ -80,96 +185,91 @@ impl<R: Read> BubbleFrameReaderKind<R> {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::bub::{
+        function::BubbleFunctions, BubbleID, BubbleSampleKind, BubbleState, BubbleState::*,
+    };
 
-//     #[test]
-//     fn read() {
-//         macro_rules! test_read_bub {
-//             ( $( $t:ty ),* ) => ($(
-//                 let bub_sample_kind = SampleKind::from_format_tag_and_bits_per_sample(3, (std::mem::size_of::<$t>() * 8) as u16);
-//                 let channels = 1;
-//                 let samples_per_sec = 44100;
+    #[test]
+    fn read_frames() {
+        let metadata = BubbleMetadata {
+            starting_sample: 0,
+            version: 0,
+            bubble_id: BubbleID::new(0),
+            frames: 8,
+            samples_per_sec: 96000.0,
+            sample_kind: SampleKind::F32LE,
+            bubble_sample_kind: BubbleSampleKind::LPCM,
+            name: String::from("0.1*T"),
 
-//                 let data: Vec<u8> = Vec::new();
-//                 let metadata = BubbleMetadata {
-//                         frames: 0,
-//                         bub_sample_kind,
-//                         channels,
-//                         samples_per_sec,
-//                 };
-//                 let mut bub_frame_reader: BubbleFrameReader<&[u8], $t> = BubbleFrameReader::new(&data[..], metadata);
-//                 assert!(bub_frame_reader.next().is_none());
-//                 assert!(bub_frame_reader.next().is_none());
+            speakers_absolute_coordinates: vec![(0.0, 0.0, 0.0), (3.0, 0.0, 0.0)],
 
-//                 let data: Vec<u8> = vec![<$t>::to_le_bytes(0.5)]
-//                     .into_iter()
-//                     .flatten()
-//                     .collect();
-//                 let metadata = BubbleMetadata {
-//                     frames: 1,
-//                     bub_sample_kind,
-//                     channels,
-//                     samples_per_sec,
-//                 };
-//                 let mut bub_frame_reader: BubbleFrameReader<&[u8], $t> = BubbleFrameReader::new(&data[..], metadata);
-//                 assert_eq!(bub_frame_reader.next().unwrap().unwrap(), vec![0.5]);
-//                 assert!(bub_frame_reader.next().is_none());
-//                 assert!(bub_frame_reader.next().is_none());
+            bubble_state: BubbleState::Stopped,
+            head_frame: 0,
 
-//                 let data: Vec<u8> = vec![<$t>::to_le_bytes(0.0), <$t>::to_le_bytes(1.0)]
-//                     .into_iter()
-//                     .flatten()
-//                     .collect();
-//                 let metadata = BubbleMetadata {
-//                     frames: 2,
-//                     bub_sample_kind,
-//                     channels,
-//                     samples_per_sec,
-//                 };
-//                 let mut bub_frame_reader: BubbleFrameReader<&[u8], $t> = BubbleFrameReader::new(&data[..], metadata);
-//                 assert_eq!(bub_frame_reader.next().unwrap().unwrap(), vec![0.0]);
-//                 assert_eq!(bub_frame_reader.next().unwrap().unwrap(), vec![1.0]);
-//                 assert!(bub_frame_reader.next().is_none());
-//                 assert!(bub_frame_reader.next().is_none());
+            bubble_functions: BubbleFunctions::new(),
+            connected: false,
+            ended: false,
+            tail_absolute_frame_plus_one: 0,
+            next_head_frame: 1,
+        };
 
-//                 let channels = 2;
+        let data: &[u8] = &[
+            // Frame 1
+            &[15][..],
+            &[0x80],
+            b"1 2 3 X<3 0.1*T",
+            &2u64.to_le_bytes(),
+            &1.0f32.to_le_bytes(),
+            // Frame 2
+            &1.0f32.to_le_bytes(),
+            // Frame 3
+            &[11],
+            &[0],
+            b"1 2 3 X<3 1",
+            &1u64.to_le_bytes(),
+            &3u64.to_le_bytes(),
+            &0.3f32.to_le_bytes(),
+            // Frame 4
 
-//                 let metadata = BubbleMetadata {
-//                     frames: 2,
-//                     bub_sample_kind,
-//                     channels,
-//                     samples_per_sec,
-//                 };
-//                 let mut bub_frame_reader: BubbleFrameReader<&[u8], $t> = BubbleFrameReader::new(&data[..], metadata);
-//                 assert_eq!(bub_frame_reader.next().unwrap().unwrap(), vec![0.0, 1.0]);
-//                 assert!(bub_frame_reader.next().unwrap().is_err());
-//                 assert!(bub_frame_reader.next().is_none());
-//                 assert!(bub_frame_reader.next().is_none());
+            // Frame 5
+            &[12],
+            &[0x80],
+            b"0 0 0 0==0 1",
+            &1u64.to_le_bytes(),
+            &0.4f32.to_le_bytes(),
+            // Frame 6
+            &[13],
+            &[0x40],
+            b"0 0 t X>=3 -z",
+            &1u64.to_le_bytes(),
+            &1.0f32.to_le_bytes(),
+            // Frame 7
 
-//                 let data: Vec<u8> = vec![
-//                     <$t>::to_le_bytes(0.0),
-//                     <$t>::to_le_bytes(1.0),
-//                     <$t>::to_le_bytes(1.0),
-//                 ]
-//                 .into_iter()
-//                 .flatten()
-//                 .collect();
-//                 let metadata = BubbleMetadata {
-//                     frames: 2,
-//                     bub_sample_kind,
-//                     channels,
-//                     samples_per_sec,
-//                 };
-//                 let mut bub_frame_reader: BubbleFrameReader<&[u8], $t> = BubbleFrameReader::new(&data[..], metadata);
-//                 assert_eq!(bub_frame_reader.next().unwrap().unwrap(), vec![0.0, 1.0]);
-//                 assert!(bub_frame_reader.next().unwrap().is_err());
-//                 assert!(bub_frame_reader.next().is_none());
-//                 assert!(bub_frame_reader.next().is_none());
-//             )*)
-//         }
+            // Frame 8
+        ]
+        .concat();
 
-//         test_read_bub!(f32, f64);
-//     }
-// }
+        let mut wav_frame_reader: BubbleFrameReader<&[u8], f32> =
+            BubbleFrameReader::new(data, metadata);
+
+        let expects = vec![
+            (Head, [0.1, 0.0]),
+            (Normal, [0.2, 0.0]),
+            (Head, [0.3, 0.0]),
+            (Stopped, [0.0, 0.0]),
+            (Head, [0.4, 0.4]),
+            (Head, [0.0, 1.0]),
+            (Ended, [0.0, 0.0]),
+            (Ended, [0.0, 0.0]),
+        ];
+
+        for expect in expects {
+            let frame = wav_frame_reader.next().unwrap().unwrap();
+            assert_eq!(wav_frame_reader.metadata.bubble_state, expect.0);
+            assert_eq!(frame, expect.1);
+        }
+    }
+}

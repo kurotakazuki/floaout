@@ -6,7 +6,7 @@ use std::ops::Mul;
 impl Sample for f32 {}
 impl Sample for f64 {}
 
-pub trait WavSample: Sample + Default + Mul<Output = Self> {
+pub trait WavSample: Sample + Default + Mul<Output = Self> + Clone + Copy + PartialEq {
     fn from_f64(n: f64) -> Self;
     fn read<R: Read>(reader: &mut R) -> Result<Self>;
     fn write<W: Write>(self, writer: &mut W) -> Result<()>;

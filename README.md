@@ -2,8 +2,9 @@
 Floaout is the next-generation audio format.
 
 # TODO
-- Decide 
+- Rename T to F, F to S, t to f, and f to b
 - Create LPCM trait
+- Create Coordinates structure
 - error handling
 - Clarify whether #[derive(Order)] is needed
 - Add Functions like pow, sinh, ...

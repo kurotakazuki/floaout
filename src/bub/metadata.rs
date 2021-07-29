@@ -62,7 +62,7 @@ pub struct BubbleMetadata {
     /// Samples Per Sec
     pub samples_per_sec: f64,
     /// Bits Per Sample
-    sample_kind: SampleKind,
+    pub sample_kind: SampleKind,
     /// Bubble Sample Kind
     pub bubble_sample_kind: BubbleSampleKind,
     /// Name of Bubble
@@ -90,8 +90,8 @@ pub struct BubbleMetadata {
     pub ended: bool,
     /// Bubble Functions
     pub bubble_functions: BubbleFunctions,
-    /// Tail Absolute Frame
-    pub tail_frame: u64,
+    /// Tail Absolute Frame Plus One
+    pub tail_absolute_frame_plus_one: u64,
     /// Next Head Absolute Frame
     /// If `self.connected` or `self.ended` is `true', this won't exist.
     pub next_head_frame: u64,
@@ -110,34 +110,50 @@ impl BubbleMetadata {
         self.samples_per_sec
     }
 
-    pub fn set_bubble_state_from_connected_and_ended(&mut self) {
-        self.bubble_state = if self.ended {
-            BubbleState::Ended
+    fn set_as_head(&mut self, pos: u64) {
+        self.head_frame = pos;
+        self.bubble_state = BubbleState::Head;
+    }
+
+    fn set_as_normal(&mut self) {
+        self.bubble_state = BubbleState::Normal;
+    }
+
+    fn set_as_stopped(&mut self) {
+        self.bubble_state = BubbleState::Stopped;
+    }
+
+    fn set_as_ended(&mut self) {
+        self.bubble_state = BubbleState::Ended;
+    }
+
+    fn set_bubble_state_from_connected_and_ended(&mut self, pos: u64) {
+        if self.ended {
+            self.set_as_ended()
         } else if self.connected {
-            BubbleState::Head
+            self.set_as_head(pos)
         } else {
-            BubbleState::Stopped
-        };
+            self.set_as_stopped()
+        }
     }
 
     pub fn init_with_pos(&mut self, pos: u64) {
         match self.bubble_state {
             BubbleState::Head => {
-                self.head_frame = pos;
-                if self.tail_frame == pos {
-                    self.set_bubble_state_from_connected_and_ended();
+                if self.tail_absolute_frame_plus_one == pos {
+                    self.set_bubble_state_from_connected_and_ended(pos);
                 } else {
-                    self.bubble_state = BubbleState::Normal;
+                    self.set_as_normal();
                 }
             }
             BubbleState::Normal => {
-                if self.tail_frame == pos {
-                    self.set_bubble_state_from_connected_and_ended();
+                if self.tail_absolute_frame_plus_one == pos {
+                    self.set_bubble_state_from_connected_and_ended(pos);
                 }
             }
             BubbleState::Stopped => {
                 if self.next_head_frame == pos {
-                    self.bubble_state = BubbleState::Head;
+                    self.set_as_head(pos);
                 }
             }
             BubbleState::Ended => (),
@@ -182,7 +198,7 @@ impl Metadata for BubbleMetadata {
             bubble_functions: BubbleFunctions::new(),
             connected: false,
             ended: false,
-            tail_frame: 0,
+            tail_absolute_frame_plus_one: 0,
             next_head_frame: 0,
         })
     }
@@ -225,7 +241,7 @@ mod tests {
             bubble_functions: BubbleFunctions::new(),
             connected: false,
             ended: false,
-            tail_frame: 0,
+            tail_absolute_frame_plus_one: 0,
             next_head_frame: 0,
         };
         let expected = bubble_metadata.clone();
