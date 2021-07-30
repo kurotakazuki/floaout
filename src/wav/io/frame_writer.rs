@@ -5,7 +5,7 @@ use std::io::{Error, ErrorKind, Result, Write};
 pub type WavFrameWriter<W, S> = FrameWriter<W, WavMetadata, S>;
 
 impl<W: Write, S: Sample> WavFrameWriter<W, S> {
-    pub fn write_wav_frame(&mut self, wav_frame: Frame<S>) -> Result<()> {
+    pub fn write_frame(&mut self, wav_frame: Frame<S>) -> Result<()> {
         if wav_frame.0.len() != self.metadata.channels() as usize {
             return Err(ErrorKind::InvalidData.into());
         }
@@ -86,12 +86,12 @@ mod tests {
         };
         let mut wav_frame_writer = WavFrameWriter::<Vec<u8>, f32>::new(data, metadata);
 
-        wav_frame_writer.write_wav_frame(vec![1.0].into())?;
-        wav_frame_writer.write_wav_frame(vec![0.0].into())?;
+        wav_frame_writer.write_frame(vec![1.0].into())?;
+        wav_frame_writer.write_frame(vec![0.0].into())?;
 
         assert_eq!(wav_frame_writer.get_ref(), &[0, 0, 0x80, 0x3F, 0, 0, 0, 0]);
-        assert!(wav_frame_writer.write_wav_frame(vec![0.0].into()).is_err());
-        assert!(wav_frame_writer.write_wav_frame(vec![0.0].into()).is_err());
+        assert!(wav_frame_writer.write_frame(vec![0.0].into()).is_err());
+        assert!(wav_frame_writer.write_frame(vec![0.0].into()).is_err());
 
         Ok(())
     }

@@ -60,7 +60,7 @@ mod tests {
         let mut wav_frame_writer = wav_writer.into_wav_frame_writer_kind().into_f32_le()?;
 
         for frame in wav_frame_reader {
-            wav_frame_writer.write_wav_frame(frame?)?;
+            wav_frame_writer.write_frame(frame?)?;
         }
 
         assert_eq!(

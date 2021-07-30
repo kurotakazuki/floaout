@@ -3,6 +3,7 @@ Floaout is the next-generation audio format.
 
 # TODO
 - Create Coordinates structure
+- Add write_frames in BubbleFrameWriter
 - error handling
 - Clarify whether #[derive(Order)] is needed
 - Add Functions like pow, sinh, ...
