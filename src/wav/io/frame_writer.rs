@@ -1,12 +1,12 @@
-use crate::wav::{WavFrame, WavMetadata, WavSample};
-use crate::{FrameWriter, SampleKind};
+use crate::wav::WavMetadata;
+use crate::{Frame, FrameWriter, LPCMKind, Sample};
 use std::io::{Error, ErrorKind, Result, Write};
 
 pub type WavFrameWriter<W, S> = FrameWriter<W, WavMetadata, S>;
 
-impl<W: Write, S: WavSample> WavFrameWriter<W, S> {
-    pub fn write_wav_frame(&mut self, wav_frame: WavFrame<S>) -> Result<()> {
-        if wav_frame.len() != self.metadata.channels() as usize {
+impl<W: Write, S: Sample> WavFrameWriter<W, S> {
+    pub fn write_wav_frame(&mut self, wav_frame: Frame<S>) -> Result<()> {
+        if wav_frame.0.len() != self.metadata.channels() as usize {
             return Err(ErrorKind::InvalidData.into());
         }
 
@@ -16,7 +16,7 @@ impl<W: Write, S: WavSample> WavFrameWriter<W, S> {
             self.pos += 1;
         }
 
-        for sample in wav_frame {
+        for sample in wav_frame.0 {
             sample.write(&mut self.inner)?;
         }
 
@@ -49,8 +49,8 @@ impl<W: Write> WavFrameWriterKind<W> {
                 ErrorKind::Other,
                 format!(
                     "expected `{:?}`, found `{:?}`",
-                    SampleKind::F32LE,
-                    w.metadata.sample_kind()
+                    LPCMKind::F32LE,
+                    w.metadata.lpcm_kind()
                 ),
             )),
         }
@@ -62,8 +62,8 @@ impl<W: Write> WavFrameWriterKind<W> {
                 ErrorKind::Other,
                 format!(
                     "expected `{:?}`, found `{:?}`",
-                    SampleKind::F64LE,
-                    w.metadata.sample_kind()
+                    LPCMKind::F64LE,
+                    w.metadata.lpcm_kind()
                 ),
             )),
             Self::F64LE(w) => Ok(w),
@@ -80,18 +80,18 @@ mod tests {
         let data: Vec<u8> = Vec::new();
         let metadata = WavMetadata {
             frames: 2,
-            sample_kind: SampleKind::F32LE,
+            lpcm_kind: LPCMKind::F32LE,
             channels: 1,
             samples_per_sec: 44100,
         };
         let mut wav_frame_writer = WavFrameWriter::<Vec<u8>, f32>::new(data, metadata);
 
-        wav_frame_writer.write_wav_frame(vec![1.0])?;
-        wav_frame_writer.write_wav_frame(vec![0.0])?;
+        wav_frame_writer.write_wav_frame(vec![1.0].into())?;
+        wav_frame_writer.write_wav_frame(vec![0.0].into())?;
 
         assert_eq!(wav_frame_writer.get_ref(), &[0, 0, 0x80, 0x3F, 0, 0, 0, 0]);
-        assert!(wav_frame_writer.write_wav_frame(vec![0.0]).is_err());
-        assert!(wav_frame_writer.write_wav_frame(vec![0.0]).is_err());
+        assert!(wav_frame_writer.write_wav_frame(vec![0.0].into()).is_err());
+        assert!(wav_frame_writer.write_wav_frame(vec![0.0].into()).is_err());
 
         Ok(())
     }

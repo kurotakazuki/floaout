@@ -7,4 +7,3 @@ pub mod function;
 mod id;
 mod io;
 mod metadata;
-mod sample;

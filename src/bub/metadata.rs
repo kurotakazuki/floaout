@@ -1,7 +1,7 @@
 use crate::bub::{function::BubbleFunctions, BubbleID};
 use crate::io::{ReadExt, WriteExt};
 use crate::utils::return_invalid_data_if_not_equal;
-use crate::{Metadata, SampleKind};
+use crate::{LPCMKind, Metadata};
 use std::io::{ErrorKind, Read, Result, Write};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -62,9 +62,9 @@ pub struct BubbleMetadata {
     /// Samples Per Sec
     pub samples_per_sec: f64,
     /// Bits Per Sample
-    pub sample_kind: SampleKind,
+    pub lpcm_kind: LPCMKind,
     /// Bubble Sample Kind
-    pub bubble_sample_kind: BubbleSampleKind,
+    pub bubble_lpcm_kind: BubbleSampleKind,
     /// Name of Bubble
     pub name: String,
 
@@ -102,8 +102,8 @@ impl BubbleMetadata {
         self.frames
     }
 
-    pub const fn sample_kind(&self) -> SampleKind {
-        self.sample_kind
+    pub const fn lpcm_kind(&self) -> LPCMKind {
+        self.lpcm_kind
     }
 
     pub const fn samples_per_sec(&self) -> f64 {
@@ -172,8 +172,8 @@ impl Metadata for BubbleMetadata {
 
         let frames = reader.read_le()?;
         let samples_per_sec = reader.read_le()?;
-        let sample_kind = SampleKind::read(reader)?;
-        let bubble_sample_kind = BubbleSampleKind::read(reader)?;
+        let lpcm_kind = LPCMKind::read(reader)?;
+        let bubble_lpcm_kind = BubbleSampleKind::read(reader)?;
 
         let name_size: u8 = reader.read_le()?;
         let name = reader.read_string_for(name_size as usize)?;
@@ -186,8 +186,8 @@ impl Metadata for BubbleMetadata {
             bubble_id,
             frames,
             samples_per_sec,
-            sample_kind,
-            bubble_sample_kind,
+            lpcm_kind,
+            bubble_lpcm_kind,
             name,
 
             speakers_absolute_coordinates: Vec::new(),
@@ -208,8 +208,8 @@ impl Metadata for BubbleMetadata {
         self.bubble_id.write(writer)?;
         writer.write_le(self.frames)?;
         writer.write_le(self.samples_per_sec)?;
-        self.sample_kind.write(writer)?;
-        self.bubble_sample_kind.write(writer)?;
+        self.lpcm_kind.write(writer)?;
+        self.bubble_lpcm_kind.write(writer)?;
         writer.write_le(self.name.len() as u8)?;
         writer.write_str(&self.name)?;
 
@@ -229,8 +229,8 @@ mod tests {
             bubble_id: BubbleID::new(0),
             frames: 96000,
             samples_per_sec: 96000.0,
-            sample_kind: SampleKind::F32LE,
-            bubble_sample_kind: BubbleSampleKind::LPCM,
+            lpcm_kind: LPCMKind::F32LE,
+            bubble_lpcm_kind: BubbleSampleKind::LPCM,
             name: String::from("Vocal"),
 
             speakers_absolute_coordinates: Vec::new(),

@@ -2,7 +2,6 @@
 Floaout is the next-generation audio format.
 
 # TODO
-- Create LPCM trait
 - Create Coordinates structure
 - error handling
 - Clarify whether #[derive(Order)] is needed
@@ -18,13 +17,13 @@ Floaout is the next-generation audio format.
 | Bubble ID | `u128` (16) | Bubble ID of this file. If undefined Bubble, than value is 0. |
 | Frames | `u64` (8) | Number of frames |
 | Samples Per Sec | `f64` (8) | Samples per sec |
-| SampleKind | `u8` (1) | `SampleKind` |
+|LPCMKind | `u8` (1) | `SampleKind` |
 | BubbleSampleKind | `u8` (1) | `BubbleSampleKind` |
 | Name Size | `u8` (1) | Name Size |
 | Name | `String` | Name (UTF-8) |
 | CRC | `` () | Pending |
 
-### SampleKind
+###LPCMKind
 | Variant  | Description | Value (`Type`) |
 | ------------- | ------------- | ------------- |
 | F32LE | `f32` Little Endian | 0 (`u8`) |
@@ -72,7 +71,7 @@ Floaout is the next-generation audio format.
 #### LPCM
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
-| WavSample | `f32` or `f64` (4 or 8) | depends on `SampleKind` |
+| Sample | `f32` or `f64` (4 or 8) | depends on `SampleKind` |
 
 #### Expression
 | Name | `Type` (Bytes) | Description |

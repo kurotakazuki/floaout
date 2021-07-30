@@ -1,11 +1,11 @@
-use crate::wav::{WavFrame, WavMetadata, WavSample};
-use crate::{FrameReader, SampleKind};
+use crate::wav::WavMetadata;
+use crate::{Frame, FrameReader, LPCMKind, Sample};
 use std::io::{Error, ErrorKind, Read, Result};
 
 pub type WavFrameReader<R, S> = FrameReader<R, WavMetadata, S>;
 
-impl<R: Read, S: WavSample> Iterator for WavFrameReader<R, S> {
-    type Item = Result<WavFrame<S>>;
+impl<R: Read, S: Sample> Iterator for WavFrameReader<R, S> {
+    type Item = Result<Frame<S>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.metadata.frames() <= self.pos {
@@ -14,7 +14,7 @@ impl<R: Read, S: WavSample> Iterator for WavFrameReader<R, S> {
             self.pos += 1;
         }
 
-        let mut buf: WavFrame<S> = Vec::with_capacity(self.metadata.channels() as usize);
+        let mut buf: Vec<S> = Vec::with_capacity(self.metadata.channels() as usize);
 
         for _ in 0..self.metadata.channels() as usize {
             let wav_sample = S::read(self.get_mut());
@@ -24,7 +24,7 @@ impl<R: Read, S: WavSample> Iterator for WavFrameReader<R, S> {
             }
         }
 
-        Some(Ok(buf))
+        Some(Ok(buf.into()))
     }
 }
 
@@ -53,8 +53,8 @@ impl<R: Read> WavFrameReaderKind<R> {
                 ErrorKind::Other,
                 format!(
                     "expected `{:?}`, found `{:?}`",
-                    SampleKind::F32LE,
-                    r.metadata.sample_kind()
+                    LPCMKind::F32LE,
+                    r.metadata.lpcm_kind()
                 ),
             )),
         }
@@ -66,8 +66,8 @@ impl<R: Read> WavFrameReaderKind<R> {
                 ErrorKind::Other,
                 format!(
                     "expected `{:?}`, found `{:?}`",
-                    SampleKind::F64LE,
-                    r.metadata.sample_kind()
+                    LPCMKind::F64LE,
+                    r.metadata.lpcm_kind()
                 ),
             )),
             Self::F64LE(r) => Ok(r),
@@ -83,7 +83,7 @@ mod tests {
     fn read() {
         macro_rules! test_read_wav {
             ( $( $t:ty ),* ) => ($(
-                let sample_kind = SampleKind::from_format_tag_and_bits_per_sample(3, (std::mem::size_of::<$t>() * 8) as u16);
+                let lpcm_kind =LPCMKind::from_format_tag_and_bits_per_sample(3, (std::mem::size_of::<$t>() * 8) as u16);
                 let channels = 1;
                 let samples_per_sec = 44100;
 
@@ -91,7 +91,7 @@ mod tests {
                 let data: Vec<u8> = Vec::new();
                 let metadata = WavMetadata {
                         frames: 0,
-                        sample_kind,
+                       lpcm_kind,
                         channels,
                         samples_per_sec,
                 };
@@ -105,12 +105,12 @@ mod tests {
                     .collect();
                 let metadata = WavMetadata {
                     frames: 1,
-                    sample_kind,
+                   lpcm_kind,
                     channels,
                     samples_per_sec,
                 };
                 let mut wav_frame_reader: WavFrameReader<&[u8], $t> = WavFrameReader::new(&data[..], metadata);
-                assert_eq!(wav_frame_reader.next().unwrap().unwrap(), vec![0.5]);
+                assert_eq!(wav_frame_reader.next().unwrap().unwrap().0, vec![0.5]);
                 assert!(wav_frame_reader.next().is_none());
                 assert!(wav_frame_reader.next().is_none());
 
@@ -120,13 +120,13 @@ mod tests {
                     .collect();
                 let metadata = WavMetadata {
                     frames: 2,
-                    sample_kind,
+                   lpcm_kind,
                     channels,
                     samples_per_sec,
                 };
                 let mut wav_frame_reader: WavFrameReader<&[u8], $t> = WavFrameReader::new(&data[..], metadata);
-                assert_eq!(wav_frame_reader.next().unwrap().unwrap(), vec![0.0]);
-                assert_eq!(wav_frame_reader.next().unwrap().unwrap(), vec![1.0]);
+                assert_eq!(wav_frame_reader.next().unwrap().unwrap().0, vec![0.0]);
+                assert_eq!(wav_frame_reader.next().unwrap().unwrap().0, vec![1.0]);
                 assert!(wav_frame_reader.next().is_none());
                 assert!(wav_frame_reader.next().is_none());
 
@@ -135,12 +135,12 @@ mod tests {
 
                 let metadata = WavMetadata {
                     frames: 2,
-                    sample_kind,
+                   lpcm_kind,
                     channels,
                     samples_per_sec,
                 };
                 let mut wav_frame_reader: WavFrameReader<&[u8], $t> = WavFrameReader::new(&data[..], metadata);
-                assert_eq!(wav_frame_reader.next().unwrap().unwrap(), vec![0.0, 1.0]);
+                assert_eq!(wav_frame_reader.next().unwrap().unwrap().0, vec![0.0, 1.0]);
                 assert!(wav_frame_reader.next().unwrap().is_err());
                 assert!(wav_frame_reader.next().is_none());
                 assert!(wav_frame_reader.next().is_none());
@@ -155,12 +155,12 @@ mod tests {
                 .collect();
                 let metadata = WavMetadata {
                     frames: 2,
-                    sample_kind,
+                   lpcm_kind,
                     channels,
                     samples_per_sec,
                 };
                 let mut wav_frame_reader: WavFrameReader<&[u8], $t> = WavFrameReader::new(&data[..], metadata);
-                assert_eq!(wav_frame_reader.next().unwrap().unwrap(), vec![0.0, 1.0]);
+                assert_eq!(wav_frame_reader.next().unwrap().unwrap().0, vec![0.0, 1.0]);
                 assert!(wav_frame_reader.next().unwrap().is_err());
                 assert!(wav_frame_reader.next().is_none());
                 assert!(wav_frame_reader.next().is_none());

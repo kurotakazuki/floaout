@@ -1,6 +1,6 @@
 use crate::io::{ReadExt, WriteBytes, WriteExt};
 use crate::utils::return_invalid_data_if_not_equal;
-use crate::{Metadata, SampleKind};
+use crate::{LPCMKind, Metadata};
 use std::io::Result;
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -8,7 +8,7 @@ pub struct WavMetadata {
     /// Number of sample frames
     pub frames: u64,
     // Sample Kind
-    pub sample_kind: SampleKind,
+    pub lpcm_kind: LPCMKind,
     /// Channels
     pub channels: u16,
     /// Samples per sec
@@ -61,7 +61,7 @@ impl Metadata for WavMetadata {
 
                                 let wav_metadata = Self {
                                     frames,
-                                    sample_kind: SampleKind::from_format_tag_and_bits_per_sample(
+                                    lpcm_kind: LPCMKind::from_format_tag_and_bits_per_sample(
                                         format_tag,
                                         bits_per_sample,
                                     ),
@@ -120,12 +120,12 @@ impl WavMetadata {
         self.frames
     }
 
-    pub const fn sample_kind(&self) -> SampleKind {
-        self.sample_kind
+    pub const fn lpcm_kind(&self) -> LPCMKind {
+        self.lpcm_kind
     }
 
     pub const fn format_tag(&self) -> u16 {
-        self.sample_kind.format_tag()
+        self.lpcm_kind.format_tag()
     }
 
     pub const fn channels(&self) -> u16 {
@@ -137,7 +137,7 @@ impl WavMetadata {
     }
 
     pub const fn bits_per_sample(&self) -> u16 {
-        self.sample_kind.bits_per_sample()
+        self.lpcm_kind.bits_per_sample()
     }
 
     pub const fn bytes_per_sample(&self) -> u16 {
@@ -173,13 +173,13 @@ mod tests {
 
     #[test]
     fn info() {
-        let sample_kind = SampleKind::F32LE;
+        let lpcm_kind = LPCMKind::F32LE;
         let frames = 0;
         let samples_per_sec = 44100;
 
         let metadata = WavMetadata {
             frames,
-            sample_kind,
+            lpcm_kind,
             channels: 1,
             samples_per_sec,
         };
@@ -194,7 +194,7 @@ mod tests {
 
         let metadata = WavMetadata {
             frames: 88200,
-            sample_kind,
+            lpcm_kind,
             channels: 1,
             samples_per_sec,
         };
@@ -211,7 +211,7 @@ mod tests {
 
         let metadata = WavMetadata {
             frames,
-            sample_kind,
+            lpcm_kind,
             channels: 2,
             samples_per_sec,
         };
@@ -226,7 +226,7 @@ mod tests {
 
     #[test]
     fn read() -> Result<()> {
-        let sample_kind = SampleKind::F32LE;
+        let lpcm_kind = LPCMKind::F32LE;
 
         let mut data: &[u8] = &[
             0x52, 0x49, 0x46, 0x46, 0x44, 0x62, 0x05, 0x00, 0x57, 0x41, 0x56, 0x45, 0x66, 0x6D,
@@ -237,7 +237,7 @@ mod tests {
         let val = WavMetadata::read(&mut data)?;
         let expect = WavMetadata {
             frames: 88200,
-            sample_kind,
+            lpcm_kind,
             channels: 1,
             samples_per_sec: 44100,
         };
@@ -304,7 +304,7 @@ mod tests {
         let val = WavMetadata::read(&mut data)?;
         let expect = WavMetadata {
             frames: 5250,
-            sample_kind,
+            lpcm_kind,
             channels: 2,
             samples_per_sec: 44100,
         };
@@ -328,7 +328,7 @@ mod tests {
         let mut v = Vec::new();
         let metadata = WavMetadata {
             frames: 88200,
-            sample_kind: SampleKind::F32LE,
+            lpcm_kind: LPCMKind::F32LE,
             channels: 1,
             samples_per_sec: 44100,
         };

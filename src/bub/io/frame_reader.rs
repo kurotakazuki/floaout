@@ -3,13 +3,12 @@ use crate::bub::{
     BubbleMetadata, BubbleSampleKind, BubbleState,
 };
 use crate::io::ReadExt;
-use crate::wav::{WavFrame, WavSample};
-use crate::{FrameReader, SampleKind};
+use crate::{Frame, FrameReader, LPCMKind, Sample};
 use std::io::{Error, ErrorKind, Read, Result};
 
 pub type BubbleFrameReader<R, S> = FrameReader<R, BubbleMetadata, S>;
 
-impl<R: Read, S: WavSample> BubbleFrameReader<R, S> {
+impl<R: Read, S: Sample> BubbleFrameReader<R, S> {
     fn read_flags_and_function_size(&mut self) -> Result<u16> {
         let mut read_flags_and_function_size: u16 = self.inner.read_le()?;
 
@@ -54,7 +53,7 @@ impl<R: Read, S: WavSample> BubbleFrameReader<R, S> {
         Ok(())
     }
 
-    fn multiply_volume(&self, frame: &mut WavFrame<S>, sample: S) {
+    fn multiply_volume(&self, frame: &mut Frame<S>, sample: S) {
         if sample != S::default() {
             for (i, speaker_absolute_coordinates) in self
                 .metadata
@@ -69,15 +68,15 @@ impl<R: Read, S: WavSample> BubbleFrameReader<R, S> {
                     self.metadata.frames as f64,
                     self.metadata.samples_per_sec,
                 ) {
-                    frame[i] = sample * S::from_f64(volume);
+                    frame.0[i] = sample * S::from_f64(volume);
                 }
             }
         }
     }
 }
 
-impl<R: Read, S: WavSample> Iterator for BubbleFrameReader<R, S> {
-    type Item = Result<WavFrame<S>>;
+impl<R: Read, S: Sample> Iterator for BubbleFrameReader<R, S> {
+    type Item = Result<Frame<S>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.metadata.frames() <= self.pos {
@@ -90,7 +89,7 @@ impl<R: Read, S: WavSample> Iterator for BubbleFrameReader<R, S> {
 
         let channels = self.metadata.speakers_absolute_coordinates.len();
 
-        let mut frame: WavFrame<S> = vec![S::default(); channels];
+        let mut frame: Frame<S> = vec![S::default(); channels].into();
 
         match self.metadata.bubble_state {
             BubbleState::Head => {
@@ -99,7 +98,7 @@ impl<R: Read, S: WavSample> Iterator for BubbleFrameReader<R, S> {
                 }
 
                 // Read Sample
-                let sample: S = match self.metadata.bubble_sample_kind {
+                let sample: S = match self.metadata.bubble_lpcm_kind {
                     BubbleSampleKind::LPCM => match S::read(&mut self.inner) {
                         Ok(n) => n,
                         Err(e) => return Some(Err(e)),
@@ -110,7 +109,7 @@ impl<R: Read, S: WavSample> Iterator for BubbleFrameReader<R, S> {
             }
             BubbleState::Normal => {
                 // Read Sample
-                let sample: S = match self.metadata.bubble_sample_kind {
+                let sample: S = match self.metadata.bubble_lpcm_kind {
                     BubbleSampleKind::LPCM => match S::read(&mut self.inner) {
                         Ok(n) => n,
                         Err(e) => return Some(Err(e)),
@@ -152,8 +151,8 @@ impl<R: Read> BubbleFrameReaderKind<R> {
                 ErrorKind::Other,
                 format!(
                     "expected `{:?}`, found `{:?}`",
-                    SampleKind::F32LE,
-                    r.metadata.sample_kind()
+                    LPCMKind::F32LE,
+                    r.metadata.lpcm_kind()
                 ),
             )),
         }
@@ -165,8 +164,8 @@ impl<R: Read> BubbleFrameReaderKind<R> {
                 ErrorKind::Other,
                 format!(
                     "expected `{:?}`, found `{:?}`",
-                    SampleKind::F64LE,
-                    r.metadata.sample_kind()
+                    LPCMKind::F64LE,
+                    r.metadata.lpcm_kind()
                 ),
             )),
             Self::F64LE(r) => Ok(r),
@@ -189,8 +188,8 @@ mod tests {
             bubble_id: BubbleID::new(0),
             frames: 8,
             samples_per_sec: 96000.0,
-            sample_kind: SampleKind::F32LE,
-            bubble_sample_kind: BubbleSampleKind::LPCM,
+            lpcm_kind: LPCMKind::F32LE,
+            bubble_lpcm_kind: BubbleSampleKind::LPCM,
             name: String::from("0.1*N"),
 
             speakers_absolute_coordinates: vec![(0.0, 0.0, 0.0), (3.0, 0.0, 0.0)],
@@ -258,7 +257,7 @@ mod tests {
         for expect in expects {
             let frame = wav_frame_reader.next().unwrap().unwrap();
             assert_eq!(wav_frame_reader.metadata.bubble_state, expect.0);
-            assert_eq!(frame, expect.1);
+            assert_eq!(frame.0, expect.1);
         }
     }
 }
