@@ -240,6 +240,7 @@ impl<'input> Output<'input, [u8], FunctionVariable, StartAndLenSpan<u16, u16>> f
             | FunctionVariable::LowercaseZ
             | FunctionVariable::UppercaseN
             | FunctionVariable::LowercaseN
+            | FunctionVariable::UppercaseF
             | FunctionVariable::UppercaseS
             | FunctionVariable::Plus
             | FunctionVariable::Minus

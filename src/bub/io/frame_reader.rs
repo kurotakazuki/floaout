@@ -96,6 +96,7 @@ impl<R: Read, S: WavSample> Iterator for BubbleFrameReader<R, S> {
                             *speaker_absolute_coordinates,
                             self.pos as f64,
                             (self.pos - self.metadata.head_frame + 1) as f64,
+                            self.metadata.frames as f64,
                             self.metadata.samples_per_sec,
                         ) {
                             frame[i] = sample * S::from_f64(volume);
@@ -123,6 +124,7 @@ impl<R: Read, S: WavSample> Iterator for BubbleFrameReader<R, S> {
                             *speaker_absolute_coordinates,
                             self.pos as f64,
                             (self.pos - self.metadata.head_frame + 1) as f64,
+                            self.metadata.frames as f64,
                             self.metadata.samples_per_sec,
                         ) {
                             frame[i] = sample * S::from_f64(volume);

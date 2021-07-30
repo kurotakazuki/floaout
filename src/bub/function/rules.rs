@@ -458,8 +458,16 @@ impl<'a> FunctionRules {
         },
         second: Second(E::V(Variable8)),
     };
-    /// Variable8 = UppercaseS () / f
+    /// Variable8 = LowercaseN () / Variable9
     const VARIABLE8_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::V(UppercaseF),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::V(Variable9)),
+    };
+    /// Variable9 = UppercaseS () / f
+    const VARIABLE9_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(UppercaseS),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
@@ -527,6 +535,14 @@ impl<'a> FunctionRules {
     const LOWERCASE_N_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::T(TerminalSymbol::Original(Char('n'))),
+            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
+        },
+        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
+    };
+    /// UppercaseF = 'F' () / f
+    const UPPERCASE_F_RULE: Rule<'a> = RightRule {
+        first: First {
+            lhs: E::T(TerminalSymbol::Original(Char('F'))),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
@@ -957,6 +973,7 @@ impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
             Variable6 => &Self::VARIABLE6_RULE,
             Variable7 => &Self::VARIABLE7_RULE,
             Variable8 => &Self::VARIABLE8_RULE,
+            Variable9 => &Self::VARIABLE9_RULE,
 
             UppercaseX => &Self::UPPERCASE_X_RULE,
             UppercaseY => &Self::UPPERCASE_Y_RULE,
@@ -966,6 +983,7 @@ impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
             LowercaseZ => &Self::LOWERCASE_Z_RULE,
             UppercaseN => &Self::UPPERCASE_N_RULE,
             LowercaseN => &Self::LOWERCASE_N_RULE,
+            UppercaseF => &Self::UPPERCASE_F_RULE,
             UppercaseS => &Self::UPPERCASE_S_RULE,
 
             // Constant

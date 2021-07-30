@@ -52,8 +52,9 @@ impl BubbleFunctions {
     pub fn to_volume(
         &self,
         speaker_absolute_coordinates: (f64, f64, f64),
-        absolute_time: f64,
-        relative_time: f64,
+        absolute_frame: f64,
+        relative_frame: f64,
+        frames: f64,
         samples_per_sec: f64,
     ) -> Option<f64> {
         for bubble_function in self.0.iter() {
@@ -61,8 +62,9 @@ impl BubbleFunctions {
             let mut interpreter = FunctionInterpreter::new(
                 speaker_absolute_coordinates,
                 bubble_absolute_coordinates,
-                absolute_time,
-                relative_time,
+                absolute_frame,
+                relative_frame,
+                frames,
                 samples_per_sec,
             );
 

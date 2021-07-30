@@ -13,6 +13,7 @@ pub struct FunctionInterpreter {
     pub uppercase_n: f64,
     /// Number of frames starting from the function. Relative Time
     pub lowercase_n: f64,
+    pub uppercase_f: f64,
     pub uppercase_s: f64,
 }
 
@@ -20,8 +21,9 @@ impl FunctionInterpreter {
     pub fn new(
         speaker_absolute_coordinates: (f64, f64, f64),
         bubble_absolute_coordinates: (f64, f64, f64),
-        absolute_time: f64,
-        relative_time: f64,
+        absolute_frame: f64,
+        relative_frame: f64,
+        frames: f64,
         samples_per_sec: f64,
     ) -> Self {
         Self {
@@ -31,8 +33,9 @@ impl FunctionInterpreter {
             lowercase_x: speaker_absolute_coordinates.0 - bubble_absolute_coordinates.0,
             lowercase_y: speaker_absolute_coordinates.1 - bubble_absolute_coordinates.1,
             lowercase_z: speaker_absolute_coordinates.2 - bubble_absolute_coordinates.2,
-            uppercase_n: absolute_time,
-            lowercase_n: relative_time,
+            uppercase_n: absolute_frame,
+            lowercase_n: relative_frame,
+            uppercase_f: frames,
             uppercase_s: samples_per_sec,
         }
     }
@@ -229,6 +232,7 @@ impl FunctionInterpreter {
                 LowercaseZ => Ok(self.lowercase_z),
                 UppercaseN => Ok(self.uppercase_n),
                 LowercaseN => Ok(self.lowercase_n),
+                UppercaseF => Ok(self.uppercase_f),
                 UppercaseS => Ok(self.uppercase_s),
                 _ => unreachable!(),
             },
@@ -254,14 +258,16 @@ mod tests {
         for bubble_function in bubble_functions.0 {
             let speaker_absolute_coordinates = (-1.0, 1.0, 0.0);
             let bubble_absolute_coordinates = (0.0, 0.0, 0.0);
-            let absolute_time = 12.0;
-            let relative_time = 0.0;
+            let absolute_frame = 12.0;
+            let relative_frame = 0.0;
+            let frames = 88200.0;
             let samples_per_sec = 44100.0;
             let mut interpreter = FunctionInterpreter::new(
                 speaker_absolute_coordinates,
                 bubble_absolute_coordinates,
-                absolute_time,
-                relative_time,
+                absolute_frame,
+                relative_frame,
+                frames,
                 samples_per_sec,
             );
 
@@ -293,10 +299,20 @@ mod tests {
 
     #[test]
     fn eval_or_or_expr() {
-        let interpreter =
-            FunctionInterpreter::new((-1.0, 1.0, 0.0), (2.0, 3.0, 4.0), 12.0, 3.0, 44100.0);
+        let interpreter = FunctionInterpreter::new(
+            (-1.0, 1.0, 0.0),
+            (2.0, 3.0, 4.0),
+            12.0,
+            3.0,
+            88200.0,
+            44100.0,
+        );
 
         let input: &[u8] = "0.0<0.1".as_bytes();
+        let ast = parse(&input, &FunctionVariable::OrOrExpression).unwrap();
+        let result = interpreter.eval_or_or_expr(&ast);
+        assert_eq!(result, Ok(true));
+        let input: &[u8] = "F==88200".as_bytes();
         let ast = parse(&input, &FunctionVariable::OrOrExpression).unwrap();
         let result = interpreter.eval_or_or_expr(&ast);
         assert_eq!(result, Ok(true));
@@ -339,8 +355,14 @@ mod tests {
 
     #[test]
     fn eval_and_and_expr() {
-        let interpreter =
-            FunctionInterpreter::new((-1.0, 1.0, 0.0), (2.0, 3.0, 4.0), 12.0, 3.0, 44100.0);
+        let interpreter = FunctionInterpreter::new(
+            (-1.0, 1.0, 0.0),
+            (2.0, 3.0, 4.0),
+            12.0,
+            3.0,
+            88200.0,
+            44100.0,
+        );
 
         let input: &[u8] = "0.0<0.1".as_bytes();
         let ast = parse(&input, &FunctionVariable::AndAndExpression).unwrap();
@@ -362,8 +384,14 @@ mod tests {
 
     #[test]
     fn eval_comparison_expr() {
-        let interpreter =
-            FunctionInterpreter::new((-1.0, 1.0, 0.0), (2.0, 3.0, 4.0), 12.0, 3.0, 44100.0);
+        let interpreter = FunctionInterpreter::new(
+            (-1.0, 1.0, 0.0),
+            (2.0, 3.0, 4.0),
+            12.0,
+            3.0,
+            88200.0,
+            44100.0,
+        );
 
         let input: &[u8] = "-1.0==-1".as_bytes();
         let ast = parse(&input, &FunctionVariable::ComparisonExpression).unwrap();
@@ -398,8 +426,14 @@ mod tests {
 
     #[test]
     fn eval_sum() {
-        let interpreter =
-            FunctionInterpreter::new((-1.0, 1.0, 0.0), (2.0, 3.0, 4.0), 12.0, 3.0, 44100.0);
+        let interpreter = FunctionInterpreter::new(
+            (-1.0, 1.0, 0.0),
+            (2.0, 3.0, 4.0),
+            12.0,
+            3.0,
+            88200.0,
+            44100.0,
+        );
 
         // PlusOrMinusFactor
         let input: &[u8] = "-3".as_bytes();

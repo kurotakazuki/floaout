@@ -2,8 +2,6 @@
 Floaout is the next-generation audio format.
 
 # TODO
-- Rename T to N, F to S, t to n, and f to b
-- Add Frames as 'F'
 - Create LPCM trait
 - Create Coordinates structure
 - error handling
@@ -94,8 +92,9 @@ Floaout is the next-generation audio format.
 | x | x = X - X_0 (X_0 is Bubble's absolute X coordinate). Speaker's relative X coordinate. |
 | y | y = Y - Y_0 (Y_0 is Bubble's absolute Y coordinate). Speaker's relative Y coordinate. |
 | z | z = Z - Z_0 (Z_0 is Bubble's absolute Z coordinate). Speaker's relative Z coordinate. |
-| N | Number of frames starting from the file. (`as f64`) |
-| n | Number of frames starting from the function.(`as f64`) |
+| N | Absolute frame n. Number of frames starting from the file. (`as f64`) |
+| n | Relative frame n. Number of frames starting from the function.(`as f64`) |
+| F | Frames (`as f64`) |
 | S | Samples per sec |
 
 ##### Constants
@@ -224,7 +223,8 @@ Variable4 = LowercaseY () / Variable5
 Variable5 = LowercaseZ () / Variable6
 Variable6 = UppercaseN () / Variable7
 Variable7 = LowercaseN () / Variable8
-Variable8 = UppercaseS () / f
+Variable8 = UppercaseF () / Variable9
+Variable9 = UppercaseS () / f
 
 UppercaseX = 'X' () / f
 UppercaseY = 'Y' () / f
@@ -234,6 +234,7 @@ LowercaseY = 'y' () / f
 LowercaseZ = 'z' () / f
 UppercaseN = 'N' () / f
 LowercaseN = 'n' () / f
+UppercaseF = 'F' () / f
 UppercaseS = 'S' () / f
 
 // Constant

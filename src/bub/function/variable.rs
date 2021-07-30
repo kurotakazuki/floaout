@@ -85,6 +85,7 @@ pub enum FunctionVariable {
     Variable6,
     Variable7,
     Variable8,
+    Variable9,
 
     UppercaseX,
     UppercaseY,
@@ -94,6 +95,7 @@ pub enum FunctionVariable {
     LowercaseZ,
     UppercaseN,
     LowercaseN,
+    UppercaseF,
     UppercaseS,
 
     // Constant
