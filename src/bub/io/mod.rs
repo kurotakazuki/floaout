@@ -1,4 +1,4 @@
-pub use self::frame_reader::BubbleFrameReader;
+pub use self::frame_reader::{BubbleFrameReader, BubbleFrameReaderKind};
 
 mod frame_reader;
 mod frame_writer;
