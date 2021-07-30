@@ -53,6 +53,27 @@ impl<R: Read, S: WavSample> BubbleFrameReader<R, S> {
 
         Ok(())
     }
+
+    fn multiply_volume(&self, frame: &mut WavFrame<S>, sample: S) {
+        if sample != S::default() {
+            for (i, speaker_absolute_coordinates) in self
+                .metadata
+                .speakers_absolute_coordinates
+                .iter()
+                .enumerate()
+            {
+                if let Some(volume) = self.metadata.bubble_functions.to_volume(
+                    *speaker_absolute_coordinates,
+                    self.pos as f64,
+                    (self.pos - self.metadata.head_frame + 1) as f64,
+                    self.metadata.frames as f64,
+                    self.metadata.samples_per_sec,
+                ) {
+                    frame[i] = sample * S::from_f64(volume);
+                }
+            }
+        }
+    }
 }
 
 impl<R: Read, S: WavSample> Iterator for BubbleFrameReader<R, S> {
@@ -85,24 +106,7 @@ impl<R: Read, S: WavSample> Iterator for BubbleFrameReader<R, S> {
                     },
                     BubbleSampleKind::Expression => todo!(),
                 };
-                if sample != S::default() {
-                    for (i, speaker_absolute_coordinates) in self
-                        .metadata
-                        .speakers_absolute_coordinates
-                        .iter()
-                        .enumerate()
-                    {
-                        if let Some(volume) = self.metadata.bubble_functions.to_volume(
-                            *speaker_absolute_coordinates,
-                            self.pos as f64,
-                            (self.pos - self.metadata.head_frame + 1) as f64,
-                            self.metadata.frames as f64,
-                            self.metadata.samples_per_sec,
-                        ) {
-                            frame[i] = sample * S::from_f64(volume);
-                        }
-                    }
-                }
+                self.multiply_volume(&mut frame, sample);
             }
             BubbleState::Normal => {
                 // Read Sample
@@ -113,24 +117,7 @@ impl<R: Read, S: WavSample> Iterator for BubbleFrameReader<R, S> {
                     },
                     BubbleSampleKind::Expression => todo!(),
                 };
-                if sample != S::default() {
-                    for (i, speaker_absolute_coordinates) in self
-                        .metadata
-                        .speakers_absolute_coordinates
-                        .iter()
-                        .enumerate()
-                    {
-                        if let Some(volume) = self.metadata.bubble_functions.to_volume(
-                            *speaker_absolute_coordinates,
-                            self.pos as f64,
-                            (self.pos - self.metadata.head_frame + 1) as f64,
-                            self.metadata.frames as f64,
-                            self.metadata.samples_per_sec,
-                        ) {
-                            frame[i] = sample * S::from_f64(volume);
-                        }
-                    }
-                }
+                self.multiply_volume(&mut frame, sample);
             }
             BubbleState::Stopped => (),
             BubbleState::Ended => (),
