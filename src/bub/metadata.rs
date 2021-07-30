@@ -12,6 +12,36 @@ pub enum BubbleState {
     Ended,
 }
 
+impl BubbleState {
+    pub fn is_head(&self) -> bool {
+        match self {
+            Self::Head => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_normal(&self) -> bool {
+        match self {
+            Self::Normal => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_stopped(&self) -> bool {
+        match self {
+            Self::Stopped => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_ended(&self) -> bool {
+        match self {
+            Self::Ended => true,
+            _ => false,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum BubbleSampleKind {
     LPCM,
@@ -110,20 +140,20 @@ impl BubbleMetadata {
         self.samples_per_sec
     }
 
-    fn set_as_head(&mut self, pos: u64) {
+    pub fn set_as_head(&mut self, pos: u64) {
         self.head_frame = pos;
         self.bubble_state = BubbleState::Head;
     }
 
-    fn set_as_normal(&mut self) {
+    pub fn set_as_normal(&mut self) {
         self.bubble_state = BubbleState::Normal;
     }
 
-    fn set_as_stopped(&mut self) {
+    pub fn set_as_stopped(&mut self) {
         self.bubble_state = BubbleState::Stopped;
     }
 
-    fn set_as_ended(&mut self) {
+    pub fn set_as_ended(&mut self) {
         self.bubble_state = BubbleState::Ended;
     }
 
@@ -159,6 +189,44 @@ impl BubbleMetadata {
             BubbleState::Ended => (),
         }
     }
+
+    // fn bubble_state_from_connected_and_ended(&self) -> BubbleState {
+    //     if self.ended {
+    //         BubbleState::Ended
+    //     } else if self.connected {
+    //         BubbleState::Head
+    //     } else {
+    //         BubbleState::Stopped
+    //     }
+    // }
+
+    // pub fn next_pos_bubble_state(&self, pos: u64) -> BubbleState {
+    //     let next_pos = pos + 1;
+    //     match self.bubble_state {
+    //         BubbleState::Head => {
+    //             if self.tail_absolute_frame_plus_one == next_pos {
+    //                 self.bubble_state_from_connected_and_ended()
+    //             } else {
+    //                 BubbleState::Normal
+    //             }
+    //         }
+    //         BubbleState::Normal => {
+    //             if self.tail_absolute_frame_plus_one == next_pos {
+    //                 self.bubble_state_from_connected_and_ended()
+    //             } else {
+    //                 BubbleState::Normal
+    //             }
+    //         }
+    //         BubbleState::Stopped => {
+    //             if self.next_head_frame == next_pos {
+    //                 BubbleState::Head
+    //             } else {
+    //                 BubbleState::Stopped
+    //             }
+    //         }
+    //         BubbleState::Ended => BubbleState::Ended,
+    //     }
+    // }
 }
 
 impl Metadata for BubbleMetadata {

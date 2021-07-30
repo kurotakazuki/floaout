@@ -2,6 +2,7 @@
 Floaout is the next-generation audio format.
 
 # TODO
+- Rename BubbleMetadata.next_head_frame to next_head_absolute_frames and to `Option<u64>`
 - Create Coordinates structure
 - Add write_frames in BubbleFrameWriter
 - error handling
