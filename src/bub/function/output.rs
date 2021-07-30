@@ -238,9 +238,9 @@ impl<'input> Output<'input, [u8], FunctionVariable, StartAndLenSpan<u16, u16>> f
             | FunctionVariable::LowercaseX
             | FunctionVariable::LowercaseY
             | FunctionVariable::LowercaseZ
-            | FunctionVariable::UppercaseT
-            | FunctionVariable::LowercaseT
-            | FunctionVariable::UppercaseF
+            | FunctionVariable::UppercaseN
+            | FunctionVariable::LowercaseN
+            | FunctionVariable::UppercaseS
             | FunctionVariable::Plus
             | FunctionVariable::Minus
             | FunctionVariable::Star

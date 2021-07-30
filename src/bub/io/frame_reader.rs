@@ -202,7 +202,7 @@ mod tests {
             samples_per_sec: 96000.0,
             sample_kind: SampleKind::F32LE,
             bubble_sample_kind: BubbleSampleKind::LPCM,
-            name: String::from("0.1*T"),
+            name: String::from("0.1*N"),
 
             speakers_absolute_coordinates: vec![(0.0, 0.0, 0.0), (3.0, 0.0, 0.0)],
 
@@ -220,7 +220,7 @@ mod tests {
             // Frame 1
             &[15][..],
             &[0x80],
-            b"1 2 3 X<3 0.1*T",
+            b"1 2 3 X<3 0.1*N",
             &2u64.to_le_bytes(),
             &1.0f32.to_le_bytes(),
             // Frame 2
@@ -243,7 +243,7 @@ mod tests {
             // Frame 6
             &[13],
             &[0x40],
-            b"0 0 t X>=3 -z",
+            b"0 0 n X>=3 -z",
             &1u64.to_le_bytes(),
             &1.0f32.to_le_bytes(),
             // Frame 7

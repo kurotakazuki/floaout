@@ -442,26 +442,26 @@ impl<'a> FunctionRules {
         },
         second: Second(E::V(Variable6)),
     };
-    /// Variable6 = UppercaseT () / Variable7
+    /// Variable6 = UppercaseN () / Variable7
     const VARIABLE6_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::V(UppercaseT),
+            lhs: E::V(UppercaseN),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::V(Variable7)),
     };
-    /// Variable7 = LowercaseT () / Variable8
+    /// Variable7 = LowercaseN () / Variable8
     const VARIABLE7_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::V(LowercaseT),
+            lhs: E::V(LowercaseN),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::V(Variable8)),
     };
-    /// Variable8 = UppercaseF () / f
+    /// Variable8 = UppercaseS () / f
     const VARIABLE8_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::V(UppercaseF),
+            lhs: E::V(UppercaseS),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
@@ -515,26 +515,26 @@ impl<'a> FunctionRules {
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// UppercaseT = 'T' () / f
-    const UPPERCASE_T_RULE: Rule<'a> = RightRule {
+    /// UppercaseN = 'N' () / f
+    const UPPERCASE_N_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('T'))),
+            lhs: E::T(TerminalSymbol::Original(Char('N'))),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// LowercaseT = 't' () / f
-    const LOWERCASE_T_RULE: Rule<'a> = RightRule {
+    /// LowercaseN = 'n' () / f
+    const LOWERCASE_N_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('t'))),
+            lhs: E::T(TerminalSymbol::Original(Char('n'))),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// UppercaseF = 'F' () / f
-    const UPPERCASE_F_RULE: Rule<'a> = RightRule {
+    /// UppercaseS = 'S' () / f
+    const UPPERCASE_S_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('F'))),
+            lhs: E::T(TerminalSymbol::Original(Char('S'))),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
@@ -696,10 +696,10 @@ impl<'a> FunctionRules {
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// BytesF64Literal = 'f' ???????? / f
+    /// BytesF64Literal = 'b' ???????? / f
     const BYTES_F64_LITERAL_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('f'))),
+            lhs: E::T(TerminalSymbol::Original(Char('b'))),
             rhs: E::T(TerminalSymbol::Metasymbol(Any(8))),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
@@ -964,9 +964,9 @@ impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
             LowercaseX => &Self::LOWERCASE_X_RULE,
             LowercaseY => &Self::LOWERCASE_Y_RULE,
             LowercaseZ => &Self::LOWERCASE_Z_RULE,
-            UppercaseT => &Self::UPPERCASE_T_RULE,
-            LowercaseT => &Self::LOWERCASE_T_RULE,
-            UppercaseF => &Self::UPPERCASE_F_RULE,
+            UppercaseN => &Self::UPPERCASE_N_RULE,
+            LowercaseN => &Self::LOWERCASE_N_RULE,
+            UppercaseS => &Self::UPPERCASE_S_RULE,
 
             // Constant
             Constant => &Self::CONSTANT_RULE,

@@ -2,7 +2,8 @@
 Floaout is the next-generation audio format.
 
 # TODO
-- Rename T to F, F to S, t to f, and f to b
+- Rename T to N, F to S, t to n, and f to b
+- Add Frames as 'F'
 - Create LPCM trait
 - Create Coordinates structure
 - error handling
@@ -93,9 +94,9 @@ Floaout is the next-generation audio format.
 | x | x = X - X_0 (X_0 is Bubble's absolute X coordinate). Speaker's relative X coordinate. |
 | y | y = Y - Y_0 (Y_0 is Bubble's absolute Y coordinate). Speaker's relative Y coordinate. |
 | z | z = Z - Z_0 (Z_0 is Bubble's absolute Z coordinate). Speaker's relative Z coordinate. |
-| T | Number of frames starting from the file. Absolute Time (`as f64`) |
-| t | Number of frames starting from the function. Relative Time (`as f64`) |
-| F | Samples per sec |
+| N | Number of frames starting from the file. (`as f64`) |
+| n | Number of frames starting from the function.(`as f64`) |
+| S | Samples per sec |
 
 ##### Constants
 | Keyword | Description |
@@ -115,7 +116,7 @@ Floaout is the next-generation audio format.
 #### Others
 | Keyword | Description |
 | ------------- | ------------- |
-| f | `f????????` `f64` |
+| b | `b????????` `f64` |
 
 ### Punctuation
 | Symbol | Name |
@@ -221,9 +222,9 @@ Variable2 = UppercaseZ () / Variable3
 Variable3 = LowercaseX () / Variable4
 Variable4 = LowercaseY () / Variable5
 Variable5 = LowercaseZ () / Variable6
-Variable6 = UppercaseT () / Variable7
-Variable7 = LowercaseT () / Variable8
-Variable8 = UppercaseF () / f
+Variable6 = UppercaseN () / Variable7
+Variable7 = LowercaseN () / Variable8
+Variable8 = UppercaseS () / f
 
 UppercaseX = 'X' () / f
 UppercaseY = 'Y' () / f
@@ -231,9 +232,9 @@ UppercaseZ = 'Z' () / f
 LowercaseX = 'x' () / f
 LowercaseY = 'y' () / f
 LowercaseZ = 'z' () / f
-UppercaseT = 'T' () / f
-LowercaseT = 't' () / f
-UppercaseF = 'F' () / f
+UppercaseN = 'N' () / f
+LowercaseN = 'n' () / f
+UppercaseS = 'S' () / f
 
 // Constant
 Constant = E () / Constant1
@@ -266,7 +267,7 @@ IntegerLiteral = DecLiteral () / f
 FloatLiteral = DecLiteral PointAndDecLiteral / BytesF64Literal
 PointAndDecLiteral = '.' DecLiteral / f
 
-BytesF64Literal = 'f' ???????? / f
+BytesF64Literal = 'b' ???????? / f
 
 // Dec
 DecLiteral = DecDigit ZeroOrMoreDecDigits / f

@@ -10,10 +10,10 @@ pub struct FunctionInterpreter {
     pub lowercase_y: f64,
     pub lowercase_z: f64,
     /// Number of frames starting from the file. Absolute Time
-    pub uppercase_t: f64,
+    pub uppercase_n: f64,
     /// Number of frames starting from the function. Relative Time
-    pub lowercase_t: f64,
-    pub uppercase_f: f64,
+    pub lowercase_n: f64,
+    pub uppercase_s: f64,
 }
 
 impl FunctionInterpreter {
@@ -31,9 +31,9 @@ impl FunctionInterpreter {
             lowercase_x: speaker_absolute_coordinates.0 - bubble_absolute_coordinates.0,
             lowercase_y: speaker_absolute_coordinates.1 - bubble_absolute_coordinates.1,
             lowercase_z: speaker_absolute_coordinates.2 - bubble_absolute_coordinates.2,
-            uppercase_t: absolute_time,
-            lowercase_t: relative_time,
-            uppercase_f: samples_per_sec,
+            uppercase_n: absolute_time,
+            lowercase_n: relative_time,
+            uppercase_s: samples_per_sec,
         }
     }
 
@@ -227,9 +227,9 @@ impl FunctionInterpreter {
                 LowercaseX => Ok(self.lowercase_x),
                 LowercaseY => Ok(self.lowercase_y),
                 LowercaseZ => Ok(self.lowercase_z),
-                UppercaseT => Ok(self.uppercase_t),
-                LowercaseT => Ok(self.lowercase_t),
-                UppercaseF => Ok(self.uppercase_f),
+                UppercaseN => Ok(self.uppercase_n),
+                LowercaseN => Ok(self.lowercase_n),
+                UppercaseS => Ok(self.uppercase_s),
                 _ => unreachable!(),
             },
         }
@@ -243,7 +243,7 @@ mod tests {
 
     #[test]
     fn bubble_functions() {
-        let input: &[u8] = "1 2 3 0!=1 sin(2*PI*440*t/F) 1 2 3 0!=1 sin(2*PI*440*t/F) 1 2 3 0!=1 sin(2*PI*440*t/F)".as_bytes();
+        let input: &[u8] = "1 2 3 0!=1 sin(2*PI*440*n/S) 1 2 3 0!=1 sin(2*PI*440*n/S) 1 2 3 0!=1 sin(2*PI*440*n/S)".as_bytes();
         let result = parse(&input, &FunctionVariable::BubbleFunctions).unwrap();
         let bubble_functions = result
             .into_original()
@@ -350,11 +350,11 @@ mod tests {
         let ast = parse(&input, &FunctionVariable::AndAndExpression).unwrap();
         let result = interpreter.eval_and_and_expr(&ast);
         assert_eq!(result, Ok(true));
-        let input: &[u8] = "0.0<0.1&&X==X&&F==F&&t!=T".as_bytes();
+        let input: &[u8] = "0.0<0.1&&X==X&&S==S&&n!=N".as_bytes();
         let ast = parse(&input, &FunctionVariable::AndAndExpression).unwrap();
         let result = interpreter.eval_and_and_expr(&ast);
         assert_eq!(result, Ok(true));
-        let input: &[u8] = "0.0<0.1&&X==X&&F==F&&t==T".as_bytes();
+        let input: &[u8] = "0.0<0.1&&X==X&&S==S&&n==N".as_bytes();
         let ast = parse(&input, &FunctionVariable::AndAndExpression).unwrap();
         let result = interpreter.eval_and_and_expr(&ast);
         assert_eq!(result, Ok(false));
@@ -466,7 +466,7 @@ mod tests {
         let ast = parse(&input, &FunctionVariable::Sum).unwrap();
         let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(2.0));
-        let input: &[u8] = "44100+T/t".as_bytes();
+        let input: &[u8] = "44100+N/n".as_bytes();
         let ast = parse(&input, &FunctionVariable::Sum).unwrap();
         let result = interpreter.eval_sum(&ast);
         assert_eq!(result, Ok(44104.0));

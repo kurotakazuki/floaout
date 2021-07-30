@@ -17,7 +17,7 @@ mod tests {
     #[test]
     fn bubble_functions() {
         // Bubble Function
-        let input: &[u8] = "1 2 3 0!=1 sin(2*PI*440*t/F)".as_bytes();
+        let input: &[u8] = "1 2 3 0!=1 sin(2*PI*440*n/S)".as_bytes();
         let result = parse(&input, &FunctionVariable::BubbleFunction);
         assert!(result.is_ok());
 
@@ -38,10 +38,10 @@ mod tests {
         let result = parse(&input, &FunctionVariable::BubbleFunctions);
         assert!(result.is_err());
 
-        let input: &[u8] = "1 2 3 0!=1 sin(2*PI*440*t/F)".as_bytes();
+        let input: &[u8] = "1 2 3 0!=1 sin(2*PI*440*n/S)".as_bytes();
         let result = parse(&input, &FunctionVariable::BubbleFunctions);
         assert!(result.is_ok());
-        let input: &[u8] = "1 2 3 0!=1 sin(2*PI*440*t/F) 1 2 3 0!=1 sin(2*PI*440*t/F)".as_bytes();
+        let input: &[u8] = "1 2 3 0!=1 sin(2*PI*440*n/S) 1 2 3 0!=1 sin(2*PI*440*n/S)".as_bytes();
         let result = parse(&input, &FunctionVariable::BubbleFunctions);
         assert!(result.is_ok());
         let input: &[u8] = "1 2 3 4!=5 6 1 2 3 4!=5 6 1 2 3 4!=5 6 1 2 3 4!=5 6".as_bytes();
@@ -71,12 +71,12 @@ mod tests {
         let result = parse(input, &FunctionVariable::OrOrExpression);
         assert!(result.is_err());
 
-        let input: &[u8] = "X<=1.1&&Y!=1.0||T<3".as_bytes();
+        let input: &[u8] = "X<=1.1&&Y!=1.0||N<3".as_bytes();
         let result = parse(input, &FunctionVariable::OrOrExpression);
         assert!(result.is_ok());
 
         let input: &[u8] =
-            "X<=1.1&&Y!=1.0||Z==0&&t<2*4||z+5*PI>9||y<=1.1&&sin2*cos(1/2*PI)!=sinPI*t&&tanF>=1.0"
+            "X<=1.1&&Y!=1.0||Z==0&&n<2*4||z+5*PI>9||y<=1.1&&sin2*cos(1/2*PI)!=sinPI*n&&tanS>=1.0"
                 .as_bytes();
         let result = parse(input, &FunctionVariable::OrOrExpression);
         assert!(result.is_ok());
@@ -120,27 +120,27 @@ mod tests {
         let result = parse(input, &FunctionVariable::Sum);
         assert!(result.is_ok());
 
-        let input: &[u8] = "sin(2*PI*440*t/F)".as_bytes();
+        let input: &[u8] = "sin(2*PI*440*n/S)".as_bytes();
         let result = parse(input, &FunctionVariable::Sum);
         assert!(result.is_ok());
 
-        let input: &[u8] = "1.2*(5+-+98.76543210)/sin(t/F)/1000".as_bytes();
+        let input: &[u8] = "1.2*(5+-+98.76543210)/sin(n/S)/1000".as_bytes();
         let result = parse(input, &FunctionVariable::Sum);
         assert!(result.is_ok());
 
-        let input: &[u8] = "X-Y+Z*x/y*(z)+tanPI-(cos((E+t-T)/F)+ln2+lg(5))+-1.0".as_bytes();
+        let input: &[u8] = "X-Y+Z*x/y*(z)+tanPI-(cos((E+n-N)/S)+ln2+lg(5))+-1.0".as_bytes();
         let result = parse(input, &FunctionVariable::Sum);
         assert!(result.is_ok());
 
-        let input: &[u8] = "4*(23-21)+54+(2343+t*(F-2))+sinPI".as_bytes();
+        let input: &[u8] = "4*(23-21)+54+(2343+n*(S-2))+sinPI".as_bytes();
         let result = parse(input, &FunctionVariable::Sum);
         assert!(result.is_ok());
-        let input: &[u8] = "4*(23-21)+54+(2343+t*(F-2)+sinPI".as_bytes();
+        let input: &[u8] = "4*(23-21)+54+(2343+t*(S-2)+sinPI".as_bytes();
         let result = parse(input, &FunctionVariable::Sum);
         assert!(result.is_err());
 
         let input = &[
-            "1.2*(5+98.765432)/sin(t/F)*f".as_bytes(),
+            "1.2*(5+98.765432)/sin(n/S)*b".as_bytes(),
             &1.0_f64.to_le_bytes(),
             "+cos(PI)+1".as_bytes(),
         ]
