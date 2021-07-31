@@ -260,14 +260,14 @@ impl Metadata for BubbleMetadata {
 
             speakers_absolute_coordinates: Vec::new(),
 
-            bubble_state: BubbleState::Head,
+            bubble_state: BubbleState::Stopped,
             head_frame: 0,
 
             bubble_functions: BubbleFunctions::new(),
             connected: false,
             ended: false,
             tail_absolute_frame_plus_one: 0,
-            next_head_frame: 0,
+            next_head_frame: 1,
         })
     }
     fn write<W: std::io::Write>(self, writer: &mut W) -> Result<()> {
@@ -303,14 +303,14 @@ mod tests {
 
             speakers_absolute_coordinates: Vec::new(),
 
-            bubble_state: BubbleState::Head,
+            bubble_state: BubbleState::Stopped,
             head_frame: 0,
 
             bubble_functions: BubbleFunctions::new(),
             connected: false,
             ended: false,
             tail_absolute_frame_plus_one: 0,
-            next_head_frame: 0,
+            next_head_frame: 1,
         };
         let expected = bubble_metadata.clone();
 
