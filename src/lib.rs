@@ -1,7 +1,7 @@
 use std::io::{Read, Result, Write};
 use std::marker::PhantomData;
 
-pub use crate::lpcm::{Frame, LPCMKind, Sample};
+pub use crate::lpcm::{Frame, LpcmKind, Sample};
 
 pub mod bub;
 pub mod io;

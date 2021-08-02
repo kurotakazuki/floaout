@@ -1,5 +1,5 @@
 use crate::bub::{BubbleFrameReader, BubbleFrameReaderKind, BubbleMetadata};
-use crate::{LPCMKind, Metadata, Sample};
+use crate::{LpcmKind, Metadata, Sample};
 use std::fs::File;
 use std::io::{BufReader, Read, Result};
 use std::path::Path;
@@ -26,8 +26,8 @@ impl<R: Read> BubbleReader<R> {
 
     pub fn into_bub_frame_reader_kind(self) -> BubbleFrameReaderKind<R> {
         match self.metadata.lpcm_kind() {
-            LPCMKind::F32LE => BubbleFrameReader::<R, f32>::new(self.inner, self.metadata).into(),
-            LPCMKind::F64LE => BubbleFrameReader::<R, f64>::new(self.inner, self.metadata).into(),
+            LpcmKind::F32LE => BubbleFrameReader::<R, f32>::new(self.inner, self.metadata).into(),
+            LpcmKind::F64LE => BubbleFrameReader::<R, f64>::new(self.inner, self.metadata).into(),
         }
     }
 }
@@ -55,7 +55,7 @@ mod tests {
             bubble_id: BubbleID::new(0),
             frames: 8,
             samples_per_sec: 96000.0,
-            lpcm_kind: LPCMKind::F32LE,
+            lpcm_kind: LpcmKind::F32LE,
             bubble_lpcm_kind: BubbleSampleKind::LPCM,
             name: String::from("0.1*N"),
 

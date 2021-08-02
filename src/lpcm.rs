@@ -46,12 +46,12 @@ impl<S: Sample> From<Vec<S>> for Frame<S> {
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub enum LPCMKind {
+pub enum LpcmKind {
     F32LE,
     F64LE,
 }
 
-impl LPCMKind {
+impl LpcmKind {
     pub fn read<R: Read>(reader: &mut R) -> Result<Self> {
         let value: u8 = reader.read_le()?;
         Ok(match value {

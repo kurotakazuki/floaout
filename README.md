@@ -20,13 +20,13 @@ Floaout is the next-generation audio format.
 | Bubble ID | `u128` (16) | Bubble ID of this file. If undefined Bubble, than value is 0. |
 | Frames | `u64` (8) | Number of frames |
 | Samples Per Sec | `f64` (8) | Samples per sec |
-| LPCMKind | `u8` (1) | `SampleKind` |
+| LpcmKind | `u8` (1) | `SampleKind` |
 | BubbleSampleKind | `u8` (1) | `BubbleSampleKind` |
 | Name Size | `u8` (1) | Name Size (0~255) |
 | Name | `String` | Name (UTF-8) |
 | CRC-32K/4.2 | `u32` (4) | Max length at Hamming Distance 4 is 2147483615 (bits). And max length at Hamming Distance 6 is 6167 (bits). |
 
-###LPCMKind
+###LpcmKind
 | Variant  | Description | Value (`Type`) |
 | ------------- | ------------- | ------------- |
 | F32LE | `f32` Little Endian | 0 (`u8`) |

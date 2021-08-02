@@ -1,7 +1,7 @@
 use crate::bub::{function::BubbleFunctions, BubbleID};
 use crate::io::{ReadExt, WriteExt};
 use crate::utils::return_invalid_data_if_not_equal;
-use crate::{LPCMKind, Metadata};
+use crate::{LpcmKind, Metadata};
 use std::io::{ErrorKind, Read, Result, Write};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -14,31 +14,19 @@ pub enum BubbleState {
 
 impl BubbleState {
     pub fn is_head(&self) -> bool {
-        match self {
-            Self::Head => true,
-            _ => false,
-        }
+        matches!(self, Self::Head)
     }
 
     pub fn is_normal(&self) -> bool {
-        match self {
-            Self::Normal => true,
-            _ => false,
-        }
+        matches!(self, Self::Normal)
     }
 
     pub fn is_stopped(&self) -> bool {
-        match self {
-            Self::Stopped => true,
-            _ => false,
-        }
+        matches!(self, Self::Stopped)
     }
 
     pub fn is_ended(&self) -> bool {
-        match self {
-            Self::Ended => true,
-            _ => false,
-        }
+        matches!(self, Self::Ended)
     }
 }
 
@@ -92,7 +80,7 @@ pub struct BubbleMetadata {
     /// Samples Per Sec
     pub samples_per_sec: f64,
     /// Bits Per Sample
-    pub lpcm_kind: LPCMKind,
+    pub lpcm_kind: LpcmKind,
     /// Bubble Sample Kind
     pub bubble_lpcm_kind: BubbleSampleKind,
     /// Name of Bubble
@@ -132,7 +120,7 @@ impl BubbleMetadata {
         self.frames
     }
 
-    pub const fn lpcm_kind(&self) -> LPCMKind {
+    pub const fn lpcm_kind(&self) -> LpcmKind {
         self.lpcm_kind
     }
 
@@ -240,7 +228,7 @@ impl Metadata for BubbleMetadata {
 
         let frames = reader.read_le()?;
         let samples_per_sec = reader.read_le()?;
-        let lpcm_kind = LPCMKind::read(reader)?;
+        let lpcm_kind = LpcmKind::read(reader)?;
         let bubble_lpcm_kind = BubbleSampleKind::read(reader)?;
 
         let name_size: u8 = reader.read_le()?;
@@ -297,7 +285,7 @@ mod tests {
             bubble_id: BubbleID::new(0),
             frames: 96000,
             samples_per_sec: 96000.0,
-            lpcm_kind: LPCMKind::F32LE,
+            lpcm_kind: LpcmKind::F32LE,
             bubble_lpcm_kind: BubbleSampleKind::LPCM,
             name: String::from("Vocal"),
 

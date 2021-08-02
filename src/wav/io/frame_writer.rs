@@ -1,5 +1,5 @@
 use crate::wav::WavMetadata;
-use crate::{Frame, FrameWriter, LPCMKind, Sample};
+use crate::{Frame, FrameWriter, LpcmKind, Sample};
 use std::io::{Error, ErrorKind, Result, Write};
 
 pub type WavFrameWriter<W, S> = FrameWriter<W, WavMetadata, S>;
@@ -49,7 +49,7 @@ impl<W: Write> WavFrameWriterKind<W> {
                 ErrorKind::Other,
                 format!(
                     "expected `{:?}`, found `{:?}`",
-                    LPCMKind::F32LE,
+                    LpcmKind::F32LE,
                     w.metadata.lpcm_kind()
                 ),
             )),
@@ -62,7 +62,7 @@ impl<W: Write> WavFrameWriterKind<W> {
                 ErrorKind::Other,
                 format!(
                     "expected `{:?}`, found `{:?}`",
-                    LPCMKind::F64LE,
+                    LpcmKind::F64LE,
                     w.metadata.lpcm_kind()
                 ),
             )),
@@ -80,7 +80,7 @@ mod tests {
         let data: Vec<u8> = Vec::new();
         let metadata = WavMetadata {
             frames: 2,
-            lpcm_kind: LPCMKind::F32LE,
+            lpcm_kind: LpcmKind::F32LE,
             channels: 1,
             samples_per_sec: 44100,
         };

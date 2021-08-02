@@ -1,5 +1,5 @@
 use crate::wav::{WavFrameReader, WavFrameReaderKind, WavMetadata};
-use crate::{LPCMKind, Metadata, Sample};
+use crate::{LpcmKind, Metadata, Sample};
 use std::fs::File;
 use std::io::{BufReader, Read, Result};
 use std::path::Path;
@@ -26,8 +26,8 @@ impl<R: Read> WavReader<R> {
 
     pub fn into_wav_frame_reader_kind(self) -> WavFrameReaderKind<R> {
         match self.metadata.lpcm_kind() {
-            LPCMKind::F32LE => WavFrameReader::<R, f32>::new(self.inner, self.metadata).into(),
-            LPCMKind::F64LE => WavFrameReader::<R, f64>::new(self.inner, self.metadata).into(),
+            LpcmKind::F32LE => WavFrameReader::<R, f32>::new(self.inner, self.metadata).into(),
+            LpcmKind::F64LE => WavFrameReader::<R, f64>::new(self.inner, self.metadata).into(),
         }
     }
 }
@@ -50,7 +50,7 @@ mod tests {
 
         let metadata = WavMetadata {
             frames: 176400,
-            lpcm_kind: LPCMKind::F32LE,
+            lpcm_kind: LpcmKind::F32LE,
             channels: 2,
             samples_per_sec: 44100,
         };

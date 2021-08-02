@@ -1,5 +1,5 @@
 use crate::wav::{WavFrameWriter, WavFrameWriterKind, WavMetadata};
-use crate::{LPCMKind, Metadata, Sample};
+use crate::{LpcmKind, Metadata, Sample};
 use std::fs::File;
 use std::io::{BufWriter, Result, Write};
 use std::path::Path;
@@ -30,8 +30,8 @@ impl<W: Write> WavWriter<W> {
 
     pub fn into_wav_frame_writer_kind(self) -> WavFrameWriterKind<W> {
         match self.metadata.lpcm_kind() {
-            LPCMKind::F32LE => WavFrameWriter::<W, f32>::new(self.inner, self.metadata).into(),
-            LPCMKind::F64LE => WavFrameWriter::<W, f64>::new(self.inner, self.metadata).into(),
+            LpcmKind::F32LE => WavFrameWriter::<W, f32>::new(self.inner, self.metadata).into(),
+            LpcmKind::F64LE => WavFrameWriter::<W, f64>::new(self.inner, self.metadata).into(),
         }
     }
 }

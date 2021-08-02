@@ -25,7 +25,7 @@ pub struct BubbleFunction {
     pub volume: FunctionAST,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct BubbleFunctions(Vec<BubbleFunction>);
 
 impl From<Vec<BubbleFunction>> for BubbleFunctions {

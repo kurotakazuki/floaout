@@ -3,7 +3,7 @@ use crate::bub::{
     BubbleMetadata, BubbleSampleKind, BubbleState,
 };
 use crate::io::ReadExt;
-use crate::{Frame, FrameReader, LPCMKind, Sample};
+use crate::{Frame, FrameReader, LpcmKind, Sample};
 use std::io::{Error, ErrorKind, Read, Result};
 
 pub type BubbleFrameReader<R, S> = FrameReader<R, BubbleMetadata, S>;
@@ -151,7 +151,7 @@ impl<R: Read> BubbleFrameReaderKind<R> {
                 ErrorKind::Other,
                 format!(
                     "expected `{:?}`, found `{:?}`",
-                    LPCMKind::F32LE,
+                    LpcmKind::F32LE,
                     r.metadata.lpcm_kind()
                 ),
             )),
@@ -164,7 +164,7 @@ impl<R: Read> BubbleFrameReaderKind<R> {
                 ErrorKind::Other,
                 format!(
                     "expected `{:?}`, found `{:?}`",
-                    LPCMKind::F64LE,
+                    LpcmKind::F64LE,
                     r.metadata.lpcm_kind()
                 ),
             )),
@@ -188,7 +188,7 @@ mod tests {
             bubble_id: BubbleID::new(0),
             frames: 8,
             samples_per_sec: 96000.0,
-            lpcm_kind: LPCMKind::F32LE,
+            lpcm_kind: LpcmKind::F32LE,
             bubble_lpcm_kind: BubbleSampleKind::LPCM,
             name: String::from("0.1*N"),
 
