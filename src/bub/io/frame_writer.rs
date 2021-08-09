@@ -271,7 +271,6 @@ mod tests {
     #[test]
     fn write_frames() -> Result<()> {
         let metadata = BubbleMetadata {
-            starting_sample: 0,
             version: 0,
             bubble_id: BubbleID::new(0),
             frames: 8,

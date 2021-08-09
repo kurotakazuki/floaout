@@ -50,7 +50,6 @@ mod tests {
         let bub_reader = BubbleReader::open("tests/test.bub").unwrap();
 
         let metadata = BubbleMetadata {
-            starting_sample: 0,
             version: 0,
             bubble_id: BubbleID::new(0),
             frames: 8,

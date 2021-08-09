@@ -69,8 +69,6 @@ impl BubbleSampleKind {
 #[derive(Clone, Debug, PartialEq)]
 pub struct BubbleMetadata {
     // In File Header
-    /// Head Sample
-    pub starting_sample: u64,
     /// This is the number of `Bubble` version.
     pub version: u8,
     /// Bubble ID
@@ -237,7 +235,6 @@ impl Metadata for BubbleMetadata {
         // TODO CRC-32C
 
         Ok(Self {
-            starting_sample: 0,
             version,
             bubble_id,
             frames,
@@ -280,7 +277,6 @@ mod tests {
     #[test]
     fn write_and_read() -> Result<()> {
         let bubble_metadata = BubbleMetadata {
-            starting_sample: 0,
             version: 0,
             bubble_id: BubbleID::new(0),
             frames: 96000,
