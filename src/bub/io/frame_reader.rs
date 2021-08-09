@@ -183,8 +183,9 @@ mod tests {
     #[test]
     fn read_frames() {
         let metadata = BubbleMetadata {
-            version: 0,
+            spec_version: 0,
             bubble_id: BubbleID::new(0),
+            bubble_version: 0,
             frames: 8,
             samples_per_sec: 96000.0,
             lpcm_kind: LpcmKind::F32LE,

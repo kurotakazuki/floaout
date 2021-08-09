@@ -1,6 +1,5 @@
 use crate::bub::{function::BubbleFunctions, BubbleID};
 use crate::io::{ReadExt, WriteExt};
-use crate::utils::return_invalid_data_if_not_equal;
 use crate::{LpcmKind, Metadata};
 use std::io::{ErrorKind, Read, Result, Write};
 
@@ -69,10 +68,12 @@ impl BubbleSampleKind {
 #[derive(Clone, Debug, PartialEq)]
 pub struct BubbleMetadata {
     // In File Header
-    /// This is the number of `Bubble` version.
-    pub version: u8,
+    /// Version of Bubble File Format Specification.
+    pub spec_version: u8,
     /// Bubble ID
     pub bubble_id: BubbleID,
+    /// Version of Bubble
+    pub bubble_version: u16,
     /// Frames
     pub frames: u64,
     /// Samples Per Sec
@@ -217,12 +218,9 @@ impl BubbleMetadata {
 
 impl Metadata for BubbleMetadata {
     fn read<R: std::io::Read>(reader: &mut R) -> Result<Self> {
-        let bub = reader.read_array::<3>()?;
-
-        return_invalid_data_if_not_equal(&bub[..], "bub".as_bytes())?;
-
-        let version = reader.read_le()?;
+        let spec_version = reader.read_le()?;
         let bubble_id = BubbleID::read(reader)?;
+        let bubble_version = reader.read_le()?;
 
         let frames = reader.read_le()?;
         let samples_per_sec = reader.read_le()?;
@@ -235,8 +233,9 @@ impl Metadata for BubbleMetadata {
         // TODO CRC-32C
 
         Ok(Self {
-            version,
+            spec_version,
             bubble_id,
+            bubble_version,
             frames,
             samples_per_sec,
             lpcm_kind,
@@ -256,9 +255,10 @@ impl Metadata for BubbleMetadata {
         })
     }
     fn write<W: std::io::Write>(self, writer: &mut W) -> Result<()> {
-        writer.write_str("bub")?;
-        writer.write_le(self.version)?;
+        writer.write_le(self.spec_version)?;
         self.bubble_id.write(writer)?;
+        writer.write_le(self.bubble_version)?;
+
         writer.write_le(self.frames)?;
         writer.write_le(self.samples_per_sec)?;
         self.lpcm_kind.write(writer)?;
@@ -277,8 +277,9 @@ mod tests {
     #[test]
     fn write_and_read() -> Result<()> {
         let bubble_metadata = BubbleMetadata {
-            version: 0,
+            spec_version: 0,
             bubble_id: BubbleID::new(0),
+            bubble_version: 0,
             frames: 96000,
             samples_per_sec: 96000.0,
             lpcm_kind: LpcmKind::F32LE,

@@ -2,6 +2,7 @@
 Floaout is the next-generation audio format.
 
 # TODO
+- Add CRC
 - Rename BubbleMetadata.next_head_frame to next_head_absolute_frames and to `Option<u64>`
 - Add read_bubble_functions_block
 - Create Coordinates structure
@@ -15,9 +16,9 @@ Floaout is the next-generation audio format.
 ## Metadata
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
-| Bubble | `str` (3) | "bub" means Bubble |
-| Version | `u8` (1) | Version of Bubble |
+| Spec Version | `u8` (1) | Version of Bubble File Format Specification. |
 | Bubble ID | `u128` (16) | Bubble ID of this file. If undefined Bubble, than value is 0. |
+| Bubble Version | `u16` (2) | Version of Bubble |
 | Frames | `u64` (8) | Number of frames |
 | Samples Per Sec | `f64` (8) | Samples per sec |
 | LpcmKind | `u8` (1) | `SampleKind` |
