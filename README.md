@@ -27,7 +27,7 @@ Floaout is the next-generation audio format.
 | Name | `String` | Name (UTF-8) |
 | CRC-32K/4.2 | `u32` (4) | Max length at Hamming Distance 4 is 2147483615 (bits). And max length at Hamming Distance 6 is 6167 (bits). |
 
-###LpcmKind
+### LpcmKind
 | Variant  | Description | Value (`Type`) |
 | ------------- | ------------- | ------------- |
 | F32LE | `f32` Little Endian | 0 (`u8`) |
@@ -38,6 +38,19 @@ Floaout is the next-generation audio format.
 | ------------- | ------------- | ------------- |
 | LPCM | LPCM | 0 |
 | Expression | Expression | 1 |
+
+### CRC
+```rust ignore
+Algorithm::<u32> {
+    endian: Endian::Little,
+    poly: 0x93a409eb, // CRC-32K/4.2
+    init: 0xffffffff,
+    refin: true,
+    refout: true,
+    xorout: 0xffffffff,
+    residue: 0x76e908ce,
+}
+```
 
 ## Each Sample
 | Bubble Sample |  | `BubbleSample` |
@@ -146,7 +159,7 @@ Floaout is the next-generation audio format.
 | ( ) | Parentheses |
 
 ### Syntax
-```rust
+```rust ignore
 // BubbleFunctions
 BubbleFunctions = BubbleFunction ZeroOrMoreBubbleFunctions / f
 ZeroOrMoreBubbleFunctions = SpaceAndBubbleFunction ZeroOrMoreBubbleFunctions / ()

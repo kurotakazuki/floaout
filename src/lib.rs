@@ -1,9 +1,12 @@
+#![doc = include_str!("../README.md")]
+
 use std::io::{Read, Result, Write};
 use std::marker::PhantomData;
 
 pub use crate::lpcm::{Frame, LpcmKind, Sample};
 
 pub mod bub;
+pub mod crc;
 pub mod io;
 pub mod lpcm;
 pub mod oao;
