@@ -1,4 +1,5 @@
 use crate::io::{ReadExt, WriteExt};
+use mycrc::CRC;
 use std::io::{ErrorKind, Read, Result, Write};
 use std::ops::Mul;
 
@@ -60,9 +61,20 @@ impl LpcmKind {
             _ => return Err(ErrorKind::InvalidData.into()),
         })
     }
+    pub fn read_and_calc_bytes<R: Read>(reader: &mut R, crc: &mut CRC<u32>) -> Result<Self> {
+        let value: u8 = reader.read_le_and_calc_bytes(crc)?;
+        Ok(match value {
+            0 => Self::F32LE,
+            1 => Self::F64LE,
+            _ => return Err(ErrorKind::InvalidData.into()),
+        })
+    }
 
     pub fn write<W: Write>(self, writer: &mut W) -> Result<()> {
         writer.write_le(self.to_u8())
+    }
+    pub fn write_and_calc_bytes<W: Write>(self, writer: &mut W, crc: &mut CRC<u32>) -> Result<()> {
+        writer.write_le_and_calc_bytes(self.to_u8(), crc)
     }
 
     pub fn from_u8(value: u8) -> Self {

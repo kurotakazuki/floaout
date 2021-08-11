@@ -1,6 +1,8 @@
 use crate::bub::{function::BubbleFunctions, BubbleID};
+use crate::crc::CRC;
 use crate::io::{ReadExt, WriteExt};
 use crate::{LpcmKind, Metadata};
+use mycrc::CRC;
 use std::io::{ErrorKind, Read, Result, Write};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -44,9 +46,20 @@ impl BubbleSampleKind {
             _ => return Err(ErrorKind::InvalidData.into()),
         })
     }
+    pub fn read_and_calc_bytes<R: Read>(reader: &mut R, crc: &mut CRC<u32>) -> Result<Self> {
+        let value: u8 = reader.read_le_and_calc_bytes(crc)?;
+        Ok(match value {
+            0 => Self::LPCM,
+            1 => Self::Expression,
+            _ => return Err(ErrorKind::InvalidData.into()),
+        })
+    }
 
     pub fn write<W: Write>(self, writer: &mut W) -> Result<()> {
         writer.write_le(self.to_u8())
+    }
+    pub fn write_and_calc_bytes<W: Write>(self, writer: &mut W, crc: &mut CRC<u32>) -> Result<()> {
+        writer.write_le_and_calc_bytes(self.to_u8(), crc)
     }
 
     pub fn from_u8(value: u8) -> Self {
@@ -81,7 +94,7 @@ pub struct BubbleMetadata {
     /// Bits Per Sample
     pub lpcm_kind: LpcmKind,
     /// Bubble Sample Kind
-    pub bubble_lpcm_kind: BubbleSampleKind,
+    pub bubble_sample_kind: BubbleSampleKind,
     /// Name of Bubble
     pub name: String,
 
@@ -218,19 +231,24 @@ impl BubbleMetadata {
 
 impl Metadata for BubbleMetadata {
     fn read<R: std::io::Read>(reader: &mut R) -> Result<Self> {
-        let spec_version = reader.read_le()?;
-        let bubble_id = BubbleID::read(reader)?;
-        let bubble_version = reader.read_le()?;
+        let mut crc = CRC;
 
-        let frames = reader.read_le()?;
-        let samples_per_sec = reader.read_le()?;
-        let lpcm_kind = LpcmKind::read(reader)?;
-        let bubble_lpcm_kind = BubbleSampleKind::read(reader)?;
+        let spec_version = reader.read_le_and_calc_bytes(&mut crc)?;
+        let bubble_id = BubbleID::read_and_calc_bytes(reader, &mut crc)?;
+        let bubble_version = reader.read_le_and_calc_bytes(&mut crc)?;
 
-        let name_size: u8 = reader.read_le()?;
-        let name = reader.read_string_for(name_size as usize)?;
+        let frames = reader.read_le_and_calc_bytes(&mut crc)?;
+        let samples_per_sec = reader.read_le_and_calc_bytes(&mut crc)?;
+        let lpcm_kind = LpcmKind::read_and_calc_bytes(reader, &mut crc)?;
+        let bubble_sample_kind = BubbleSampleKind::read_and_calc_bytes(reader, &mut crc)?;
 
-        // TODO CRC-32C
+        let name_size: u8 = reader.read_le_and_calc_bytes(&mut crc)?;
+        let name = reader.read_string_for_and_calc_bytes(name_size as usize, &mut crc)?;
+
+        // CRC
+        let _checksum: u32 = reader.read_le_and_calc_bytes(&mut crc)?;
+        // TODO: Return Error
+        assert!(crc.is_error_free());
 
         Ok(Self {
             spec_version,
@@ -239,7 +257,7 @@ impl Metadata for BubbleMetadata {
             frames,
             samples_per_sec,
             lpcm_kind,
-            bubble_lpcm_kind,
+            bubble_sample_kind,
             name,
 
             speakers_absolute_coordinates: Vec::new(),
@@ -255,16 +273,23 @@ impl Metadata for BubbleMetadata {
         })
     }
     fn write<W: std::io::Write>(self, writer: &mut W) -> Result<()> {
-        writer.write_le(self.spec_version)?;
-        self.bubble_id.write(writer)?;
-        writer.write_le(self.bubble_version)?;
+        let mut crc = CRC;
 
-        writer.write_le(self.frames)?;
-        writer.write_le(self.samples_per_sec)?;
-        self.lpcm_kind.write(writer)?;
-        self.bubble_lpcm_kind.write(writer)?;
-        writer.write_le(self.name.len() as u8)?;
-        writer.write_str(&self.name)?;
+        writer.write_le_and_calc_bytes(self.spec_version, &mut crc)?;
+        self.bubble_id.write_and_calc_bytes(writer, &mut crc)?;
+        writer.write_le_and_calc_bytes(self.bubble_version, &mut crc)?;
+
+        writer.write_le_and_calc_bytes(self.frames, &mut crc)?;
+        writer.write_le_and_calc_bytes(self.samples_per_sec, &mut crc)?;
+        self.lpcm_kind.write_and_calc_bytes(writer, &mut crc)?;
+        self.bubble_sample_kind
+            .write_and_calc_bytes(writer, &mut crc)?;
+        writer.write_le_and_calc_bytes(self.name.len() as u8, &mut crc)?;
+        writer.write_str_and_calc_bytes(&self.name, &mut crc)?;
+
+        // CRC
+        let checksum_bytes = crc.finalize_to_endian_bytes();
+        writer.write_all(&checksum_bytes)?;
 
         Ok(())
     }
@@ -283,7 +308,7 @@ mod tests {
             frames: 96000,
             samples_per_sec: 96000.0,
             lpcm_kind: LpcmKind::F32LE,
-            bubble_lpcm_kind: BubbleSampleKind::LPCM,
+            bubble_sample_kind: BubbleSampleKind::LPCM,
             name: String::from("Vocal"),
 
             speakers_absolute_coordinates: Vec::new(),

@@ -1,13 +1,20 @@
 use crate::io::ReadBytes;
+use mycrc::CRC;
 use std::io::{Error, ErrorKind, Read, Result};
 
 pub trait ReadExt: Read + Sized {
     fn read_be<T: ReadBytes>(&mut self) -> Result<T> {
         <T>::read_be_bytes(self)
     }
-
     fn read_le<T: ReadBytes>(&mut self) -> Result<T> {
         <T>::read_le_bytes(self)
+    }
+
+    fn read_be_and_calc_bytes<T: ReadBytes>(&mut self, crc: &mut CRC<u32>) -> Result<T> {
+        <T>::read_be_bytes_and_calc_bytes(self, crc)
+    }
+    fn read_le_and_calc_bytes<T: ReadBytes>(&mut self, crc: &mut CRC<u32>) -> Result<T> {
+        <T>::read_le_bytes_and_calc_bytes(self, crc)
     }
 
     fn read_vec_for(&mut self, n: usize) -> Result<Vec<u8>> {
@@ -15,11 +22,24 @@ pub trait ReadExt: Read + Sized {
         self.read_exact(&mut buf)?;
         Ok(buf)
     }
+    fn read_vec_for_and_calc_bytes(&mut self, n: usize, crc: &mut CRC<u32>) -> Result<Vec<u8>> {
+        let mut buf = vec![0; n];
+        self.read_exact(&mut buf)?;
+        crc.calc_bytes(&buf);
+        Ok(buf)
+    }
 
     fn read_string_for(&mut self, n: usize) -> Result<String> {
         let vec = self.read_vec_for(n)?;
         let s = String::from_utf8(vec);
-
+        match s {
+            Ok(s) => Ok(s),
+            Err(e) => Err(Error::new(ErrorKind::InvalidData, e)),
+        }
+    }
+    fn read_string_for_and_calc_bytes(&mut self, n: usize, crc: &mut CRC<u32>) -> Result<String> {
+        let vec = self.read_vec_for_and_calc_bytes(n, crc)?;
+        let s = String::from_utf8(vec);
         match s {
             Ok(s) => Ok(s),
             Err(e) => Err(Error::new(ErrorKind::InvalidData, e)),
@@ -31,9 +51,30 @@ pub trait ReadExt: Read + Sized {
         self.read_exact(&mut buf)?;
         Ok(buf)
     }
+    fn read_array_and_calc_bytes<const LEN: usize>(
+        &mut self,
+        crc: &mut CRC<u32>,
+    ) -> Result<[u8; LEN]> {
+        let mut buf = [0; LEN];
+        self.read_exact(&mut buf)?;
+        crc.calc_bytes(&buf);
+        Ok(buf)
+    }
 
     fn read_string<const LEN: usize>(&mut self) -> Result<String> {
         let bytes = self.read_array::<LEN>()?;
+        let s = String::from_utf8(bytes.to_vec());
+
+        match s {
+            Ok(s) => Ok(s),
+            Err(e) => Err(Error::new(ErrorKind::InvalidData, e)),
+        }
+    }
+    fn read_stringy_and_calc_bytes<const LEN: usize>(
+        &mut self,
+        crc: &mut CRC<u32>,
+    ) -> Result<String> {
+        let bytes = self.read_array_and_calc_bytes::<LEN>(crc)?;
         let s = String::from_utf8(bytes.to_vec());
 
         match s {

@@ -1,17 +1,30 @@
 use crate::io::write::write_bytes::WriteBytes;
+use mycrc::CRC;
 use std::io::{Result, Write};
 
 pub trait WriteExt: Write + Sized {
     fn write_be<T: WriteBytes>(&mut self, n: T) -> Result<()> {
         n.write_be_bytes(self)
     }
-
     fn write_le<T: WriteBytes>(&mut self, n: T) -> Result<()> {
         n.write_le_bytes(self)
     }
 
+    fn write_be_and_calc_bytes<T: WriteBytes>(&mut self, n: T, crc: &mut CRC<u32>) -> Result<()> {
+        n.write_be_bytes_and_calc_bytes(self, crc)
+    }
+    fn write_le_and_calc_bytes<T: WriteBytes>(&mut self, n: T, crc: &mut CRC<u32>) -> Result<()> {
+        n.write_le_bytes_and_calc_bytes(self, crc)
+    }
+
     fn write_str(&mut self, s: &str) -> Result<()> {
         self.write_all(s.as_bytes())
+    }
+    fn write_str_and_calc_bytes(&mut self, s: &str, crc: &mut CRC<u32>) -> Result<()> {
+        let bytes = s.as_bytes();
+        self.write_all(bytes)?;
+        crc.calc_bytes(bytes);
+        Ok(())
     }
 }
 

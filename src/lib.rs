@@ -3,6 +3,7 @@
 use std::io::{Read, Result, Write};
 use std::marker::PhantomData;
 
+pub use crate::crc::CRC;
 pub use crate::lpcm::{Frame, LpcmKind, Sample};
 
 pub mod bub;

@@ -1,3 +1,4 @@
+use mycrc::CRC;
 use std::io::{Result, Write};
 
 pub trait WriteBytes {
@@ -5,6 +6,17 @@ pub trait WriteBytes {
     fn write_be_bytes<W: Write>(&self, writer: &mut W) -> Result<()>;
     /// This method writes bytes in little-endian byte order.
     fn write_le_bytes<W: Write>(&self, writer: &mut W) -> Result<()>;
+
+    fn write_be_bytes_and_calc_bytes<W: Write>(
+        &self,
+        writer: &mut W,
+        crc: &mut CRC<u32>,
+    ) -> Result<()>;
+    fn write_le_bytes_and_calc_bytes<W: Write>(
+        &self,
+        writer: &mut W,
+        crc: &mut CRC<u32>,
+    ) -> Result<()>;
 }
 
 macro_rules! write_bytes_impl {
@@ -13,9 +25,21 @@ macro_rules! write_bytes_impl {
             fn write_be_bytes<W: Write>(&self, writer: &mut W) -> Result<()> {
                 writer.write_all(&self.to_be_bytes())
             }
-
             fn write_le_bytes<W: Write>(&self, writer: &mut W) -> Result<()> {
                 writer.write_all(&self.to_le_bytes())
+            }
+
+            fn write_be_bytes_and_calc_bytes<W: Write>(&self, writer: &mut W, crc: &mut CRC<u32>) -> Result<()> {
+                let bytes = &self.to_be_bytes();
+                writer.write_all(bytes)?;
+                crc.calc_bytes(bytes);
+                Ok(())
+            }
+            fn write_le_bytes_and_calc_bytes<W: Write>(&self, writer: &mut W, crc: &mut CRC<u32>) -> Result<()> {
+                let bytes = &self.to_le_bytes();
+                writer.write_all(bytes)?;
+                crc.calc_bytes(bytes);
+                Ok(())
             }
         }
     )*)

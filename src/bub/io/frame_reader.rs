@@ -98,7 +98,7 @@ impl<R: Read, S: Sample> Iterator for BubbleFrameReader<R, S> {
                 }
 
                 // Read Sample
-                let sample: S = match self.metadata.bubble_lpcm_kind {
+                let sample: S = match self.metadata.bubble_sample_kind {
                     BubbleSampleKind::LPCM => match S::read(&mut self.inner) {
                         Ok(n) => n,
                         Err(e) => return Some(Err(e)),
@@ -109,7 +109,7 @@ impl<R: Read, S: Sample> Iterator for BubbleFrameReader<R, S> {
             }
             BubbleState::Normal => {
                 // Read Sample
-                let sample: S = match self.metadata.bubble_lpcm_kind {
+                let sample: S = match self.metadata.bubble_sample_kind {
                     BubbleSampleKind::LPCM => match S::read(&mut self.inner) {
                         Ok(n) => n,
                         Err(e) => return Some(Err(e)),
@@ -189,7 +189,7 @@ mod tests {
             frames: 8,
             samples_per_sec: 96000.0,
             lpcm_kind: LpcmKind::F32LE,
-            bubble_lpcm_kind: BubbleSampleKind::LPCM,
+            bubble_sample_kind: BubbleSampleKind::LPCM,
             name: String::from("0.1*N"),
 
             speakers_absolute_coordinates: vec![(0.0, 0.0, 0.0), (3.0, 0.0, 0.0)],

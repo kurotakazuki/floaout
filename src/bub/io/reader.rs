@@ -56,7 +56,7 @@ impl BubbleReader<BufReader<File>> {
 //             frames: 8,
 //             samples_per_sec: 96000.0,
 //             lpcm_kind: LpcmKind::F32LE,
-//             bubble_lpcm_kind: BubbleSampleKind::LPCM,
+//             bubble_sample_kind: BubbleSampleKind::LPCM,
 //             name: String::from("0.1*N"),
 
 //             speakers_absolute_coordinates: vec![],

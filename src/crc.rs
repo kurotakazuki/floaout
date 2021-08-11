@@ -37,6 +37,6 @@ mod tests {
         // Is error-free?
         let checksum = crc.checksum_to_endian_bytes(CHECK_BYTES);
         let bytes = [CHECK_BYTES, &checksum].concat();
-        assert!(crc.is_error_free(&bytes));
+        assert!(crc.is_error_free_bytes(&bytes));
     }
 }
