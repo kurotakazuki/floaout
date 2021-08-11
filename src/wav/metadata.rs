@@ -89,7 +89,7 @@ impl Metadata for WavMetadata {
         }
     }
 
-    fn write<W: std::io::Write>(self, writer: &mut W) -> Result<()> {
+    fn write<W: std::io::Write>(&mut self, writer: &mut W) -> Result<()> {
         // Riff chunk
         writer.write_str("RIFF")?;
         self.standard_riff_chunk_size().write_le_bytes(writer)?;
@@ -326,7 +326,7 @@ mod tests {
     #[test]
     fn write_and_read() -> Result<()> {
         let mut v = Vec::new();
-        let metadata = WavMetadata {
+        let mut metadata = WavMetadata {
             frames: 88200,
             lpcm_kind: LpcmKind::F32LE,
             channels: 1,

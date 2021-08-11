@@ -10,7 +10,7 @@ pub struct WavWriter<W: Write> {
 }
 
 impl<W: Write> WavWriter<W> {
-    pub fn new(mut inner: W, metadata: WavMetadata) -> Result<Self> {
+    pub fn new(mut inner: W, mut metadata: WavMetadata) -> Result<Self> {
         metadata.write(&mut inner)?;
 
         Ok(Self { inner, metadata })

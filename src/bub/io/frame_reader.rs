@@ -202,6 +202,8 @@ mod tests {
             ended: false,
             tail_absolute_frame_plus_one: 0,
             next_head_frame: 1,
+
+            crc: crate::crc::CRC,
         };
 
         let data: &[u8] = &[

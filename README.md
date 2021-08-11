@@ -3,6 +3,7 @@ Floaout is the next-generation audio format.
 
 # TODO
 - Add CRC
+- Delete Metadata and &mut self to self in WavMetadata
 - Rename BubbleMetadata.next_head_frame to next_head_absolute_frames and to `Option<u64>`
 - Add read_bubble_functions_block
 - Create Coordinates structure

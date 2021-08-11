@@ -125,6 +125,9 @@ pub struct BubbleMetadata {
     /// Next Head Absolute Frame
     /// If `self.connected` or `self.ended` is `true', this won't exist.
     pub next_head_frame: u64,
+
+    /// CRC
+    pub crc: CRC<u32>,
 }
 
 impl BubbleMetadata {
@@ -246,9 +249,13 @@ impl Metadata for BubbleMetadata {
         let name = reader.read_string_for_and_calc_bytes(name_size as usize, &mut crc)?;
 
         // CRC
-        let _checksum: u32 = reader.read_le_and_calc_bytes(&mut crc)?;
+        let mut buf = [0; 4];
+        reader.read_exact(&mut buf)?;
+        crc.calc_bytes(&buf);
         // TODO: Return Error
         assert!(crc.is_error_free());
+
+        crc.initialize().calc_bytes(&buf);
 
         Ok(Self {
             spec_version,
@@ -270,26 +277,28 @@ impl Metadata for BubbleMetadata {
             ended: false,
             tail_absolute_frame_plus_one: 0,
             next_head_frame: 1,
+
+            crc,
         })
     }
-    fn write<W: std::io::Write>(self, writer: &mut W) -> Result<()> {
-        let mut crc = CRC;
+    fn write<W: std::io::Write>(&mut self, writer: &mut W) -> Result<()> {
+        writer.write_le_and_calc_bytes(self.spec_version, &mut self.crc)?;
+        self.bubble_id.write_and_calc_bytes(writer, &mut self.crc)?;
+        writer.write_le_and_calc_bytes(self.bubble_version, &mut self.crc)?;
 
-        writer.write_le_and_calc_bytes(self.spec_version, &mut crc)?;
-        self.bubble_id.write_and_calc_bytes(writer, &mut crc)?;
-        writer.write_le_and_calc_bytes(self.bubble_version, &mut crc)?;
-
-        writer.write_le_and_calc_bytes(self.frames, &mut crc)?;
-        writer.write_le_and_calc_bytes(self.samples_per_sec, &mut crc)?;
-        self.lpcm_kind.write_and_calc_bytes(writer, &mut crc)?;
+        writer.write_le_and_calc_bytes(self.frames, &mut self.crc)?;
+        writer.write_le_and_calc_bytes(self.samples_per_sec, &mut self.crc)?;
+        self.lpcm_kind.write_and_calc_bytes(writer, &mut self.crc)?;
         self.bubble_sample_kind
-            .write_and_calc_bytes(writer, &mut crc)?;
-        writer.write_le_and_calc_bytes(self.name.len() as u8, &mut crc)?;
-        writer.write_str_and_calc_bytes(&self.name, &mut crc)?;
+            .write_and_calc_bytes(writer, &mut self.crc)?;
+        writer.write_le_and_calc_bytes(self.name.len() as u8, &mut self.crc)?;
+        writer.write_str_and_calc_bytes(&self.name, &mut self.crc)?;
 
         // CRC
-        let checksum_bytes = crc.finalize_to_endian_bytes();
+        let checksum_bytes = self.crc.finalize_to_endian_bytes();
         writer.write_all(&checksum_bytes)?;
+
+        self.crc.initialize().calc_bytes(&checksum_bytes);
 
         Ok(())
     }
@@ -301,7 +310,7 @@ mod tests {
 
     #[test]
     fn write_and_read() -> Result<()> {
-        let bubble_metadata = BubbleMetadata {
+        let mut bubble_metadata = BubbleMetadata {
             spec_version: 0,
             bubble_id: BubbleID::new(0),
             bubble_version: 0,
@@ -321,6 +330,8 @@ mod tests {
             ended: false,
             tail_absolute_frame_plus_one: 0,
             next_head_frame: 1,
+
+            crc: crate::crc::CRC,
         };
         let expected = bubble_metadata.clone();
 
@@ -328,7 +339,8 @@ mod tests {
 
         bubble_metadata.write(&mut v)?;
 
-        let val = BubbleMetadata::read(&mut &v[..])?;
+        let mut val = BubbleMetadata::read(&mut &v[..])?;
+        val.crc = crate::crc::CRC;
 
         assert_eq!(val, expected);
 
