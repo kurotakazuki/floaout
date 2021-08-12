@@ -1,5 +1,5 @@
 use crate::bub::{BubbleFrameReader, BubbleFrameReaderKind, BubbleMetadata};
-use crate::{LpcmKind, Metadata, Sample};
+use crate::{LpcmKind, Sample};
 use std::fs::File;
 use std::io::{BufReader, Read, Result};
 use std::path::Path;

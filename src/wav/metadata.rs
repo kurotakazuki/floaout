@@ -15,8 +15,64 @@ pub struct WavMetadata {
     pub samples_per_sec: u32,
 }
 
-impl Metadata for WavMetadata {
-    fn read<R: std::io::Read>(reader: &mut R) -> Result<Self> {
+impl Metadata for WavMetadata {}
+
+impl WavMetadata {
+    pub fn calculate_frames(data_size: u32, channels: u16, bits_per_sample: u16) -> u64 {
+        data_size as u64 / (channels * bits_per_sample / 8) as u64
+    }
+
+    pub const fn frames(&self) -> u64 {
+        self.frames
+    }
+
+    pub const fn lpcm_kind(&self) -> LpcmKind {
+        self.lpcm_kind
+    }
+
+    pub const fn format_tag(&self) -> u16 {
+        self.lpcm_kind.format_tag()
+    }
+
+    pub const fn channels(&self) -> u16 {
+        self.channels
+    }
+
+    pub const fn samples_per_sec(&self) -> u32 {
+        self.samples_per_sec
+    }
+
+    pub const fn bits_per_sample(&self) -> u16 {
+        self.lpcm_kind.bits_per_sample()
+    }
+
+    pub const fn bytes_per_sample(&self) -> u16 {
+        self.bits_per_sample() / 8
+    }
+
+    pub const fn block_align(&self) -> u16 {
+        self.bytes_per_sample() * self.channels()
+    }
+
+    pub const fn avg_bytes_per_sec(&self) -> u32 {
+        self.samples_per_sec() * self.block_align() as u32
+    }
+
+    pub const fn data_chunk_size(&self) -> u32 {
+        self.frames() as u32 * self.block_align() as u32
+    }
+
+    pub const fn standard_riff_chunk_size(&self) -> u32 {
+        // riff chunk + fmt chunk + data chunk
+        4 + 24 + 8 + self.data_chunk_size()
+    }
+
+    pub fn secs(&self) -> f64 {
+        f64::from(self.frames() as u32) / f64::from(self.samples_per_sec())
+    }
+
+    // IO
+    pub fn read<R: std::io::Read>(reader: &mut R) -> Result<Self> {
         let check_fourcc = |reader: &mut R, val: &str| {
             let fourcc = reader.read_string::<4>()?;
             return_invalid_data_if_not_equal(fourcc, val.to_string())
@@ -89,7 +145,7 @@ impl Metadata for WavMetadata {
         }
     }
 
-    fn write<W: std::io::Write>(&mut self, writer: &mut W) -> Result<()> {
+    pub fn write<W: std::io::Write>(&self, writer: &mut W) -> Result<()> {
         // Riff chunk
         writer.write_str("RIFF")?;
         self.standard_riff_chunk_size().write_le_bytes(writer)?;
@@ -108,61 +164,6 @@ impl Metadata for WavMetadata {
         self.data_chunk_size().write_le_bytes(writer)?;
 
         Ok(())
-    }
-}
-
-impl WavMetadata {
-    pub fn calculate_frames(data_size: u32, channels: u16, bits_per_sample: u16) -> u64 {
-        data_size as u64 / (channels * bits_per_sample / 8) as u64
-    }
-
-    pub const fn frames(&self) -> u64 {
-        self.frames
-    }
-
-    pub const fn lpcm_kind(&self) -> LpcmKind {
-        self.lpcm_kind
-    }
-
-    pub const fn format_tag(&self) -> u16 {
-        self.lpcm_kind.format_tag()
-    }
-
-    pub const fn channels(&self) -> u16 {
-        self.channels
-    }
-
-    pub const fn samples_per_sec(&self) -> u32 {
-        self.samples_per_sec
-    }
-
-    pub const fn bits_per_sample(&self) -> u16 {
-        self.lpcm_kind.bits_per_sample()
-    }
-
-    pub const fn bytes_per_sample(&self) -> u16 {
-        self.bits_per_sample() / 8
-    }
-
-    pub const fn block_align(&self) -> u16 {
-        self.bytes_per_sample() * self.channels()
-    }
-
-    pub const fn avg_bytes_per_sec(&self) -> u32 {
-        self.samples_per_sec() * self.block_align() as u32
-    }
-
-    pub const fn data_chunk_size(&self) -> u32 {
-        self.frames() as u32 * self.block_align() as u32
-    }
-
-    pub const fn standard_riff_chunk_size(&self) -> u32 {
-        // riff chunk + fmt chunk + data chunk
-        4 + 24 + 8 + self.data_chunk_size()
-    }
-
-    pub fn secs(&self) -> f64 {
-        f64::from(self.frames() as u32) / f64::from(self.samples_per_sec())
     }
 }
 
@@ -326,7 +327,7 @@ mod tests {
     #[test]
     fn write_and_read() -> Result<()> {
         let mut v = Vec::new();
-        let mut metadata = WavMetadata {
+        let metadata = WavMetadata {
             frames: 88200,
             lpcm_kind: LpcmKind::F32LE,
             channels: 1,

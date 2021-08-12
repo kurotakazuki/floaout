@@ -250,10 +250,8 @@ impl BubbleMetadata {
     //         BubbleState::Ended => BubbleState::Ended,
     //     }
     // }
-}
 
-impl Metadata for BubbleMetadata {
-    fn read<R: std::io::Read>(reader: &mut R) -> Result<Self> {
+    pub fn read<R: std::io::Read>(reader: &mut R) -> Result<Self> {
         let mut metadata = Self {
             spec_version: Default::default(),
             bubble_id: Default::default(),
@@ -304,7 +302,7 @@ impl Metadata for BubbleMetadata {
 
         Ok(metadata)
     }
-    fn write<W: std::io::Write>(&mut self, writer: &mut W) -> Result<()> {
+    pub fn write<W: std::io::Write>(&mut self, writer: &mut W) -> Result<()> {
         writer.write_le_and_calc_bytes(self.spec_version, &mut self.crc)?;
         self.bubble_id.write_and_calc_bytes(writer, &mut self.crc)?;
         writer.write_le_and_calc_bytes(self.bubble_version, &mut self.crc)?;
@@ -321,6 +319,8 @@ impl Metadata for BubbleMetadata {
         self.write_crc(writer)
     }
 }
+
+impl Metadata for BubbleMetadata {}
 
 #[cfg(test)]
 mod tests {

@@ -199,7 +199,6 @@ mod tests {
     use crate::bub::{
         function::BubbleFunctions, BubbleID, BubbleSampleKind, BubbleState, BubbleState::*,
     };
-    use crate::Metadata;
 
     #[test]
     fn read_frames() {

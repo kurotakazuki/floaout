@@ -15,10 +15,7 @@ pub mod utils;
 pub mod wav;
 
 /// Metadata
-pub trait Metadata: Sized {
-    fn read<R: Read>(reader: &mut R) -> Result<Self>;
-    fn write<W: Write>(&mut self, writer: &mut W) -> Result<()>;
-}
+pub trait Metadata {}
 
 /// Frame Reader
 pub struct FrameReader<R: Read, M: Metadata, S: Sample> {

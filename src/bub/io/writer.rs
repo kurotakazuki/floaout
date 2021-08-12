@@ -1,5 +1,5 @@
 use crate::bub::{BubbleFrameWriter, BubbleFrameWriterKind, BubbleMetadata};
-use crate::{LpcmKind, Metadata, Sample};
+use crate::{LpcmKind, Sample};
 use std::fs::File;
 use std::io::{BufWriter, Result, Write};
 use std::path::Path;

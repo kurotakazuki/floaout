@@ -229,7 +229,6 @@ impl<W: Write> BubbleFrameWriterKind<W> {
 mod tests {
     use super::*;
     use crate::bub::{function::BubbleFunctions, BubbleID, BubbleSampleKind, BubbleState};
-    use crate::Metadata;
 
     #[test]
     fn write_frames() -> Result<()> {
