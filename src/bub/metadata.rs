@@ -281,6 +281,7 @@ impl BubbleMetadata {
         let bubble_version = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
 
         let frames = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
+        let starting_frame = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
         let samples_per_sec = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
         let lpcm_kind = LpcmKind::read_and_calc_bytes(reader, &mut metadata.crc)?;
         let bubble_sample_kind = BubbleSampleKind::read_and_calc_bytes(reader, &mut metadata.crc)?;
@@ -295,6 +296,7 @@ impl BubbleMetadata {
         metadata.bubble_id = bubble_id;
         metadata.bubble_version = bubble_version;
         metadata.frames = frames;
+        metadata.next_head_frame = starting_frame; // Next Head Frame
         metadata.samples_per_sec = samples_per_sec;
         metadata.lpcm_kind = lpcm_kind;
         metadata.bubble_sample_kind = bubble_sample_kind;
@@ -308,6 +310,7 @@ impl BubbleMetadata {
         writer.write_le_and_calc_bytes(self.bubble_version, &mut self.crc)?;
 
         writer.write_le_and_calc_bytes(self.frames, &mut self.crc)?;
+        writer.write_le_and_calc_bytes(self.next_head_frame, &mut self.crc)?;
         writer.write_le_and_calc_bytes(self.samples_per_sec, &mut self.crc)?;
         self.lpcm_kind.write_and_calc_bytes(writer, &mut self.crc)?;
         self.bubble_sample_kind

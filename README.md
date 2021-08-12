@@ -19,6 +19,7 @@ Floaout is the next-generation audio format.
 | Bubble ID | `u128` (16) | Bubble ID of this file. If undefined Bubble, than value is 0. |
 | Bubble Version | `u16` (2) | Version of Bubble |
 | Frames | `u64` (8) | Number of frames |
+| Starting Absolute Frame | `u64` (8) | Starting Absolute Frame |
 | Samples Per Sec | `f64` (8) | Samples per sec |
 | LpcmKind | `u8` (1) | `SampleKind` |
 | BubbleSampleKind | `u8` (1) | `BubbleSampleKind` |

@@ -265,7 +265,7 @@ mod tests {
             &1.0f32.to_le_bytes(),
             // Frame 2
             &1.0f32.to_le_bytes(),
-            &[36, 239, 251, 84], // crc
+            &[194, 54, 74, 24], // crc
             // Frame 3
             &[11],
             &[0],
@@ -273,26 +273,26 @@ mod tests {
             &1u64.to_le_bytes(),
             &3u64.to_le_bytes(),
             &0.3f32.to_le_bytes(),
-            &[111, 186, 119, 179], // crc
+            &[142, 47, 230, 233], // crc
             // Frame 4
-
+    
             // Frame 5
             &[12],
             &[0x80],
             b"0 0 0 0==0 1",
             &1u64.to_le_bytes(),
             &0.4f32.to_le_bytes(),
-            &[56, 203, 203, 92], // crc
+            &[16, 85, 195, 62], // crc
             // Frame 6
             &[13],
             &[0x40],
             b"0 0 n X>=3 -z",
             &1u64.to_le_bytes(),
             &1.0f32.to_le_bytes(),
-            &[249, 6, 139, 129], // crc
-            // Frame 7
-
-            // Frame 8
+            &[175, 72, 19, 72], // crc
+                                // Frame 7
+    
+                                // Frame 8
         ]
         .concat();
 
