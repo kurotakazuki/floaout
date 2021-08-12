@@ -40,60 +40,64 @@ impl BubbleReader<BufReader<File>> {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use crate::bub::{BubbleFunctions, BubbleID, BubbleSampleKind, BubbleState};
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::bub::{BubbleFunctions, BubbleID, BubbleSampleKind, BubbleState};
 
-//     #[test]
-//     fn open() {
-//         let bub_reader = BubbleReader::open("tests/test.bub").unwrap();
+    #[test]
+    fn open() {
+        let mut bub_reader = BubbleReader::open("tests/test.bub").unwrap();
 
-//         let metadata = BubbleMetadata {
-//             spec_version: 0,
-//             bubble_id: BubbleID::new(0),
-//             bubble_version: 0,
-//             frames: 8,
-//             samples_per_sec: 96000.0,
-//             lpcm_kind: LpcmKind::F32LE,
-//             bubble_sample_kind: BubbleSampleKind::LPCM,
-//             name: String::from("0.1*N"),
+        let metadata = BubbleMetadata {
+            spec_version: 0,
+            bubble_id: BubbleID::new(0),
+            bubble_version: 0,
+            frames: 8,
+            samples_per_sec: 96000.0,
+            lpcm_kind: LpcmKind::F32LE,
+            bubble_sample_kind: BubbleSampleKind::Lpcm,
+            name: String::from("0.1*N"),
 
-//             speakers_absolute_coordinates: vec![],
+            speakers_absolute_coordinates: vec![],
 
-//             bubble_state: BubbleState::Stopped,
-//             head_frame: 0,
+            bubble_state: BubbleState::Stopped,
+            head_frame: 0,
 
-//             bubble_functions: BubbleFunctions::new(),
-//             connected: false,
-//             ended: false,
-//             tail_absolute_frame_plus_one: 0,
-//             next_head_frame: 1,
-//         };
+            bubble_functions: BubbleFunctions::new(),
+            connected: false,
+            ended: false,
+            tail_absolute_frame_plus_one: 0,
+            next_head_frame: 1,
 
-//         assert_eq!(bub_reader.metadata, metadata);
-//     }
+            crc: crate::crc::CRC,
+        };
 
-//     #[test]
-//     fn read_bub_frames() -> std::io::Result<()> {
-//         let bub_reader = BubbleReader::open("tests/test.bub").unwrap();
-//         assert!(bub_reader
-//             .into_bub_frame_reader_kind()
-//             .into_f64_le()
-//             .is_err());
-//         let bub_reader = BubbleReader::open("tests/test.bub").unwrap();
-//         let mut bub_frame_reader = bub_reader.into_bub_frame_reader_kind().into_f32_le()?;
+        bub_reader.metadata.crc = crate::crc::CRC;
 
-//         for _ in 0..bub_frame_reader.metadata.frames() {
-//             if let Some(frame) = bub_frame_reader.next() {
-//                 frame?;
-//             } else {
-//                 panic!();
-//             }
-//         }
+        assert_eq!(bub_reader.metadata, metadata);
+    }
 
-//         assert!(bub_frame_reader.next().is_none());
+    #[test]
+    fn read_bub_frames() -> std::io::Result<()> {
+        let bub_reader = BubbleReader::open("tests/test.bub").unwrap();
+        assert!(bub_reader
+            .into_bub_frame_reader_kind()
+            .into_f64_le()
+            .is_err());
+        let bub_reader = BubbleReader::open("tests/test.bub").unwrap();
+        let mut bub_frame_reader = bub_reader.into_bub_frame_reader_kind().into_f32_le()?;
 
-//         Ok(())
-//     }
-// }
+        for _ in 0..bub_frame_reader.metadata.frames() {
+            if let Some(frame) = bub_frame_reader.next() {
+                frame?;
+            } else {
+                panic!();
+            }
+        }
+
+        assert!(bub_frame_reader.next().is_none());
+
+        Ok(())
+    }
+}

@@ -9,32 +9,35 @@ use std::io::{Error, ErrorKind, Read, Result};
 pub type BubbleFrameReader<R, S> = FrameReader<R, BubbleMetadata, S>;
 
 impl<R: Read, S: Sample> BubbleFrameReader<R, S> {
-    fn read_flags_and_function_size(&mut self) -> Result<u16> {
-        let mut read_flags_and_function_size: u16 = self.inner.read_le()?;
+    fn read_flags_functions_size_and_calc_bytes(&mut self) -> Result<u16> {
+        let mut read_flags_and_functions_size: u16 =
+            self.inner.read_le_and_calc_bytes(&mut self.metadata.crc)?;
 
         // connected
-        self.metadata.connected = if read_flags_and_function_size & (1 << 15) != 0 {
-            read_flags_and_function_size &= 0x7FFF;
+        self.metadata.connected = if read_flags_and_functions_size & (1 << 15) != 0 {
+            read_flags_and_functions_size &= 0x7FFF;
             true
         } else {
             false
         };
 
         // ended
-        self.metadata.ended = if read_flags_and_function_size & (1 << 14) != 0 {
-            read_flags_and_function_size &= 0xBFFF;
+        self.metadata.ended = if read_flags_and_functions_size & (1 << 14) != 0 {
+            read_flags_and_functions_size &= 0xBFFF;
             true
         } else {
             false
         };
 
-        Ok(read_flags_and_function_size)
+        Ok(read_flags_and_functions_size)
     }
 
-    fn read_head_metadata(&mut self) -> Result<()> {
-        let function_size = self.read_flags_and_function_size()?;
+    fn read_head_metadata_and_calc_bytes(&mut self) -> Result<()> {
+        let functions_size = self.read_flags_functions_size_and_calc_bytes()?;
 
-        let bubble_functions_vec = self.inner.read_vec_for(function_size as usize)?;
+        let bubble_functions_vec = self
+            .inner
+            .read_vec_for_and_calc_bytes(functions_size as usize, &mut self.metadata.crc)?;
 
         self.metadata.bubble_functions =
             parse(&bubble_functions_vec, &FunctionVariable::BubbleFunctions)
@@ -43,11 +46,18 @@ impl<R: Read, S: Sample> BubbleFrameReader<R, S> {
                 .unwrap()
                 .into_bubble_functions()
                 .unwrap();
-
-        self.metadata.tail_absolute_frame_plus_one = self.pos + self.inner.read_le::<u64>()?;
-
+        // Tail relative frame
+        self.metadata.tail_absolute_frame_plus_one = self.pos
+            + self
+                .inner
+                .read_le_and_calc_bytes::<u64>(&mut self.metadata.crc)?;
+        // Next head relative frame
         if !(self.metadata.connected || self.metadata.ended) {
-            self.metadata.next_head_frame = self.pos + self.inner.read_le::<u64>()? - 1;
+            self.metadata.next_head_frame = self.pos
+                + self
+                    .inner
+                    .read_le_and_calc_bytes::<u64>(&mut self.metadata.crc)?
+                - 1;
         }
 
         Ok(())
@@ -93,16 +103,18 @@ impl<R: Read, S: Sample> Iterator for BubbleFrameReader<R, S> {
 
         match self.metadata.bubble_state {
             BubbleState::Head => {
-                if let Err(e) = self.read_head_metadata() {
+                if let Err(e) = self.read_head_metadata_and_calc_bytes() {
                     return Some(Err(e));
                 }
 
                 // Read Sample
                 let sample: S = match self.metadata.bubble_sample_kind {
-                    BubbleSampleKind::LPCM => match S::read(&mut self.inner) {
-                        Ok(n) => n,
-                        Err(e) => return Some(Err(e)),
-                    },
+                    BubbleSampleKind::Lpcm => {
+                        match S::read_and_calc_bytes(&mut self.inner, &mut self.metadata.crc) {
+                            Ok(n) => n,
+                            Err(e) => return Some(Err(e)),
+                        }
+                    }
                     BubbleSampleKind::Expression => todo!(),
                 };
                 self.multiply_volume(&mut frame, sample);
@@ -110,16 +122,24 @@ impl<R: Read, S: Sample> Iterator for BubbleFrameReader<R, S> {
             BubbleState::Normal => {
                 // Read Sample
                 let sample: S = match self.metadata.bubble_sample_kind {
-                    BubbleSampleKind::LPCM => match S::read(&mut self.inner) {
-                        Ok(n) => n,
-                        Err(e) => return Some(Err(e)),
-                    },
+                    BubbleSampleKind::Lpcm => {
+                        match S::read_and_calc_bytes(&mut self.inner, &mut self.metadata.crc) {
+                            Ok(n) => n,
+                            Err(e) => return Some(Err(e)),
+                        }
+                    }
                     BubbleSampleKind::Expression => todo!(),
                 };
                 self.multiply_volume(&mut frame, sample);
             }
             BubbleState::Stopped => (),
             BubbleState::Ended => (),
+        }
+        // Read CRC
+        if self.metadata.tail_absolute_frame_plus_one - 1 == self.pos {
+            if let Err(e) = self.metadata.read_crc(&mut self.inner) {
+                return Some(Err(e));
+            }
         }
 
         Some(Ok(frame))
@@ -179,17 +199,18 @@ mod tests {
     use crate::bub::{
         function::BubbleFunctions, BubbleID, BubbleSampleKind, BubbleState, BubbleState::*,
     };
+    use crate::Metadata;
 
     #[test]
     fn read_frames() {
-        let metadata = BubbleMetadata {
+        let mut metadata = BubbleMetadata {
             spec_version: 0,
             bubble_id: BubbleID::new(0),
             bubble_version: 0,
             frames: 8,
             samples_per_sec: 96000.0,
             lpcm_kind: LpcmKind::F32LE,
-            bubble_sample_kind: BubbleSampleKind::LPCM,
+            bubble_sample_kind: BubbleSampleKind::Lpcm,
             name: String::from("0.1*N"),
 
             speakers_absolute_coordinates: vec![(0.0, 0.0, 0.0), (3.0, 0.0, 0.0)],
@@ -206,6 +227,10 @@ mod tests {
             crc: crate::crc::CRC,
         };
 
+        // Write Metadata and get CRC
+        let mut skip: Vec<u8> = Vec::new();
+        metadata.write(&mut skip).unwrap();
+
         let data: &[u8] = &[
             // Frame 1
             &[15][..],
@@ -215,6 +240,7 @@ mod tests {
             &1.0f32.to_le_bytes(),
             // Frame 2
             &1.0f32.to_le_bytes(),
+            &[36, 239, 251, 84], // crc
             // Frame 3
             &[11],
             &[0],
@@ -222,6 +248,7 @@ mod tests {
             &1u64.to_le_bytes(),
             &3u64.to_le_bytes(),
             &0.3f32.to_le_bytes(),
+            &[111, 186, 119, 179], // crc
             // Frame 4
 
             // Frame 5
@@ -230,12 +257,14 @@ mod tests {
             b"0 0 0 0==0 1",
             &1u64.to_le_bytes(),
             &0.4f32.to_le_bytes(),
+            &[56, 203, 203, 92], // crc
             // Frame 6
             &[13],
             &[0x40],
             b"0 0 n X>=3 -z",
             &1u64.to_le_bytes(),
             &1.0f32.to_le_bytes(),
+            &[249, 6, 139, 129], // crc
             // Frame 7
 
             // Frame 8

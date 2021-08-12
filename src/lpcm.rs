@@ -3,11 +3,14 @@ use mycrc::CRC;
 use std::io::{ErrorKind, Read, Result, Write};
 use std::ops::Mul;
 
-/// LPCM Sample
+/// Lpcm Sample
 pub trait Sample: Sized + Default + Mul<Output = Self> + Clone + Copy + PartialEq {
     fn from_f64(n: f64) -> Self;
     fn read<R: Read>(reader: &mut R) -> Result<Self>;
     fn write<W: Write>(self, writer: &mut W) -> Result<()>;
+
+    fn read_and_calc_bytes<R: Read>(reader: &mut R, crc: &mut CRC<u32>) -> Result<Self>;
+    fn write_and_calc_bytes<W: Write>(self, writer: &mut W, crc: &mut CRC<u32>) -> Result<()>;
 }
 
 macro_rules! le_sample_impl {
@@ -20,9 +23,15 @@ macro_rules! le_sample_impl {
             fn read<R: Read>(reader: &mut R) -> Result<Self> {
                 reader.read_le()
             }
-
             fn write<W: Write>(self, writer: &mut W) -> Result<()> {
                 writer.write_le(self)
+            }
+
+            fn read_and_calc_bytes<R: Read>(reader: &mut R, crc: &mut CRC<u32>) -> Result<Self> {
+                reader.read_le_and_calc_bytes(crc)
+            }
+            fn write_and_calc_bytes<W: Write>(self, writer: &mut W, crc: &mut CRC<u32>) -> Result<()> {
+                writer.write_le_and_calc_bytes(self, crc)
             }
         }
     )*)
@@ -30,7 +39,7 @@ macro_rules! le_sample_impl {
 
 le_sample_impl!(f32, f64);
 
-/// LPCM Frame
+/// Lpcm Frame
 #[derive(Clone, Debug, PartialEq)]
 pub struct Frame<S: Sample>(pub Vec<S>);
 

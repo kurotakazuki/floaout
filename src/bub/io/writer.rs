@@ -10,8 +10,8 @@ pub struct BubbleWriter<W: Write> {
 }
 
 impl<W: Write> BubbleWriter<W> {
-    pub fn new(mut inner: W, metadata: BubbleMetadata) -> Result<Self> {
-        metadata.clone().write(&mut inner)?;
+    pub fn new(mut inner: W, mut metadata: BubbleMetadata) -> Result<Self> {
+        metadata.write(&mut inner)?;
 
         Ok(Self { inner, metadata })
     }

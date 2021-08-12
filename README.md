@@ -37,7 +37,7 @@ Floaout is the next-generation audio format.
 ### BubbleSampleKind
 | Variant  | Description | Value |
 | ------------- | ------------- | ------------- |
-| LPCM | LPCM | 0 |
+| Lpcm | Lpcm | 0 |
 | Expression | Expression | 1 |
 
 ### CRC
@@ -88,7 +88,7 @@ Algorithm::<u32> {
 | ?1????????????? | Ended | x |
 
 ### Sample Data
-#### LPCM
+#### Lpcm
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
 | Sample | `f32` or `f64` (4 or 8) | depends on `SampleKind` |

@@ -33,7 +33,7 @@ impl BubbleState {
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum BubbleSampleKind {
-    LPCM,
+    Lpcm,
     Expression,
 }
 
@@ -41,7 +41,7 @@ impl BubbleSampleKind {
     pub fn read<R: Read>(reader: &mut R) -> Result<Self> {
         let value: u8 = reader.read_le()?;
         Ok(match value {
-            0 => Self::LPCM,
+            0 => Self::Lpcm,
             1 => Self::Expression,
             _ => return Err(ErrorKind::InvalidData.into()),
         })
@@ -49,7 +49,7 @@ impl BubbleSampleKind {
     pub fn read_and_calc_bytes<R: Read>(reader: &mut R, crc: &mut CRC<u32>) -> Result<Self> {
         let value: u8 = reader.read_le_and_calc_bytes(crc)?;
         Ok(match value {
-            0 => Self::LPCM,
+            0 => Self::Lpcm,
             1 => Self::Expression,
             _ => return Err(ErrorKind::InvalidData.into()),
         })
@@ -64,7 +64,7 @@ impl BubbleSampleKind {
 
     pub fn from_u8(value: u8) -> Self {
         match value {
-            0 => Self::LPCM,
+            0 => Self::Lpcm,
             1 => Self::Expression,
             _ => unimplemented!(),
         }
@@ -72,7 +72,7 @@ impl BubbleSampleKind {
 
     pub const fn to_u8(self) -> u8 {
         match self {
-            Self::LPCM => 0,
+            Self::Lpcm => 0,
             Self::Expression => 1,
         }
     }
@@ -192,6 +192,26 @@ impl BubbleMetadata {
             BubbleState::Ended => (),
         }
     }
+    // IO
+    pub(crate) fn read_crc<R: std::io::Read>(&mut self, reader: &mut R) -> Result<()> {
+        let mut buf = [0; 4];
+        reader.read_exact(&mut buf)?;
+        self.crc.calc_bytes(&buf);
+        // TODO: Return Error
+        assert!(self.crc.is_error_free());
+
+        self.crc.initialize().calc_bytes(&buf);
+
+        Ok(())
+    }
+    pub(crate) fn write_crc<W: std::io::Write>(&mut self, writer: &mut W) -> Result<()> {
+        let checksum_bytes = self.crc.finalize_to_endian_bytes();
+        writer.write_all(&checksum_bytes)?;
+
+        self.crc.initialize().calc_bytes(&checksum_bytes);
+
+        Ok(())
+    }
 
     // fn bubble_state_from_connected_and_ended(&self) -> BubbleState {
     //     if self.ended {
@@ -234,38 +254,15 @@ impl BubbleMetadata {
 
 impl Metadata for BubbleMetadata {
     fn read<R: std::io::Read>(reader: &mut R) -> Result<Self> {
-        let mut crc = CRC;
-
-        let spec_version = reader.read_le_and_calc_bytes(&mut crc)?;
-        let bubble_id = BubbleID::read_and_calc_bytes(reader, &mut crc)?;
-        let bubble_version = reader.read_le_and_calc_bytes(&mut crc)?;
-
-        let frames = reader.read_le_and_calc_bytes(&mut crc)?;
-        let samples_per_sec = reader.read_le_and_calc_bytes(&mut crc)?;
-        let lpcm_kind = LpcmKind::read_and_calc_bytes(reader, &mut crc)?;
-        let bubble_sample_kind = BubbleSampleKind::read_and_calc_bytes(reader, &mut crc)?;
-
-        let name_size: u8 = reader.read_le_and_calc_bytes(&mut crc)?;
-        let name = reader.read_string_for_and_calc_bytes(name_size as usize, &mut crc)?;
-
-        // CRC
-        let mut buf = [0; 4];
-        reader.read_exact(&mut buf)?;
-        crc.calc_bytes(&buf);
-        // TODO: Return Error
-        assert!(crc.is_error_free());
-
-        crc.initialize().calc_bytes(&buf);
-
-        Ok(Self {
-            spec_version,
-            bubble_id,
-            bubble_version,
-            frames,
-            samples_per_sec,
-            lpcm_kind,
-            bubble_sample_kind,
-            name,
+        let mut metadata = Self {
+            spec_version: Default::default(),
+            bubble_id: Default::default(),
+            bubble_version: Default::default(),
+            frames: Default::default(),
+            samples_per_sec: Default::default(),
+            lpcm_kind: LpcmKind::F64LE,
+            bubble_sample_kind: BubbleSampleKind::Lpcm,
+            name: Default::default(),
 
             speakers_absolute_coordinates: Vec::new(),
 
@@ -278,8 +275,34 @@ impl Metadata for BubbleMetadata {
             tail_absolute_frame_plus_one: 0,
             next_head_frame: 1,
 
-            crc,
-        })
+            crc: CRC,
+        };
+
+        let spec_version = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
+        let bubble_id = BubbleID::read_and_calc_bytes(reader, &mut metadata.crc)?;
+        let bubble_version = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
+
+        let frames = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
+        let samples_per_sec = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
+        let lpcm_kind = LpcmKind::read_and_calc_bytes(reader, &mut metadata.crc)?;
+        let bubble_sample_kind = BubbleSampleKind::read_and_calc_bytes(reader, &mut metadata.crc)?;
+
+        let name_size: u8 = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
+        let name = reader.read_string_for_and_calc_bytes(name_size as usize, &mut metadata.crc)?;
+
+        // CRC
+        metadata.read_crc(reader)?;
+        // TODO
+        metadata.spec_version = spec_version;
+        metadata.bubble_id = bubble_id;
+        metadata.bubble_version = bubble_version;
+        metadata.frames = frames;
+        metadata.samples_per_sec = samples_per_sec;
+        metadata.lpcm_kind = lpcm_kind;
+        metadata.bubble_sample_kind = bubble_sample_kind;
+        metadata.name = name;
+
+        Ok(metadata)
     }
     fn write<W: std::io::Write>(&mut self, writer: &mut W) -> Result<()> {
         writer.write_le_and_calc_bytes(self.spec_version, &mut self.crc)?;
@@ -295,12 +318,7 @@ impl Metadata for BubbleMetadata {
         writer.write_str_and_calc_bytes(&self.name, &mut self.crc)?;
 
         // CRC
-        let checksum_bytes = self.crc.finalize_to_endian_bytes();
-        writer.write_all(&checksum_bytes)?;
-
-        self.crc.initialize().calc_bytes(&checksum_bytes);
-
-        Ok(())
+        self.write_crc(writer)
     }
 }
 
@@ -317,7 +335,7 @@ mod tests {
             frames: 96000,
             samples_per_sec: 96000.0,
             lpcm_kind: LpcmKind::F32LE,
-            bubble_sample_kind: BubbleSampleKind::LPCM,
+            bubble_sample_kind: BubbleSampleKind::Lpcm,
             name: String::from("Vocal"),
 
             speakers_absolute_coordinates: Vec::new(),
