@@ -56,7 +56,7 @@ impl BubbleFunctions {
         relative_frame: f64,
         frames: f64,
         samples_per_sec: f64,
-    ) -> Option<f64> {
+    ) -> Option<(f64, FunctionInterpreter)> {
         for bubble_function in self.0.iter() {
             let bubble_absolute_coordinates = (0.0, 0.0, 0.0);
             let mut interpreter = FunctionInterpreter::new(
@@ -87,7 +87,7 @@ impl BubbleFunctions {
 
             if domain {
                 let volume = interpreter.eval_sum(&bubble_function.volume).unwrap();
-                return Some(volume);
+                return Some((volume, interpreter));
             }
         }
 

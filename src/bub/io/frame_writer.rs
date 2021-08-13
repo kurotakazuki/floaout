@@ -275,7 +275,7 @@ mod tests {
             &0.3f32.to_le_bytes(),
             &[142, 47, 230, 233], // crc
             // Frame 4
-    
+
             // Frame 5
             &[12],
             &[0x80],
@@ -291,7 +291,7 @@ mod tests {
             &1.0f32.to_le_bytes(),
             &[175, 72, 19, 72], // crc
                                 // Frame 7
-    
+
                                 // Frame 8
         ]
         .concat();

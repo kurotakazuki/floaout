@@ -1,5 +1,5 @@
 use crate::bub::{
-    function::{parse, FunctionVariable},
+    function::{parse, FunctionAST, FunctionInterpreter, FunctionVariable},
     BubbleMetadata, BubbleSampleKind, BubbleState,
 };
 use crate::io::ReadExt;
@@ -63,23 +63,73 @@ impl<R: Read, S: Sample> BubbleFrameReader<R, S> {
         Ok(())
     }
 
-    fn multiply_volume(&self, frame: &mut Frame<S>, sample: S) {
+    fn read_lpcm_and_crc(&mut self) -> Result<S> {
+        let sample = S::read_and_calc_bytes(&mut self.inner, &mut self.metadata.crc)?;
+        // Read CRC
+        if self.metadata.tail_absolute_frame_plus_one - 1 == self.pos {
+            self.metadata.read_crc(&mut self.inner)?;
+        }
+
+        Ok(sample)
+    }
+
+    fn read_expression_and_crc(&mut self) -> Result<Vec<u8>> {
+        let expr_size: u16 = self.inner.read_le_and_calc_bytes(&mut self.metadata.crc)?;
+        let expr = self
+            .inner
+            .read_vec_for_and_calc_bytes(expr_size as usize, &mut self.metadata.crc)?;
+        // CRC
+        self.metadata.read_crc(&mut self.inner)?;
+        Ok(expr)
+    }
+
+    fn get_volume_and_interpreter(
+        &self,
+        speaker_absolute_coordinates: (f64, f64, f64),
+    ) -> Option<(f64, FunctionInterpreter)> {
+        self.metadata.bubble_functions.to_volume(
+            speaker_absolute_coordinates,
+            self.pos as f64,
+            (self.pos - self.metadata.head_frame + 1) as f64,
+            self.metadata.frames as f64,
+            self.metadata.samples_per_sec,
+        )
+    }
+
+    fn read_lpcm_frame(&mut self, frame: &mut Frame<S>) -> Result<()> {
+        let sample = self.read_lpcm_and_crc()?;
+
         if sample != S::default() {
+            // TODO: Create method
             for (i, speaker_absolute_coordinates) in self
                 .metadata
                 .speakers_absolute_coordinates
                 .iter()
                 .enumerate()
             {
-                if let Some(volume) = self.metadata.bubble_functions.to_volume(
-                    *speaker_absolute_coordinates,
-                    self.pos as f64,
-                    (self.pos - self.metadata.head_frame + 1) as f64,
-                    self.metadata.frames as f64,
-                    self.metadata.samples_per_sec,
-                ) {
+                if let Some((volume, _)) =
+                    self.get_volume_and_interpreter(*speaker_absolute_coordinates)
+                {
                     frame.0[i] = sample * S::from_f64(volume);
                 }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn expr_frame(&self, expr: &FunctionAST, frame: &mut Frame<S>) {
+            for (i, speaker_absolute_coordinates) in self
+            .metadata
+            .speakers_absolute_coordinates
+            .iter()
+            .enumerate()
+        {
+            if let Some((volume, interpreter)) =
+                self.get_volume_and_interpreter(*speaker_absolute_coordinates)
+            {
+                let sample = interpreter.eval_sum(expr).unwrap();
+                frame.0[i] = S::from_f64(sample * volume);
             }
         }
     }
@@ -108,38 +158,36 @@ impl<R: Read, S: Sample> Iterator for BubbleFrameReader<R, S> {
                 }
 
                 // Read Sample
-                let sample: S = match self.metadata.bubble_sample_kind {
+                match self.metadata.bubble_sample_kind {
                     BubbleSampleKind::Lpcm => {
-                        match S::read_and_calc_bytes(&mut self.inner, &mut self.metadata.crc) {
-                            Ok(n) => n,
-                            Err(e) => return Some(Err(e)),
+                        if let Err(e) = self.read_lpcm_frame(&mut frame) {
+                            return Some(Err(e));
                         }
                     }
-                    BubbleSampleKind::Expression => todo!(),
-                };
-                self.multiply_volume(&mut frame, sample);
+                    BubbleSampleKind::Expression(_) => {
+                        let expr = match self.read_expression_and_crc() {
+                            Ok(v) => v,
+                            Err(e) => return Some(Err(e)),
+                        };
+                        let expr = parse(&expr, &FunctionVariable::Sum).unwrap();
+                        self.expr_frame(&expr, &mut frame);
+                        self.metadata.bubble_sample_kind = expr.into();
+                    }
+                }
             }
             BubbleState::Normal => {
                 // Read Sample
-                let sample: S = match self.metadata.bubble_sample_kind {
+                match &self.metadata.bubble_sample_kind {
                     BubbleSampleKind::Lpcm => {
-                        match S::read_and_calc_bytes(&mut self.inner, &mut self.metadata.crc) {
-                            Ok(n) => n,
-                            Err(e) => return Some(Err(e)),
+                        if let Err(e) = self.read_lpcm_frame(&mut frame) {
+                            return Some(Err(e));
                         }
                     }
-                    BubbleSampleKind::Expression => todo!(),
-                };
-                self.multiply_volume(&mut frame, sample);
+                    BubbleSampleKind::Expression(expr) => self.expr_frame(&expr, &mut frame),
+                }
             }
             BubbleState::Stopped => (),
             BubbleState::Ended => (),
-        }
-        // Read CRC
-        if self.metadata.tail_absolute_frame_plus_one - 1 == self.pos {
-            if let Err(e) = self.metadata.read_crc(&mut self.inner) {
-                return Some(Err(e));
-            }
         }
 
         Some(Ok(frame))
@@ -249,7 +297,7 @@ mod tests {
             &0.3f32.to_le_bytes(),
             &[142, 47, 230, 233], // crc
             // Frame 4
-    
+
             // Frame 5
             &[12],
             &[0x80],
@@ -265,7 +313,7 @@ mod tests {
             &1.0f32.to_le_bytes(),
             &[175, 72, 19, 72], // crc
                                 // Frame 7
-    
+
                                 // Frame 8
         ]
         .concat();

@@ -1,4 +1,7 @@
-use crate::bub::{function::BubbleFunctions, BubbleID};
+use crate::bub::{
+    function::{parse, BubbleFunctions, FunctionAST, FunctionVariable},
+    BubbleID,
+};
 use crate::crc::CRC;
 use crate::io::{ReadExt, WriteExt};
 use crate::{LpcmKind, Metadata};
@@ -31,18 +34,30 @@ impl BubbleState {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum BubbleSampleKind {
     Lpcm,
-    Expression,
+    Expression(FunctionAST),
+}
+
+impl From<FunctionAST> for BubbleSampleKind {
+    fn from(ast: FunctionAST) -> Self {
+        Self::Expression(ast)
+    }
 }
 
 impl BubbleSampleKind {
+    pub fn default_expr() -> Self {
+        parse("0".as_bytes(), &FunctionVariable::Sum)
+            .unwrap()
+            .into()
+    }
+
     pub fn read<R: Read>(reader: &mut R) -> Result<Self> {
         let value: u8 = reader.read_le()?;
         Ok(match value {
             0 => Self::Lpcm,
-            1 => Self::Expression,
+            1 => Self::default_expr(),
             _ => return Err(ErrorKind::InvalidData.into()),
         })
     }
@@ -50,30 +65,30 @@ impl BubbleSampleKind {
         let value: u8 = reader.read_le_and_calc_bytes(crc)?;
         Ok(match value {
             0 => Self::Lpcm,
-            1 => Self::Expression,
+            1 => Self::default_expr(),
             _ => return Err(ErrorKind::InvalidData.into()),
         })
     }
 
-    pub fn write<W: Write>(self, writer: &mut W) -> Result<()> {
+    pub fn write<W: Write>(&self, writer: &mut W) -> Result<()> {
         writer.write_le(self.to_u8())
     }
-    pub fn write_and_calc_bytes<W: Write>(self, writer: &mut W, crc: &mut CRC<u32>) -> Result<()> {
+    pub fn write_and_calc_bytes<W: Write>(&self, writer: &mut W, crc: &mut CRC<u32>) -> Result<()> {
         writer.write_le_and_calc_bytes(self.to_u8(), crc)
     }
 
     pub fn from_u8(value: u8) -> Self {
         match value {
             0 => Self::Lpcm,
-            1 => Self::Expression,
+            1 => Self::default_expr(),
             _ => unimplemented!(),
         }
     }
 
-    pub const fn to_u8(self) -> u8 {
+    pub const fn to_u8(&self) -> u8 {
         match self {
             Self::Lpcm => 0,
-            Self::Expression => 1,
+            Self::Expression(_) => 1,
         }
     }
 }
