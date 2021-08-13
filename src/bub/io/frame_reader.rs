@@ -119,7 +119,7 @@ impl<R: Read, S: Sample> BubbleFrameReader<R, S> {
     }
 
     fn expr_frame(&self, expr: &FunctionAST, frame: &mut Frame<S>) {
-            for (i, speaker_absolute_coordinates) in self
+        for (i, speaker_absolute_coordinates) in self
             .metadata
             .speakers_absolute_coordinates
             .iter()
@@ -183,7 +183,7 @@ impl<R: Read, S: Sample> Iterator for BubbleFrameReader<R, S> {
                             return Some(Err(e));
                         }
                     }
-                    BubbleSampleKind::Expression(expr) => self.expr_frame(&expr, &mut frame),
+                    BubbleSampleKind::Expression(expr) => self.expr_frame(expr, &mut frame),
                 }
             }
             BubbleState::Stopped => (),
@@ -249,7 +249,7 @@ mod tests {
     };
 
     #[test]
-    fn read_frames() {
+    fn read_lpcm_frames() {
         let mut metadata = BubbleMetadata {
             spec_version: 0,
             bubble_id: BubbleID::new(0),
@@ -328,6 +328,99 @@ mod tests {
             (Stopped, [0.0, 0.0]),
             (Head, [0.4, 0.4]),
             (Head, [0.0, 1.0]),
+            (Ended, [0.0, 0.0]),
+            (Ended, [0.0, 0.0]),
+        ];
+
+        for expect in expects {
+            let frame = wav_frame_reader.next().unwrap().unwrap();
+            assert_eq!(wav_frame_reader.metadata.bubble_state, expect.0);
+            assert_eq!(frame.0, expect.1);
+        }
+    }
+
+    #[test]
+    fn read_expr_frames() {
+        let mut metadata = BubbleMetadata {
+            spec_version: 0,
+            bubble_id: BubbleID::new(0),
+            bubble_version: 0,
+            frames: 8,
+            samples_per_sec: 96000.0,
+            lpcm_kind: LpcmKind::F64LE,
+            bubble_sample_kind: BubbleSampleKind::default_expr(),
+            name: String::from("Expression"),
+
+            speakers_absolute_coordinates: vec![(0.0, 0.0, 0.0), (0.0, 0.0, 1.0)],
+
+            bubble_state: BubbleState::Stopped,
+            head_frame: 0,
+
+            bubble_functions: BubbleFunctions::new(),
+            connected: false,
+            ended: false,
+            tail_absolute_frame_plus_one: 0,
+            next_head_frame: 2,
+
+            crc: crate::crc::CRC,
+        };
+
+        // Write Metadata and get CRC
+        let mut skip: Vec<u8> = Vec::new();
+        metadata.write(&mut skip).unwrap();
+
+        let data: &[u8] = &[
+            // Frame 1
+
+            // Frame 2
+            &[14][..],
+            &[0],
+            b"1 2 3 Z==1 0.1",
+            &1u64.to_le_bytes(),
+            &3u64.to_le_bytes(),
+            // Expr
+            &1u16.to_le_bytes(),
+            b"1",
+            &[17, 247, 225, 70], // crc
+            // Frame 3
+
+            // Frame 4
+            &[12][..],
+            &[0x80],
+            b"1 2 3 Z==1 1",
+            &2u64.to_le_bytes(),
+            // Expr
+            &3u16.to_le_bytes(),
+            b"1/n",
+            &[219, 3, 147, 171], // crc
+            // Frame 5
+
+            // Frame 6
+            &[11][..],
+            &[0x40],
+            b"1 2 3 Z<1 n",
+            &1u64.to_le_bytes(),
+            // Expr
+            &3u16.to_le_bytes(),
+            b"0.1",
+            &[61, 68, 24, 114], // crc
+
+                                // Frame 7
+
+                                // Frame 8
+        ]
+        .concat();
+
+        let mut wav_frame_reader: BubbleFrameReader<&[u8], f32> =
+            BubbleFrameReader::new(data, metadata);
+
+        let expects = vec![
+            (Stopped, [0.0, 0.0]),
+            (Head, [0.0, 0.1]),
+            (Stopped, [0.0, 0.0]),
+            (Head, [0.0, 1.0]),
+            (Normal, [0.0, 0.5]),
+            (Head, [0.1, 0.0]),
             (Ended, [0.0, 0.0]),
             (Ended, [0.0, 0.0]),
         ];

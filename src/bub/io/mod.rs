@@ -23,8 +23,8 @@ pub enum BubbleSample<'a, S: Sample> {
     },
     LpcmNormal(S),
     // Expression
-    // TODO
     Expression {
+        head_absolute_frame: u64,
         connected: bool,
         ended: bool,
         bubble_functions: &'a [u8],
@@ -44,7 +44,6 @@ pub enum BubbleFunctionsBlock<'a, S: Sample> {
         samples: Vec<S>,
     },
     // Expression
-    // TODO
     Expression {
         connected: bool,
         ended: bool,
