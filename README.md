@@ -2,13 +2,14 @@
 Floaout is the next-generation audio format.
 
 # TODO
+- Create BubbleFrameReader structure
 - Add Expression file test
-- Rename BubbleMetadata.next_head_frame to next_head_absolute_frames and to `Option<u64>`
 - Add read_bubble_functions_block
 - Create Coordinates structure
 - Add write_frames in BubbleFrameWriter
 - error handling
 - Clarify whether #[derive(Order)] is needed
+- Add Position in function
 - Add Functions like pow, sinh, ...
 
 # Bubble File Format Specification
@@ -17,7 +18,7 @@ Floaout is the next-generation audio format.
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
 | Spec Version | `u8` (1) | Version of Bubble File Format Specification. |
-| Bubble ID | `u128` (16) | Bubble ID of this file. If undefined Bubble, than value is 0. |
+| Bubble ID | `u128` (16) | Bubble ID of this file. The value is 0 if the Bubble is undefined. |
 | Bubble Version | `u16` (2) | Version of Bubble |
 | Frames | `u64` (8) | Number of frames |
 | Starting Absolute Frame | `u64` (8) | Starting Absolute Frame |
@@ -305,3 +306,32 @@ Slash = '/' () / f
 
 Space = ' ' () / f
 ```
+
+
+# Floaout File Format Specification
+
+## Metadata
+| Name | `Type` (Bytes) | Description |
+| ------------- | ------------- | ------------- |
+| Spec Version | `u8` (1) | Version of Floaout File Format Specification. |
+| Song ID | `u128` (16) | Song ID of this file. The value is 0 if the song is undefined. |
+| Song Version | `u16` (2) | Version of Song |
+| Bubbles | `u16` (2) | Number of Bubbles |
+| Frames | `u64` (8) | Number of frames |
+| Samples Per Sec | `f64` (8) | Samples per sec |
+| LpcmKind | `u8` (1) | `SampleKind` |
+| Title Size | `u8` (1) | Title Size (0~255) |
+| Title | `String` | Title (UTF-8) |
+| Artist Size | `u8` (1) | Artist Size (0~255) |
+| Artist | `String` | Artist (UTF-8) |
+| CRC-32K/4.2 | `u32` (4) | Max length at Hamming Distance 4 is 2147483615 (bits). And max length at Hamming Distance 6 is 6167 (bits). |
+
+## Each Bubble
+Bubble Files will be 'i.bub' (i = 0, ... , Bubbles - 1)
+
+| Name | `Type` (Bytes) | Description |
+| ------------- | ------------- | ------------- |
+| Bubble Starting Frames | `u16` (2) | Number of Bubble Starting Frames |
+| Bubble Starting Frame | `u64` (8) | Bubble Starting Frame |
+| ... | ... | ... |
+| Bubble Starting Frame | `u64` (8) | Bubble Starting Frame |
