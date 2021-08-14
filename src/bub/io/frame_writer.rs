@@ -6,39 +6,18 @@ use std::io::{Error, ErrorKind, Result, Write};
 pub type BubbleFrameWriter<W, S> = FrameWriter<W, BubbleMetadata, S>;
 
 impl<W: Write, S: Sample> BubbleFrameWriter<W, S> {
-    fn write_flags_functions_size_and_calc_bytes(&mut self, functions_size: u16) -> Result<()> {
-        let mut read_flags_and_functions_size = functions_size;
-
-        // connected
-        if self.metadata.connected {
-            read_flags_and_functions_size |= 1 << 15;
-        }
-        // ended
-        if self.metadata.ended {
-            read_flags_and_functions_size |= 1 << 14;
-        }
-
-        self.inner
-            .write_le_and_calc_bytes(read_flags_and_functions_size, &mut self.metadata.crc)?;
-
-        Ok(())
-    }
-
     fn write_head_metadata_and_calc_bytes(
         &mut self,
         head_absolute_frame: u64,
-        connected: bool,
-        ended: bool,
         bubble_functions: &[u8],
         tail_relative_frame: u64,
         next_head_relative_frame: u64,
     ) -> Result<()> {
         self.metadata.set_as_head(head_absolute_frame);
-        self.metadata.connected = connected;
-        self.metadata.ended = ended;
         self.metadata.tail_absolute_frame_plus_one = head_absolute_frame + tail_relative_frame;
-        // Flags and functions
-        self.write_flags_functions_size_and_calc_bytes(bubble_functions.len() as u16)?;
+        // functions size
+        self.inner
+            .write_le_and_calc_bytes(bubble_functions.len() as u16, &mut self.metadata.crc)?;
         // Bubble Functions
         self.inner.write_all(bubble_functions)?;
         self.metadata.crc.calc_bytes(bubble_functions);
@@ -46,11 +25,12 @@ impl<W: Write, S: Sample> BubbleFrameWriter<W, S> {
         self.inner
             .write_le_and_calc_bytes(tail_relative_frame, &mut self.metadata.crc)?;
         // Next head relative frame
-        if !(connected || ended) {
-            self.inner
-                .write_le_and_calc_bytes(next_head_relative_frame, &mut self.metadata.crc)?;
-            self.metadata.next_head_frame = head_absolute_frame + next_head_relative_frame - 1;
-        }
+        self.inner
+            .write_le_and_calc_bytes(next_head_relative_frame, &mut self.metadata.crc)?;
+        self.metadata.set_next_head_absolute_frame_from_relative(
+            next_head_relative_frame,
+            head_absolute_frame,
+        );
 
         Ok(())
     }
@@ -59,8 +39,6 @@ impl<W: Write, S: Sample> BubbleFrameWriter<W, S> {
         match bubble_sample {
             BubbleSample::LpcmHead {
                 head_absolute_frame,
-                connected,
-                ended,
                 bubble_functions,
                 tail_relative_frame,
                 next_head_relative_frame,
@@ -68,11 +46,9 @@ impl<W: Write, S: Sample> BubbleFrameWriter<W, S> {
             } => {
                 self.write_head_metadata_and_calc_bytes(
                     head_absolute_frame,
-                    connected,
-                    ended,
                     bubble_functions,
                     tail_relative_frame,
-                    next_head_relative_frame,
+                    next_head_relative_frame.unwrap_or(0),
                 )?;
 
                 sample.write_and_calc_bytes(&mut self.inner, &mut self.metadata.crc)?;
@@ -83,8 +59,6 @@ impl<W: Write, S: Sample> BubbleFrameWriter<W, S> {
             }
             BubbleSample::Expression {
                 head_absolute_frame,
-                connected,
-                ended,
                 bubble_functions,
                 tail_relative_frame,
                 next_head_relative_frame,
@@ -92,11 +66,9 @@ impl<W: Write, S: Sample> BubbleFrameWriter<W, S> {
             } => {
                 self.write_head_metadata_and_calc_bytes(
                     head_absolute_frame,
-                    connected,
-                    ended,
                     bubble_functions,
                     tail_relative_frame,
-                    next_head_relative_frame,
+                    next_head_relative_frame.unwrap_or(0),
                 )?;
                 // Write Expression
                 self.inner
@@ -112,33 +84,30 @@ impl<W: Write, S: Sample> BubbleFrameWriter<W, S> {
     fn add_pos_to_less_than_next_head_or_ended(
         &mut self,
         head_absolute_frame: u64,
-        connected: bool,
-        ended: bool,
         tail_relative_frame: u64,
-        next_head_relative_frame: u64,
+        next_head_relative_frame: Option<u64>,
     ) -> Result<()> {
-        if ended {
+        match next_head_relative_frame {
+            Some(next_head_relative_frame) => {
+                if tail_relative_frame < next_head_relative_frame {
+                    let next_head_relative_frame_minus_one = next_head_relative_frame - 1;
+                    if self.metadata.frames()
+                        < head_absolute_frame + next_head_relative_frame_minus_one
+                    {
+                        return Err(ErrorKind::InvalidData.into());
+                    }
+                    self.pos += next_head_relative_frame_minus_one;
+                } else {
+                    return Err(ErrorKind::InvalidData.into());
+                }
+            }
             // Ended
-            if self.metadata.frames() <= head_absolute_frame + tail_relative_frame {
-                return Err(ErrorKind::InvalidData.into());
+            None => {
+                if self.metadata.frames() <= head_absolute_frame + tail_relative_frame {
+                    return Err(ErrorKind::InvalidData.into());
+                }
+                self.pos = self.metadata.frames();
             }
-            self.pos = self.metadata.frames();
-        } else if connected {
-            if self.metadata.frames() < head_absolute_frame + tail_relative_frame {
-                return Err(ErrorKind::InvalidData.into());
-            }
-            self.pos += tail_relative_frame;
-        } else {
-            let next_head_relative_frame_minus_one = next_head_relative_frame - 1;
-            // Check if next_head_relative_frame is valid.
-            if tail_relative_frame >= next_head_relative_frame_minus_one {
-                return Err(ErrorKind::InvalidData.into());
-            }
-            // Stopped
-            if self.metadata.frames() < head_absolute_frame + next_head_relative_frame_minus_one {
-                return Err(ErrorKind::InvalidData.into());
-            }
-            self.pos += next_head_relative_frame_minus_one;
         }
 
         Ok(())
@@ -156,8 +125,6 @@ impl<W: Write, S: Sample> BubbleFrameWriter<W, S> {
 
         match bubble_functions_block {
             BubbleFunctionsBlock::Lpcm {
-                connected,
-                ended,
                 bubble_functions,
                 next_head_relative_frame,
                 samples,
@@ -171,8 +138,6 @@ impl<W: Write, S: Sample> BubbleFrameWriter<W, S> {
 
                 self.add_pos_to_less_than_next_head_or_ended(
                     head_absolute_frame,
-                    connected,
-                    ended,
                     tail_relative_frame,
                     next_head_relative_frame,
                 )?;
@@ -180,8 +145,6 @@ impl<W: Write, S: Sample> BubbleFrameWriter<W, S> {
                 // Write Head
                 self.write_sample_and_calc_bytes(BubbleSample::LpcmHead {
                     head_absolute_frame,
-                    connected,
-                    ended,
                     bubble_functions,
                     tail_relative_frame,
                     next_head_relative_frame,
@@ -194,15 +157,10 @@ impl<W: Write, S: Sample> BubbleFrameWriter<W, S> {
                 // Write CRC
                 self.metadata.write_crc(&mut self.inner)?;
                 // Finalize
-                if ended {
-                    self.metadata.set_as_ended();
-                } else if !connected {
-                    self.metadata.set_as_stopped();
-                }
+                self.metadata
+                    .set_bubble_state_from_connected_and_ended(self.pos);
             }
             BubbleFunctionsBlock::Expression {
-                connected,
-                ended,
                 bubble_functions,
                 tail_relative_frame,
                 next_head_relative_frame,
@@ -210,16 +168,12 @@ impl<W: Write, S: Sample> BubbleFrameWriter<W, S> {
             } => {
                 self.add_pos_to_less_than_next_head_or_ended(
                     head_absolute_frame,
-                    connected,
-                    ended,
                     tail_relative_frame,
                     next_head_relative_frame,
                 )?;
                 // Write Expression
                 self.write_sample_and_calc_bytes(BubbleSample::Expression {
                     head_absolute_frame,
-                    connected,
-                    ended,
                     bubble_functions,
                     tail_relative_frame,
                     next_head_relative_frame,
@@ -229,11 +183,8 @@ impl<W: Write, S: Sample> BubbleFrameWriter<W, S> {
                 // Write CRC
                 self.metadata.write_crc(&mut self.inner)?;
                 // Finalize
-                if ended {
-                    self.metadata.set_as_ended();
-                } else if !connected {
-                    self.metadata.set_as_stopped();
-                }
+                self.metadata
+                    .set_bubble_state_from_connected_and_ended(self.pos);
             }
         }
 
@@ -321,7 +272,7 @@ mod tests {
     use crate::bub::{function::BubbleFunctions, BubbleID, BubbleSampleKind, BubbleState};
 
     #[test]
-    fn write_frames() -> Result<()> {
+    fn write_lpcm_frames() -> Result<()> {
         let mut metadata = BubbleMetadata {
             spec_version: 0,
             bubble_id: BubbleID::new(0),
@@ -335,57 +286,53 @@ mod tests {
             speakers_absolute_coordinates: vec![],
 
             bubble_state: BubbleState::Stopped,
-            head_frame: 0,
+            head_absolute_frame: 0,
 
             bubble_functions: BubbleFunctions::new(),
-            connected: false,
-            ended: false,
             tail_absolute_frame_plus_one: 0,
-            next_head_frame: 1,
+            next_head_absolute_frame: Some(1),
 
             crc: crate::crc::CRC,
         };
 
         let data: &[u8] = &[
             // Frame 1
-            &[15][..],
-            &[0x80],
+            &15u16.to_le_bytes()[..],
             b"1 2 3 X<3 0.1*N",
             &2u64.to_le_bytes(),
+            &3u64.to_le_bytes(),
             &1.0f32.to_le_bytes(),
             // Frame 2
             &1.0f32.to_le_bytes(),
-            &[194, 54, 74, 24], // crc
+            &[253, 24, 123, 85], // crc
             // Frame 3
-            &[11],
-            &[0],
+            &11u16.to_le_bytes()[..],
             b"1 2 3 X<3 1",
             &1u64.to_le_bytes(),
             &3u64.to_le_bytes(),
             &0.3f32.to_le_bytes(),
-            &[142, 47, 230, 233], // crc
+            &[250, 147, 10, 142], // crc
             // Frame 4
 
             // Frame 5
-            &[12],
-            &[0x80],
+            &12u16.to_le_bytes()[..],
             b"0 0 0 0==0 1",
             &1u64.to_le_bytes(),
+            &2u64.to_le_bytes(),
             &0.4f32.to_le_bytes(),
-            &[16, 85, 195, 62], // crc
+            &[84, 232, 255, 6], // crc
             // Frame 6
-            &[13],
-            &[0x40],
+            &13u16.to_le_bytes()[..],
             b"0 0 n X>=3 -z",
             &1u64.to_le_bytes(),
+            &0u64.to_le_bytes(),
             &1.0f32.to_le_bytes(),
-            &[175, 72, 19, 72], // crc
-                                // Frame 7
+            &[227, 183, 22, 42], // crc
+                                 // Frame 7
 
-                                // Frame 8
+                                 // Frame 8
         ]
         .concat();
-
         // Write Metadata
         let mut skip = Vec::new();
         metadata.write(&mut skip).unwrap();
@@ -396,29 +343,23 @@ mod tests {
 
         // BubbleFunctionsBlock 1
         let lpcm = BubbleFunctionsBlock::Lpcm {
-            connected: true,
-            ended: false,
             bubble_functions: b"1 2 3 X<3 0.1*N",
-            next_head_relative_frame: 0,
+            next_head_relative_frame: Some(3),
             samples: vec![1.0, 1.0],
         };
         bub_frame_writer.write_head_to_less_than_next_head_or_ended(lpcm)?;
 
         let lpcm = BubbleFunctionsBlock::Lpcm {
-            connected: false,
-            ended: false,
             bubble_functions: b"0 0 n X>=3 -z",
-            next_head_relative_frame: 5,
+            next_head_relative_frame: Some(5),
             samples: vec![1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
         };
         assert!(bub_frame_writer
             .write_head_to_less_than_next_head_or_ended(lpcm)
             .is_err());
         let lpcm = BubbleFunctionsBlock::Lpcm {
-            connected: false,
-            ended: false,
             bubble_functions: b"0 0 n X>=3 -z",
-            next_head_relative_frame: 5,
+            next_head_relative_frame: Some(5),
             samples: vec![],
         };
         assert!(bub_frame_writer
@@ -427,19 +368,15 @@ mod tests {
 
         // BubbleFunctionsBlock 2
         let lpcm = BubbleFunctionsBlock::Lpcm {
-            connected: false,
-            ended: false,
             bubble_functions: b"1 2 3 X<3 1",
-            next_head_relative_frame: 3,
+            next_head_relative_frame: Some(3),
             samples: vec![0.3],
         };
         bub_frame_writer.write_head_to_less_than_next_head_or_ended(lpcm)?;
 
         let lpcm = BubbleFunctionsBlock::Lpcm {
-            connected: false,
-            ended: false,
             bubble_functions: b"0 0 n X>=3 -z",
-            next_head_relative_frame: 5,
+            next_head_relative_frame: Some(5),
             samples: vec![1.0, 1.0, 1.0, 1.0, 1.0],
         };
         assert!(bub_frame_writer
@@ -448,29 +385,23 @@ mod tests {
 
         // BubbleFunctionsBlock 3
         let lpcm = BubbleFunctionsBlock::Lpcm {
-            connected: true,
-            ended: false,
             bubble_functions: b"0 0 0 0==0 1",
-            next_head_relative_frame: 0,
+            next_head_relative_frame: Some(2),
             samples: vec![0.4],
         };
         bub_frame_writer.write_head_to_less_than_next_head_or_ended(lpcm)?;
 
         let lpcm = BubbleFunctionsBlock::Lpcm {
-            connected: true,
-            ended: false,
             bubble_functions: b"0 0 n X>=3 -z",
-            next_head_relative_frame: 0,
+            next_head_relative_frame: Some(2),
             samples: vec![1.0, 1.0, 1.0, 1.0],
         };
         assert!(bub_frame_writer
             .write_head_to_less_than_next_head_or_ended(lpcm)
             .is_err());
         let lpcm = BubbleFunctionsBlock::Lpcm {
-            connected: false,
-            ended: true,
             bubble_functions: b"0 0 n X>=3 -z",
-            next_head_relative_frame: 0,
+            next_head_relative_frame: Some(5),
             samples: vec![1.0, 1.0, 1.0, 1.0],
         };
         assert!(bub_frame_writer
@@ -479,10 +410,8 @@ mod tests {
 
         // BubbleFunctionsBlock 4
         let lpcm = BubbleFunctionsBlock::Lpcm {
-            connected: false,
-            ended: true,
             bubble_functions: b"0 0 n X>=3 -z",
-            next_head_relative_frame: 0,
+            next_head_relative_frame: None,
             samples: vec![1.0],
         };
         bub_frame_writer.write_head_to_less_than_next_head_or_ended(lpcm)?;
@@ -490,10 +419,8 @@ mod tests {
         assert_eq!(&bub_frame_writer.inner[..], data);
 
         let lpcm = BubbleFunctionsBlock::Lpcm {
-            connected: false,
-            ended: false,
             bubble_functions: b"0 0 n X>=3 -z",
-            next_head_relative_frame: 5,
+            next_head_relative_frame: Some(5),
             samples: vec![1.0],
         };
         assert!(bub_frame_writer

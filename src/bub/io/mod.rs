@@ -14,22 +14,20 @@ pub enum BubbleSample<'a, S: Sample> {
     // Lpcm
     LpcmHead {
         head_absolute_frame: u64,
-        connected: bool,
-        ended: bool,
+
         bubble_functions: &'a [u8],
         tail_relative_frame: u64,
-        next_head_relative_frame: u64,
+        next_head_relative_frame: Option<u64>,
         sample: S,
     },
     LpcmNormal(S),
     // Expression
     Expression {
         head_absolute_frame: u64,
-        connected: bool,
-        ended: bool,
+
         bubble_functions: &'a [u8],
         tail_relative_frame: u64,
-        next_head_relative_frame: u64,
+        next_head_relative_frame: Option<u64>,
         expression: &'a [u8],
     },
 }
@@ -37,19 +35,15 @@ pub enum BubbleSample<'a, S: Sample> {
 pub enum BubbleFunctionsBlock<'a, S: Sample> {
     // Lpcm
     Lpcm {
-        connected: bool,
-        ended: bool,
         bubble_functions: &'a [u8],
-        next_head_relative_frame: u64,
+        next_head_relative_frame: Option<u64>,
         samples: Vec<S>,
     },
     // Expression
     Expression {
-        connected: bool,
-        ended: bool,
         bubble_functions: &'a [u8],
         tail_relative_frame: u64,
-        next_head_relative_frame: u64,
+        next_head_relative_frame: Option<u64>,
         expression: &'a [u8],
     },
 }

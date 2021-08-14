@@ -2,7 +2,7 @@
 Floaout is the next-generation audio format.
 
 # TODO
-- Delete connected and ended
+- Add Expression file test
 - Rename BubbleMetadata.next_head_frame to next_head_absolute_frames and to `Option<u64>`
 - Add read_bubble_functions_block
 - Create Coordinates structure
@@ -60,7 +60,7 @@ Algorithm::<u32> {
 ## Bubble Sample
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
-| Connected, Ended and Functions size | `u16` (1) | Connected, Ended and Functions size |
+| Functions size | `u16` (1) | Functions size |
 | Bubble's X coordinate | `Sum` | Bubble's X coordinate (X_0) |
 | Space | `char` (1) | ' ' |
 | Bubble's Y coordinate | `Sum` | Bubble's Y coordinate (Y_0) |
@@ -72,20 +72,9 @@ Algorithm::<u32> {
 | Volume | `Sum` |  |
 | Space or Empty | `char` (1) | ' ' if there is another |
 | Tail Relative Frame | `u64` (8) | Number of frames at the end of function. |
-| Next Head Relative Frame | `u64` (8) | Number of frames at the start of the next function. Optional (!connected && !ended) |
+| Next Head Relative Frame | `Option<u64>` (8) | Number of frames at the start of the next function. `None` if 0. |
 | Sample Data |  | Sample Data |
 | CRC-32K/4.2 | `u32` (4) | After every tail frames. From the previous CRC. |
-
-
-### Connected, Ended and Functions size
-| Name | `Type` (bits) | Description |
-| ------------- | ------------- | ------------- |
-| Functions Size | `u16` (14)  | Functions Size is 14 bits |
-
-| ended \ connected | 0?????????????? | 1?????????????? |
-| ------------- | ------------- | ------------- |
-| ?0????????????? | Stopped (NST) | Head |
-| ?1????????????? | Ended | x |
 
 ### Sample Data
 #### Lpcm

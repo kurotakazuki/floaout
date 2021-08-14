@@ -9,31 +9,8 @@ use std::io::{Error, ErrorKind, Read, Result};
 pub type BubbleFrameReader<R, S> = FrameReader<R, BubbleMetadata, S>;
 
 impl<R: Read, S: Sample> BubbleFrameReader<R, S> {
-    fn read_flags_functions_size_and_calc_bytes(&mut self) -> Result<u16> {
-        let mut read_flags_and_functions_size: u16 =
-            self.inner.read_le_and_calc_bytes(&mut self.metadata.crc)?;
-
-        // connected
-        self.metadata.connected = if read_flags_and_functions_size & (1 << 15) != 0 {
-            read_flags_and_functions_size &= 0x7FFF;
-            true
-        } else {
-            false
-        };
-
-        // ended
-        self.metadata.ended = if read_flags_and_functions_size & (1 << 14) != 0 {
-            read_flags_and_functions_size &= 0xBFFF;
-            true
-        } else {
-            false
-        };
-
-        Ok(read_flags_and_functions_size)
-    }
-
     fn read_head_metadata_and_calc_bytes(&mut self) -> Result<()> {
-        let functions_size = self.read_flags_functions_size_and_calc_bytes()?;
+        let functions_size: u16 = self.inner.read_le_and_calc_bytes(&mut self.metadata.crc)?;
 
         let bubble_functions_vec = self
             .inner
@@ -52,13 +29,8 @@ impl<R: Read, S: Sample> BubbleFrameReader<R, S> {
                 .inner
                 .read_le_and_calc_bytes::<u64>(&mut self.metadata.crc)?;
         // Next head relative frame
-        if !(self.metadata.connected || self.metadata.ended) {
-            self.metadata.next_head_frame = self.pos
-                + self
-                    .inner
-                    .read_le_and_calc_bytes::<u64>(&mut self.metadata.crc)?
-                - 1;
-        }
+        self.metadata
+            .read_next_head_absolute_frame_from_relative(&mut self.inner, self.pos)?;
 
         Ok(())
     }
@@ -90,7 +62,7 @@ impl<R: Read, S: Sample> BubbleFrameReader<R, S> {
         self.metadata.bubble_functions.to_volume(
             speaker_absolute_coordinates,
             self.pos as f64,
-            (self.pos - self.metadata.head_frame + 1) as f64,
+            (self.pos - self.metadata.head_absolute_frame + 1) as f64,
             self.metadata.frames as f64,
             self.metadata.samples_per_sec,
         )
@@ -263,13 +235,11 @@ mod tests {
             speakers_absolute_coordinates: vec![(0.0, 0.0, 0.0), (3.0, 0.0, 0.0)],
 
             bubble_state: BubbleState::Stopped,
-            head_frame: 0,
+            head_absolute_frame: 0,
 
             bubble_functions: BubbleFunctions::new(),
-            connected: false,
-            ended: false,
             tail_absolute_frame_plus_one: 0,
-            next_head_frame: 1,
+            next_head_absolute_frame: Some(1),
 
             crc: crate::crc::CRC,
         };
@@ -280,45 +250,44 @@ mod tests {
 
         let data: &[u8] = &[
             // Frame 1
-            &[15][..],
-            &[0x80],
+            &15u16.to_le_bytes()[..],
             b"1 2 3 X<3 0.1*N",
             &2u64.to_le_bytes(),
+            &3u64.to_le_bytes(),
             &1.0f32.to_le_bytes(),
             // Frame 2
             &1.0f32.to_le_bytes(),
-            &[194, 54, 74, 24], // crc
+            &[253, 24, 123, 85], // crc
             // Frame 3
-            &[11],
-            &[0],
+            &11u16.to_le_bytes()[..],
             b"1 2 3 X<3 1",
             &1u64.to_le_bytes(),
             &3u64.to_le_bytes(),
             &0.3f32.to_le_bytes(),
-            &[142, 47, 230, 233], // crc
+            &[250, 147, 10, 142], // crc
             // Frame 4
 
             // Frame 5
-            &[12],
-            &[0x80],
+            &12u16.to_le_bytes()[..],
             b"0 0 0 0==0 1",
             &1u64.to_le_bytes(),
+            &2u64.to_le_bytes(),
             &0.4f32.to_le_bytes(),
-            &[16, 85, 195, 62], // crc
+            &[84, 232, 255, 6], // crc
             // Frame 6
-            &[13],
-            &[0x40],
+            &13u16.to_le_bytes()[..],
             b"0 0 n X>=3 -z",
             &1u64.to_le_bytes(),
+            &0u64.to_le_bytes(),
             &1.0f32.to_le_bytes(),
-            &[175, 72, 19, 72], // crc
-                                // Frame 7
+            &[227, 183, 22, 42], // crc
+                                 // Frame 7
 
-                                // Frame 8
+                                 // Frame 8
         ]
         .concat();
 
-        let mut wav_frame_reader: BubbleFrameReader<&[u8], f32> =
+        let mut bub_frame_reader: BubbleFrameReader<&[u8], f32> =
             BubbleFrameReader::new(data, metadata);
 
         let expects = vec![
@@ -333,8 +302,8 @@ mod tests {
         ];
 
         for expect in expects {
-            let frame = wav_frame_reader.next().unwrap().unwrap();
-            assert_eq!(wav_frame_reader.metadata.bubble_state, expect.0);
+            let frame = bub_frame_reader.next().unwrap().unwrap();
+            assert_eq!(bub_frame_reader.metadata.bubble_state, expect.0);
             assert_eq!(frame.0, expect.1);
         }
     }
@@ -354,13 +323,11 @@ mod tests {
             speakers_absolute_coordinates: vec![(0.0, 0.0, 0.0), (0.0, 0.0, 1.0)],
 
             bubble_state: BubbleState::Stopped,
-            head_frame: 0,
+            head_absolute_frame: 0,
 
             bubble_functions: BubbleFunctions::new(),
-            connected: false,
-            ended: false,
             tail_absolute_frame_plus_one: 0,
-            next_head_frame: 2,
+            next_head_absolute_frame: Some(2),
 
             crc: crate::crc::CRC,
         };
@@ -373,8 +340,7 @@ mod tests {
             // Frame 1
 
             // Frame 2
-            &[14][..],
-            &[0],
+            &14u16.to_le_bytes()[..],
             b"1 2 3 Z==1 0.1",
             &1u64.to_le_bytes(),
             &3u64.to_le_bytes(),
@@ -385,33 +351,32 @@ mod tests {
             // Frame 3
 
             // Frame 4
-            &[12][..],
-            &[0x80],
+            &12u16.to_le_bytes()[..],
             b"1 2 3 Z==1 1",
             &2u64.to_le_bytes(),
+            &3u64.to_le_bytes(),
             // Expr
             &3u16.to_le_bytes(),
             b"1/n",
-            &[219, 3, 147, 171], // crc
+            &[48, 94, 190, 151], // crc
             // Frame 5
 
             // Frame 6
-            &[11][..],
-            &[0x40],
+            &11u16.to_le_bytes()[..],
             b"1 2 3 Z<1 n",
             &1u64.to_le_bytes(),
+            &0u64.to_le_bytes(),
             // Expr
             &3u16.to_le_bytes(),
             b"0.1",
-            &[61, 68, 24, 114], // crc
+            &[248, 137, 58, 64], // crc
 
-                                // Frame 7
+                                 // Frame 7
 
-                                // Frame 8
+                                 // Frame 8
         ]
         .concat();
-
-        let mut wav_frame_reader: BubbleFrameReader<&[u8], f32> =
+        let mut bub_frame_reader: BubbleFrameReader<&[u8], f32> =
             BubbleFrameReader::new(data, metadata);
 
         let expects = vec![
@@ -426,8 +391,8 @@ mod tests {
         ];
 
         for expect in expects {
-            let frame = wav_frame_reader.next().unwrap().unwrap();
-            assert_eq!(wav_frame_reader.metadata.bubble_state, expect.0);
+            let frame = bub_frame_reader.next().unwrap().unwrap();
+            assert_eq!(bub_frame_reader.metadata.bubble_state, expect.0);
             assert_eq!(frame.0, expect.1);
         }
     }

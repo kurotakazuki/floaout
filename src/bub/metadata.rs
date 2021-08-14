@@ -119,27 +119,15 @@ pub struct BubbleMetadata {
     /// Bubble State
     pub bubble_state: BubbleState,
     /// Head Absolute Frame
-    pub head_frame: u64,
+    pub head_absolute_frame: u64,
 
-    /// Connected or Not Flag
-    /// | Value | Contents |
-    /// | ---------------- |
-    /// | 0 | Not Connected |
-    /// | 1 | Connected |
-    pub connected: bool,
-    /// Ended or Not Flag
-    /// | Value | Contents |
-    /// | ---------------- |
-    /// | 0 | Not Ended |
-    /// | 1 | Ended |
-    pub ended: bool,
     /// Bubble Functions
     pub bubble_functions: BubbleFunctions,
     /// Tail Absolute Frame Plus One
     pub tail_absolute_frame_plus_one: u64,
     /// Next Head Absolute Frame
-    /// If `self.connected` or `self.ended` is `true', this won't exist.
-    pub next_head_frame: u64,
+    /// `None` if 0.
+    pub next_head_absolute_frame: Option<u64>,
 
     /// CRC
     pub crc: CRC<u32>,
@@ -159,7 +147,7 @@ impl BubbleMetadata {
     }
 
     pub fn set_as_head(&mut self, pos: u64) {
-        self.head_frame = pos;
+        self.head_absolute_frame = pos;
         self.bubble_state = BubbleState::Head;
     }
 
@@ -175,13 +163,17 @@ impl BubbleMetadata {
         self.bubble_state = BubbleState::Ended;
     }
 
-    fn set_bubble_state_from_connected_and_ended(&mut self, pos: u64) {
-        if self.ended {
-            self.set_as_ended()
-        } else if self.connected {
-            self.set_as_head(pos)
-        } else {
-            self.set_as_stopped()
+    pub(crate) fn set_bubble_state_from_connected_and_ended(&mut self, pos: u64) {
+        // TODO: Create closures method
+        match self.next_head_absolute_frame {
+            Some(next_head_absolute_frame) => {
+                if next_head_absolute_frame == pos {
+                    self.set_as_head(pos)
+                } else {
+                    self.set_as_stopped()
+                }
+            }
+            None => self.set_as_ended(),
         }
     }
 
@@ -200,14 +192,37 @@ impl BubbleMetadata {
                 }
             }
             BubbleState::Stopped => {
-                if self.next_head_frame == pos {
+                if self.next_head_absolute_frame.expect("Some") == pos {
                     self.set_as_head(pos);
                 }
             }
             BubbleState::Ended => (),
         }
     }
+
+    pub(crate) fn set_next_head_absolute_frame_from_relative(
+        &mut self,
+        next_head_relative_frame: u64,
+        pos: u64,
+    ) {
+        self.next_head_absolute_frame = if next_head_relative_frame != 0 {
+            Some(next_head_relative_frame + pos - 1)
+        } else {
+            None
+        };
+    }
     // IO
+    pub(crate) fn read_next_head_absolute_frame_from_relative<R: std::io::Read>(
+        &mut self,
+        reader: &mut R,
+        pos: u64,
+    ) -> Result<()> {
+        let next_head_relative_frame: u64 = reader.read_le_and_calc_bytes(&mut self.crc)?;
+        self.set_next_head_absolute_frame_from_relative(next_head_relative_frame, pos);
+
+        Ok(())
+    }
+
     pub(crate) fn read_crc<R: std::io::Read>(&mut self, reader: &mut R) -> Result<()> {
         let mut buf = [0; 4];
         reader.read_exact(&mut buf)?;
@@ -228,44 +243,6 @@ impl BubbleMetadata {
         Ok(())
     }
 
-    // fn bubble_state_from_connected_and_ended(&self) -> BubbleState {
-    //     if self.ended {
-    //         BubbleState::Ended
-    //     } else if self.connected {
-    //         BubbleState::Head
-    //     } else {
-    //         BubbleState::Stopped
-    //     }
-    // }
-
-    // pub fn next_pos_bubble_state(&self, pos: u64) -> BubbleState {
-    //     let next_pos = pos + 1;
-    //     match self.bubble_state {
-    //         BubbleState::Head => {
-    //             if self.tail_absolute_frame_plus_one == next_pos {
-    //                 self.bubble_state_from_connected_and_ended()
-    //             } else {
-    //                 BubbleState::Normal
-    //             }
-    //         }
-    //         BubbleState::Normal => {
-    //             if self.tail_absolute_frame_plus_one == next_pos {
-    //                 self.bubble_state_from_connected_and_ended()
-    //             } else {
-    //                 BubbleState::Normal
-    //             }
-    //         }
-    //         BubbleState::Stopped => {
-    //             if self.next_head_frame == next_pos {
-    //                 BubbleState::Head
-    //             } else {
-    //                 BubbleState::Stopped
-    //             }
-    //         }
-    //         BubbleState::Ended => BubbleState::Ended,
-    //     }
-    // }
-
     pub fn read<R: std::io::Read>(reader: &mut R) -> Result<Self> {
         let mut metadata = Self {
             spec_version: Default::default(),
@@ -280,52 +257,53 @@ impl BubbleMetadata {
             speakers_absolute_coordinates: Vec::new(),
 
             bubble_state: BubbleState::Stopped,
-            head_frame: 0,
+            head_absolute_frame: 0,
 
             bubble_functions: BubbleFunctions::new(),
-            connected: false,
-            ended: false,
             tail_absolute_frame_plus_one: 0,
-            next_head_frame: 1,
+            next_head_absolute_frame: None,
 
             crc: CRC,
         };
 
-        let spec_version = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
-        let bubble_id = BubbleID::read_and_calc_bytes(reader, &mut metadata.crc)?;
-        let bubble_version = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
+        metadata.spec_version = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
+        metadata.bubble_id = BubbleID::read_and_calc_bytes(reader, &mut metadata.crc)?;
+        metadata.bubble_version = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
 
-        let frames = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
-        let starting_frame = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
-        let samples_per_sec = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
-        let lpcm_kind = LpcmKind::read_and_calc_bytes(reader, &mut metadata.crc)?;
-        let bubble_sample_kind = BubbleSampleKind::read_and_calc_bytes(reader, &mut metadata.crc)?;
+        metadata.frames = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
+        metadata.read_next_head_absolute_frame_from_relative(reader, 1)?;
+        metadata.samples_per_sec = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
+        metadata.lpcm_kind = LpcmKind::read_and_calc_bytes(reader, &mut metadata.crc)?;
+        metadata.bubble_sample_kind =
+            BubbleSampleKind::read_and_calc_bytes(reader, &mut metadata.crc)?;
 
         let name_size: u8 = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
-        let name = reader.read_string_for_and_calc_bytes(name_size as usize, &mut metadata.crc)?;
+        metadata.name =
+            reader.read_string_for_and_calc_bytes(name_size as usize, &mut metadata.crc)?;
 
         // CRC
         metadata.read_crc(reader)?;
-        // TODO
-        metadata.spec_version = spec_version;
-        metadata.bubble_id = bubble_id;
-        metadata.bubble_version = bubble_version;
-        metadata.frames = frames;
-        metadata.next_head_frame = starting_frame; // Next Head Frame
-        metadata.samples_per_sec = samples_per_sec;
-        metadata.lpcm_kind = lpcm_kind;
-        metadata.bubble_sample_kind = bubble_sample_kind;
-        metadata.name = name;
 
         Ok(metadata)
     }
+
+    fn next_head_absolute_frame_into_relative(&self, pos: u64) -> u64 {
+        match self.next_head_absolute_frame {
+            Some(n) => 1 + n - pos,
+            None => 0,
+        }
+    }
+
     pub fn write<W: std::io::Write>(&mut self, writer: &mut W) -> Result<()> {
         writer.write_le_and_calc_bytes(self.spec_version, &mut self.crc)?;
         self.bubble_id.write_and_calc_bytes(writer, &mut self.crc)?;
         writer.write_le_and_calc_bytes(self.bubble_version, &mut self.crc)?;
 
         writer.write_le_and_calc_bytes(self.frames, &mut self.crc)?;
-        writer.write_le_and_calc_bytes(self.next_head_frame, &mut self.crc)?;
+        writer.write_le_and_calc_bytes(
+            self.next_head_absolute_frame_into_relative(1),
+            &mut self.crc,
+        )?;
         writer.write_le_and_calc_bytes(self.samples_per_sec, &mut self.crc)?;
         self.lpcm_kind.write_and_calc_bytes(writer, &mut self.crc)?;
         self.bubble_sample_kind
@@ -359,13 +337,11 @@ mod tests {
             speakers_absolute_coordinates: Vec::new(),
 
             bubble_state: BubbleState::Stopped,
-            head_frame: 0,
+            head_absolute_frame: 0,
 
             bubble_functions: BubbleFunctions::new(),
-            connected: false,
-            ended: false,
             tail_absolute_frame_plus_one: 0,
-            next_head_frame: 1,
+            next_head_absolute_frame: Some(1),
 
             crc: crate::crc::CRC,
         };

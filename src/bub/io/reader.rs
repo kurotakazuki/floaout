@@ -47,7 +47,7 @@ mod tests {
 
     #[test]
     fn open() {
-        let mut bub_reader = BubbleReader::open("tests/test.bub").unwrap();
+        let mut bub_reader = BubbleReader::open("tests/lpcm_test.bub").unwrap();
 
         let metadata = BubbleMetadata {
             spec_version: 0,
@@ -62,13 +62,11 @@ mod tests {
             speakers_absolute_coordinates: vec![],
 
             bubble_state: BubbleState::Stopped,
-            head_frame: 0,
+            head_absolute_frame: 0,
 
             bubble_functions: BubbleFunctions::new(),
-            connected: false,
-            ended: false,
             tail_absolute_frame_plus_one: 0,
-            next_head_frame: 1,
+            next_head_absolute_frame: Some(1),
 
             crc: crate::crc::CRC,
         };
@@ -79,13 +77,13 @@ mod tests {
     }
 
     #[test]
-    fn read_bub_frames() -> std::io::Result<()> {
-        let bub_reader = BubbleReader::open("tests/test.bub").unwrap();
+    fn read_lpcm_frames() -> std::io::Result<()> {
+        let bub_reader = BubbleReader::open("tests/lpcm_test.bub").unwrap();
         assert!(bub_reader
             .into_bub_frame_reader_kind()
             .into_f64_le()
             .is_err());
-        let bub_reader = BubbleReader::open("tests/test.bub").unwrap();
+        let bub_reader = BubbleReader::open("tests/lpcm_test.bub").unwrap();
         let mut bub_frame_reader = bub_reader.into_bub_frame_reader_kind().into_f32_le()?;
 
         for _ in 0..bub_frame_reader.metadata.frames() {
