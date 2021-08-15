@@ -1,7 +1,7 @@
 use crate::bub::{BubbleFunctionsBlock, BubbleMetadata, BubbleSample};
 use crate::io::WriteExt;
-use crate::{FrameWriter, LpcmKind, Sample};
-use std::io::{Error, ErrorKind, Result, Write};
+use crate::{FrameIOKind, FrameWriter, Sample};
+use std::io::{ErrorKind, Result, Write};
 use std::marker::PhantomData;
 
 pub struct BubbleFrameWriter<W: Write, S: Sample> {
@@ -269,57 +269,14 @@ impl<W: Write, S: Sample> BubbleFrameWriter<W, S> {
     // }
 }
 
-pub enum BubbleFrameWriterKind<W: Write> {
-    F32LE(BubbleFrameWriter<W, f32>),
-    F64LE(BubbleFrameWriter<W, f64>),
-}
-
-impl<W: Write> From<BubbleFrameWriter<W, f32>> for BubbleFrameWriterKind<W> {
-    fn from(w: BubbleFrameWriter<W, f32>) -> Self {
-        Self::F32LE(w)
-    }
-}
-
-impl<W: Write> From<BubbleFrameWriter<W, f64>> for BubbleFrameWriterKind<W> {
-    fn from(w: BubbleFrameWriter<W, f64>) -> Self {
-        Self::F64LE(w)
-    }
-}
-
-impl<W: Write> BubbleFrameWriterKind<W> {
-    pub fn into_f32_le(self) -> Result<BubbleFrameWriter<W, f32>> {
-        match self {
-            Self::F32LE(w) => Ok(w),
-            Self::F64LE(w) => Err(Error::new(
-                ErrorKind::Other,
-                format!(
-                    "expected `{:?}`, found `{:?}`",
-                    LpcmKind::F32LE,
-                    w.metadata.lpcm_kind()
-                ),
-            )),
-        }
-    }
-
-    pub fn into_f64_le(self) -> Result<BubbleFrameWriter<W, f64>> {
-        match self {
-            Self::F32LE(w) => Err(Error::new(
-                ErrorKind::Other,
-                format!(
-                    "expected `{:?}`, found `{:?}`",
-                    LpcmKind::F64LE,
-                    w.metadata.lpcm_kind()
-                ),
-            )),
-            Self::F64LE(w) => Ok(w),
-        }
-    }
-}
+pub type BubbleFrameWriterKind<W> =
+    FrameIOKind<BubbleFrameWriter<W, f32>, BubbleFrameWriter<W, f64>>;
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::bub::{function::BubbleFunctions, BubbleID, BubbleSampleKind, BubbleState};
+    use crate::LpcmKind;
 
     #[test]
     fn write_lpcm_frames() -> Result<()> {

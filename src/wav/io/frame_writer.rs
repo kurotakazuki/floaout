@@ -1,6 +1,6 @@
 use crate::wav::WavMetadata;
-use crate::{Frame, FrameWriter, LpcmKind, Sample};
-use std::io::{Error, ErrorKind, Result, Write};
+use crate::{Frame, FrameIOKind, FrameWriter, Sample};
+use std::io::{ErrorKind, Result, Write};
 use std::marker::PhantomData;
 
 pub struct WavFrameWriter<W: Write, S: Sample> {
@@ -56,56 +56,12 @@ impl<W: Write, S: Sample> WavFrameWriter<W, S> {
     }
 }
 
-pub enum WavFrameWriterKind<W: Write> {
-    F32LE(WavFrameWriter<W, f32>),
-    F64LE(WavFrameWriter<W, f64>),
-}
-
-impl<W: Write> From<WavFrameWriter<W, f32>> for WavFrameWriterKind<W> {
-    fn from(w: WavFrameWriter<W, f32>) -> Self {
-        Self::F32LE(w)
-    }
-}
-
-impl<W: Write> From<WavFrameWriter<W, f64>> for WavFrameWriterKind<W> {
-    fn from(w: WavFrameWriter<W, f64>) -> Self {
-        Self::F64LE(w)
-    }
-}
-
-impl<W: Write> WavFrameWriterKind<W> {
-    pub fn into_f32_le(self) -> Result<WavFrameWriter<W, f32>> {
-        match self {
-            Self::F32LE(w) => Ok(w),
-            Self::F64LE(w) => Err(Error::new(
-                ErrorKind::Other,
-                format!(
-                    "expected `{:?}`, found `{:?}`",
-                    LpcmKind::F32LE,
-                    w.metadata.lpcm_kind()
-                ),
-            )),
-        }
-    }
-
-    pub fn into_f64_le(self) -> Result<WavFrameWriter<W, f64>> {
-        match self {
-            Self::F32LE(w) => Err(Error::new(
-                ErrorKind::Other,
-                format!(
-                    "expected `{:?}`, found `{:?}`",
-                    LpcmKind::F64LE,
-                    w.metadata.lpcm_kind()
-                ),
-            )),
-            Self::F64LE(w) => Ok(w),
-        }
-    }
-}
+pub type WavFrameWriterKind<W> = FrameIOKind<WavFrameWriter<W, f32>, WavFrameWriter<W, f64>>;
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::LpcmKind;
 
     #[test]
     fn write() -> Result<()> {

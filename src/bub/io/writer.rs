@@ -30,8 +30,14 @@ impl<W: Write> BubbleWriter<W> {
 
     pub fn into_bub_frame_writer_kind(self) -> BubbleFrameWriterKind<W> {
         match self.metadata.lpcm_kind() {
-            LpcmKind::F32LE => BubbleFrameWriter::<W, f32>::new(self.inner, self.metadata).into(),
-            LpcmKind::F64LE => BubbleFrameWriter::<W, f64>::new(self.inner, self.metadata).into(),
+            LpcmKind::F32LE => BubbleFrameWriterKind::F32LE(BubbleFrameWriter::<W, f32>::new(
+                self.inner,
+                self.metadata,
+            )),
+            LpcmKind::F64LE => BubbleFrameWriterKind::F64LE(BubbleFrameWriter::<W, f64>::new(
+                self.inner,
+                self.metadata,
+            )),
         }
     }
 }

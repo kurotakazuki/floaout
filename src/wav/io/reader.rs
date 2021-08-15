@@ -26,8 +26,12 @@ impl<R: Read> WavReader<R> {
 
     pub fn into_wav_frame_reader_kind(self) -> WavFrameReaderKind<R> {
         match self.metadata.lpcm_kind() {
-            LpcmKind::F32LE => WavFrameReader::<R, f32>::new(self.inner, self.metadata).into(),
-            LpcmKind::F64LE => WavFrameReader::<R, f64>::new(self.inner, self.metadata).into(),
+            LpcmKind::F32LE => {
+                WavFrameReaderKind::F32LE(WavFrameReader::<R, f32>::new(self.inner, self.metadata))
+            }
+            LpcmKind::F64LE => {
+                WavFrameReaderKind::F64LE(WavFrameReader::<R, f64>::new(self.inner, self.metadata))
+            }
         }
     }
 }

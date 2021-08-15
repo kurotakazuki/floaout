@@ -30,8 +30,12 @@ impl<W: Write> WavWriter<W> {
 
     pub fn into_wav_frame_writer_kind(self) -> WavFrameWriterKind<W> {
         match self.metadata.lpcm_kind() {
-            LpcmKind::F32LE => WavFrameWriter::<W, f32>::new(self.inner, self.metadata).into(),
-            LpcmKind::F64LE => WavFrameWriter::<W, f64>::new(self.inner, self.metadata).into(),
+            LpcmKind::F32LE => {
+                WavFrameWriterKind::F32LE(WavFrameWriter::<W, f32>::new(self.inner, self.metadata))
+            }
+            LpcmKind::F64LE => {
+                WavFrameWriterKind::F64LE(WavFrameWriter::<W, f64>::new(self.inner, self.metadata))
+            }
         }
     }
 }

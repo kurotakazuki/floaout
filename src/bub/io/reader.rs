@@ -36,18 +36,16 @@ impl<R: Read> BubbleReader<R> {
 
     pub fn into_bub_frame_reader_kind(self) -> BubbleFrameReaderKind<R> {
         match self.metadata.lpcm_kind() {
-            LpcmKind::F32LE => BubbleFrameReader::<R, f32>::new(
+            LpcmKind::F32LE => BubbleFrameReaderKind::F32LE(BubbleFrameReader::<R, f32>::new(
                 self.inner,
                 self.metadata,
                 self.speakers_absolute_coordinates,
-            )
-            .into(),
-            LpcmKind::F64LE => BubbleFrameReader::<R, f64>::new(
+            )),
+            LpcmKind::F64LE => BubbleFrameReaderKind::F64LE(BubbleFrameReader::<R, f64>::new(
                 self.inner,
                 self.metadata,
                 self.speakers_absolute_coordinates,
-            )
-            .into(),
+            )),
         }
     }
 }

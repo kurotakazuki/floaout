@@ -2,10 +2,8 @@
 Floaout is the next-generation audio format.
 
 # TODO
-- Add Expression file test
-- Add read_bubble_functions_block
+- Add read_bubble_functions_block in BubFrameReader
 - Use `Coord` in InterPreter fields
-- Add write_frames in BubbleFrameWriter
 - error handling
 - Clarify whether #[derive(Order)] is needed
 - Add Position in function

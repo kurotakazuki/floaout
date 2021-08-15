@@ -3,8 +3,8 @@ use crate::bub::{
     BubbleMetadata, BubbleSampleKind, BubbleState,
 };
 use crate::io::ReadExt;
-use crate::{Coord, Frame, FrameReader, LpcmKind, Sample};
-use std::io::{Error, ErrorKind, Read, Result};
+use crate::{Coord, Frame, FrameIOKind, FrameReader, Sample};
+use std::io::{Read, Result};
 use std::marker::PhantomData;
 
 pub struct BubbleFrameReader<R: Read, S: Sample> {
@@ -194,52 +194,8 @@ impl<R: Read, S: Sample> Iterator for BubbleFrameReader<R, S> {
     }
 }
 
-pub enum BubbleFrameReaderKind<R: Read> {
-    F32LE(BubbleFrameReader<R, f32>),
-    F64LE(BubbleFrameReader<R, f64>),
-}
-
-impl<R: Read> From<BubbleFrameReader<R, f32>> for BubbleFrameReaderKind<R> {
-    fn from(r: BubbleFrameReader<R, f32>) -> Self {
-        Self::F32LE(r)
-    }
-}
-
-impl<R: Read> From<BubbleFrameReader<R, f64>> for BubbleFrameReaderKind<R> {
-    fn from(r: BubbleFrameReader<R, f64>) -> Self {
-        Self::F64LE(r)
-    }
-}
-
-impl<R: Read> BubbleFrameReaderKind<R> {
-    pub fn into_f32_le(self) -> Result<BubbleFrameReader<R, f32>> {
-        match self {
-            Self::F32LE(r) => Ok(r),
-            Self::F64LE(r) => Err(Error::new(
-                ErrorKind::Other,
-                format!(
-                    "expected `{:?}`, found `{:?}`",
-                    LpcmKind::F32LE,
-                    r.metadata.lpcm_kind()
-                ),
-            )),
-        }
-    }
-
-    pub fn into_f64_le(self) -> Result<BubbleFrameReader<R, f64>> {
-        match self {
-            Self::F32LE(r) => Err(Error::new(
-                ErrorKind::Other,
-                format!(
-                    "expected `{:?}`, found `{:?}`",
-                    LpcmKind::F64LE,
-                    r.metadata.lpcm_kind()
-                ),
-            )),
-            Self::F64LE(r) => Ok(r),
-        }
-    }
-}
+pub type BubbleFrameReaderKind<R> =
+    FrameIOKind<BubbleFrameReader<R, f32>, BubbleFrameReader<R, f64>>;
 
 #[cfg(test)]
 mod tests {
@@ -247,6 +203,7 @@ mod tests {
     use crate::bub::{
         function::BubbleFunctions, BubbleID, BubbleSampleKind, BubbleState, BubbleState::*,
     };
+    use crate::LpcmKind;
 
     #[test]
     fn read_lpcm_frames() {

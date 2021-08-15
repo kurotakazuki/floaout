@@ -1,6 +1,6 @@
 use crate::wav::WavMetadata;
-use crate::{Frame, FrameReader, LpcmKind, Sample};
-use std::io::{Error, ErrorKind, Read, Result};
+use crate::{Frame, FrameIOKind, FrameReader, Sample};
+use std::io::{Read, Result};
 use std::marker::PhantomData;
 
 pub struct WavFrameReader<R: Read, S: Sample> {
@@ -57,56 +57,12 @@ impl<R: Read, S: Sample> Iterator for WavFrameReader<R, S> {
     }
 }
 
-pub enum WavFrameReaderKind<R: Read> {
-    F32LE(WavFrameReader<R, f32>),
-    F64LE(WavFrameReader<R, f64>),
-}
-
-impl<R: Read> From<WavFrameReader<R, f32>> for WavFrameReaderKind<R> {
-    fn from(r: WavFrameReader<R, f32>) -> Self {
-        Self::F32LE(r)
-    }
-}
-
-impl<R: Read> From<WavFrameReader<R, f64>> for WavFrameReaderKind<R> {
-    fn from(r: WavFrameReader<R, f64>) -> Self {
-        Self::F64LE(r)
-    }
-}
-
-impl<R: Read> WavFrameReaderKind<R> {
-    pub fn into_f32_le(self) -> Result<WavFrameReader<R, f32>> {
-        match self {
-            Self::F32LE(r) => Ok(r),
-            Self::F64LE(r) => Err(Error::new(
-                ErrorKind::Other,
-                format!(
-                    "expected `{:?}`, found `{:?}`",
-                    LpcmKind::F32LE,
-                    r.metadata.lpcm_kind()
-                ),
-            )),
-        }
-    }
-
-    pub fn into_f64_le(self) -> Result<WavFrameReader<R, f64>> {
-        match self {
-            Self::F32LE(r) => Err(Error::new(
-                ErrorKind::Other,
-                format!(
-                    "expected `{:?}`, found `{:?}`",
-                    LpcmKind::F64LE,
-                    r.metadata.lpcm_kind()
-                ),
-            )),
-            Self::F64LE(r) => Ok(r),
-        }
-    }
-}
+pub type WavFrameReaderKind<R> = FrameIOKind<WavFrameReader<R, f32>, WavFrameReader<R, f64>>;
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::LpcmKind;
 
     #[test]
     fn read() {
