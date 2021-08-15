@@ -2,9 +2,8 @@ use crate::bub::{
     function::{parse, BubbleFunctions, FunctionAST, FunctionVariable},
     BubbleID,
 };
-use crate::crc::CRC;
 use crate::io::{ReadExt, WriteExt};
-use crate::{LpcmKind, Metadata};
+use crate::{Coord, LpcmKind, Metadata, CRC};
 use mycrc::CRC;
 use std::io::{ErrorKind, Read, Result, Write};
 
@@ -114,7 +113,7 @@ pub struct BubbleMetadata {
     pub name: String,
 
     /// Speakers absolute coordinates
-    pub speakers_absolute_coordinates: Vec<(f64, f64, f64)>,
+    pub speakers_absolute_coordinates: Vec<Coord>,
 
     /// Bubble State
     pub bubble_state: BubbleState,

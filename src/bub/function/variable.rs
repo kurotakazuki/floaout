@@ -2,7 +2,7 @@ use mpl::symbols::Variable;
 
 impl Variable for FunctionVariable {}
 
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum FunctionVariable {
     // BubbleFunctions
     BubbleFunctions,

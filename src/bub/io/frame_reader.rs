@@ -3,7 +3,7 @@ use crate::bub::{
     BubbleMetadata, BubbleSampleKind, BubbleState,
 };
 use crate::io::ReadExt;
-use crate::{Frame, FrameReader, LpcmKind, Sample};
+use crate::{Coord, Frame, FrameReader, LpcmKind, Sample};
 use std::io::{Error, ErrorKind, Read, Result};
 use std::marker::PhantomData;
 
@@ -84,7 +84,7 @@ impl<R: Read, S: Sample> BubbleFrameReader<R, S> {
 
     fn get_volume_and_interpreter(
         &self,
-        speaker_absolute_coordinates: (f64, f64, f64),
+        speaker_absolute_coordinates: Coord,
     ) -> Option<(f64, FunctionInterpreter)> {
         self.metadata.bubble_functions.to_volume(
             speaker_absolute_coordinates,
@@ -259,7 +259,7 @@ mod tests {
             bubble_sample_kind: BubbleSampleKind::Lpcm,
             name: String::from("0.1*N"),
 
-            speakers_absolute_coordinates: vec![(0.0, 0.0, 0.0), (3.0, 0.0, 0.0)],
+            speakers_absolute_coordinates: vec![(0.0, 0.0, 0.0).into(), (3.0, 0.0, 0.0).into()],
 
             bubble_state: BubbleState::Stopped,
             head_absolute_frame: 0,
@@ -347,7 +347,7 @@ mod tests {
             bubble_sample_kind: BubbleSampleKind::default_expr(),
             name: String::from("Expression"),
 
-            speakers_absolute_coordinates: vec![(0.0, 0.0, 0.0), (0.0, 0.0, 1.0)],
+            speakers_absolute_coordinates: vec![(0.0, 0.0, 0.0).into(), (0.0, 0.0, 1.0).into()],
 
             bubble_state: BubbleState::Stopped,
             head_absolute_frame: 0,

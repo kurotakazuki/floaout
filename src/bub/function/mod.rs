@@ -1,3 +1,4 @@
+use crate::Coord;
 use mpl::span::StartAndLenSpan;
 use mpl::trees::AST;
 
@@ -51,14 +52,14 @@ impl BubbleFunctions {
 
     pub fn to_volume(
         &self,
-        speaker_absolute_coordinates: (f64, f64, f64),
+        speaker_absolute_coordinates: Coord,
         absolute_frame: f64,
         relative_frame: f64,
         frames: f64,
         samples_per_sec: f64,
     ) -> Option<(f64, FunctionInterpreter)> {
         for bubble_function in self.0.iter() {
-            let bubble_absolute_coordinates = (0.0, 0.0, 0.0);
+            let bubble_absolute_coordinates = Coord::default();
             let mut interpreter = FunctionInterpreter::new(
                 speaker_absolute_coordinates,
                 bubble_absolute_coordinates,

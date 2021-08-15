@@ -2,10 +2,12 @@
 
 use std::io::{Read, Result, Write};
 
+pub use crate::coord::Coord;
 pub use crate::crc::CRC;
 pub use crate::lpcm::{Frame, LpcmKind, Sample};
 
 pub mod bub;
+pub mod coord;
 pub mod crc;
 pub mod io;
 pub mod lpcm;

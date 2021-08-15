@@ -1,4 +1,5 @@
 use crate::bub::function::{FunctionAST, FunctionVariable::*};
+use crate::Coord;
 use mpl::choices::Choice;
 use mpl::trees::Node::*;
 
@@ -19,20 +20,20 @@ pub struct FunctionInterpreter {
 
 impl FunctionInterpreter {
     pub fn new(
-        speaker_absolute_coordinates: (f64, f64, f64),
-        bubble_absolute_coordinates: (f64, f64, f64),
+        speaker_absolute_coordinates: Coord,
+        bubble_absolute_coordinates: Coord,
         absolute_frame: f64,
         relative_frame: f64,
         frames: f64,
         samples_per_sec: f64,
     ) -> Self {
         Self {
-            uppercase_x: speaker_absolute_coordinates.0,
-            uppercase_y: speaker_absolute_coordinates.1,
-            uppercase_z: speaker_absolute_coordinates.2,
-            lowercase_x: speaker_absolute_coordinates.0 - bubble_absolute_coordinates.0,
-            lowercase_y: speaker_absolute_coordinates.1 - bubble_absolute_coordinates.1,
-            lowercase_z: speaker_absolute_coordinates.2 - bubble_absolute_coordinates.2,
+            uppercase_x: speaker_absolute_coordinates.x,
+            uppercase_y: speaker_absolute_coordinates.y,
+            uppercase_z: speaker_absolute_coordinates.z,
+            lowercase_x: speaker_absolute_coordinates.x - bubble_absolute_coordinates.x,
+            lowercase_y: speaker_absolute_coordinates.y - bubble_absolute_coordinates.y,
+            lowercase_z: speaker_absolute_coordinates.z - bubble_absolute_coordinates.z,
             uppercase_n: absolute_frame,
             lowercase_n: relative_frame,
             uppercase_f: frames,
@@ -256,8 +257,8 @@ mod tests {
             .unwrap();
 
         for bubble_function in bubble_functions.0 {
-            let speaker_absolute_coordinates = (-1.0, 1.0, 0.0);
-            let bubble_absolute_coordinates = (0.0, 0.0, 0.0);
+            let speaker_absolute_coordinates = (-1.0, 1.0, 0.0).into();
+            let bubble_absolute_coordinates = (0.0, 0.0, 0.0).into();
             let absolute_frame = 12.0;
             let relative_frame = 0.0;
             let frames = 88200.0;
@@ -300,8 +301,8 @@ mod tests {
     #[test]
     fn eval_or_or_expr() {
         let interpreter = FunctionInterpreter::new(
-            (-1.0, 1.0, 0.0),
-            (2.0, 3.0, 4.0),
+            (-1.0, 1.0, 0.0).into(),
+            (2.0, 3.0, 4.0).into(),
             12.0,
             3.0,
             88200.0,
@@ -356,8 +357,8 @@ mod tests {
     #[test]
     fn eval_and_and_expr() {
         let interpreter = FunctionInterpreter::new(
-            (-1.0, 1.0, 0.0),
-            (2.0, 3.0, 4.0),
+            (-1.0, 1.0, 0.0).into(),
+            (2.0, 3.0, 4.0).into(),
             12.0,
             3.0,
             88200.0,
@@ -385,8 +386,8 @@ mod tests {
     #[test]
     fn eval_comparison_expr() {
         let interpreter = FunctionInterpreter::new(
-            (-1.0, 1.0, 0.0),
-            (2.0, 3.0, 4.0),
+            (-1.0, 1.0, 0.0).into(),
+            (2.0, 3.0, 4.0).into(),
             12.0,
             3.0,
             88200.0,
@@ -427,8 +428,8 @@ mod tests {
     #[test]
     fn eval_sum() {
         let interpreter = FunctionInterpreter::new(
-            (-1.0, 1.0, 0.0),
-            (2.0, 3.0, 4.0),
+            (-1.0, 1.0, 0.0).into(),
+            (2.0, 3.0, 4.0).into(),
             12.0,
             3.0,
             88200.0,
