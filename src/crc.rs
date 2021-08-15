@@ -1,7 +1,7 @@
 use mycrc::{Endian, CRC};
 
-/// CRC
-pub const CRC: CRC<u32> = CRC::<u32>::new(
+/// CRC-32K/4.2
+pub const CRC_32K_4_2: CRC<u32> = CRC::<u32>::new(
     Endian::Little, // endian
     0x93a409eb,     // poly CRC-32K/4.2
     0xffffffff,     // init
@@ -29,7 +29,7 @@ mod tests {
             xorout: 0xffffffff,
             residue: 0x76e908ce,
         };
-        let mut crc = CRC;
+        let mut crc = CRC_32K_4_2;
         // Is algorithm same?
         assert_eq!(crc.algorithm, algo);
         // Is check same?

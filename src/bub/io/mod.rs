@@ -1,9 +1,9 @@
 use crate::Sample;
 
-pub use self::frame_reader::{BubbleFrameReader, BubbleFrameReaderKind};
-pub use self::frame_writer::{BubbleFrameWriter, BubbleFrameWriterKind};
-pub use self::reader::BubbleReader;
-pub use self::writer::BubbleWriter;
+pub use self::frame_reader::{BubFrameReader, BubFrameReaderKind};
+pub use self::frame_writer::{BubFrameWriter, BubFrameWriterKind};
+pub use self::reader::BubReader;
+pub use self::writer::BubWriter;
 
 mod frame_reader;
 mod frame_writer;
@@ -15,33 +15,33 @@ pub enum BubbleSample<'a, S: Sample> {
     LpcmHead {
         head_absolute_frame: u64,
 
-        bubble_functions: &'a [u8],
+        bub_functions: &'a [u8],
         tail_relative_frame: u64,
         next_head_relative_frame: Option<u64>,
         sample: S,
     },
     LpcmNormal(S),
     // Expression
-    Expression {
+    Expr {
         head_absolute_frame: u64,
 
-        bubble_functions: &'a [u8],
+        bub_functions: &'a [u8],
         tail_relative_frame: u64,
         next_head_relative_frame: Option<u64>,
         expression: &'a [u8],
     },
 }
 
-pub enum BubbleFunctionsBlock<'a, S: Sample> {
+pub enum BubFnsBlock<'a, S: Sample> {
     // Lpcm
     Lpcm {
-        bubble_functions: &'a [u8],
+        bub_functions: &'a [u8],
         next_head_relative_frame: Option<u64>,
         samples: Vec<S>,
     },
     // Expression
-    Expression {
-        bubble_functions: &'a [u8],
+    Expr {
+        bub_functions: &'a [u8],
         tail_relative_frame: u64,
         next_head_relative_frame: Option<u64>,
         expression: &'a [u8],

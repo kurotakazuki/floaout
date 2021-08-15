@@ -1,22 +1,22 @@
 use crate::bub::{
-    function::{parse, FunctionAST, FunctionInterpreter, FunctionVariable},
-    BubbleMetadata, BubbleSampleKind, BubbleState,
+    functions::{parse, BubFnsAST, BubFnsInterpreter, BubFnsVariable},
+    BubSampleKind, BubState, BubbleMetadata,
 };
 use crate::io::ReadExt;
 use crate::{Coord, Frame, FrameIOKind, FrameReader, Sample};
 use std::io::{Read, Result};
 use std::marker::PhantomData;
 
-pub struct BubbleFrameReader<R: Read, S: Sample> {
+pub struct BubFrameReader<R: Read, S: Sample> {
     pub inner: R,
     pub pos: u64,
     _phantom_sample: PhantomData<S>,
     pub metadata: BubbleMetadata,
     /// Speakers absolute coordinates
-    pub speakers_absolute_coordinates: Vec<Coord>,
+    pub speakers_absolute_coord: Vec<Coord>,
 }
 
-impl<R: Read, S: Sample> FrameReader<R> for BubbleFrameReader<R, S> {
+impl<R: Read, S: Sample> FrameReader<R> for BubFrameReader<R, S> {
     fn get_ref(&self) -> &R {
         &self.inner
     }
@@ -28,35 +28,30 @@ impl<R: Read, S: Sample> FrameReader<R> for BubbleFrameReader<R, S> {
     }
 }
 
-impl<R: Read, S: Sample> BubbleFrameReader<R, S> {
-    pub fn new(
-        inner: R,
-        metadata: BubbleMetadata,
-        speakers_absolute_coordinates: Vec<Coord>,
-    ) -> Self {
+impl<R: Read, S: Sample> BubFrameReader<R, S> {
+    pub fn new(inner: R, metadata: BubbleMetadata, speakers_absolute_coord: Vec<Coord>) -> Self {
         Self {
             inner,
             pos: 0,
             _phantom_sample: PhantomData,
             metadata,
-            speakers_absolute_coordinates,
+            speakers_absolute_coord,
         }
     }
 
     fn read_head_metadata_and_calc_bytes(&mut self) -> Result<()> {
         let functions_size: u16 = self.inner.read_le_and_calc_bytes(&mut self.metadata.crc)?;
 
-        let bubble_functions_vec = self
+        let bub_functions_vec = self
             .inner
             .read_vec_for_and_calc_bytes(functions_size as usize, &mut self.metadata.crc)?;
 
-        self.metadata.bubble_functions =
-            parse(&bubble_functions_vec, &FunctionVariable::BubbleFunctions)
-                .unwrap()
-                .into_original()
-                .unwrap()
-                .into_bubble_functions()
-                .unwrap();
+        self.metadata.bub_functions = parse(&bub_functions_vec, &BubFnsVariable::BubFns)
+            .unwrap()
+            .into_original()
+            .unwrap()
+            .into_bub_functions()
+            .unwrap();
         // Tail relative frame
         self.metadata.tail_absolute_frame_plus_one = self.pos
             + self
@@ -91,10 +86,10 @@ impl<R: Read, S: Sample> BubbleFrameReader<R, S> {
 
     fn get_volume_and_interpreter(
         &self,
-        speaker_absolute_coordinates: Coord,
-    ) -> Option<(f64, FunctionInterpreter)> {
-        self.metadata.bubble_functions.to_volume(
-            speaker_absolute_coordinates,
+        speaker_absolute_coord: Coord,
+    ) -> Option<(f64, BubFnsInterpreter)> {
+        self.metadata.bub_functions.to_volume(
+            speaker_absolute_coord,
             self.pos as f64,
             (self.pos - self.metadata.head_absolute_frame + 1) as f64,
             self.metadata.frames as f64,
@@ -107,11 +102,8 @@ impl<R: Read, S: Sample> BubbleFrameReader<R, S> {
 
         if sample != S::default() {
             // TODO: Create method
-            for (i, speaker_absolute_coordinates) in
-                self.speakers_absolute_coordinates.iter().enumerate()
-            {
-                if let Some((volume, _)) =
-                    self.get_volume_and_interpreter(*speaker_absolute_coordinates)
+            for (i, speaker_absolute_coord) in self.speakers_absolute_coord.iter().enumerate() {
+                if let Some((volume, _)) = self.get_volume_and_interpreter(*speaker_absolute_coord)
                 {
                     frame.0[i] = sample * S::from_f64(volume);
                 }
@@ -121,12 +113,10 @@ impl<R: Read, S: Sample> BubbleFrameReader<R, S> {
         Ok(())
     }
 
-    fn expr_frame(&self, expr: &FunctionAST, frame: &mut Frame<S>) {
-        for (i, speaker_absolute_coordinates) in
-            self.speakers_absolute_coordinates.iter().enumerate()
-        {
+    fn expr_frame(&self, expr: &BubFnsAST, frame: &mut Frame<S>) {
+        for (i, speaker_absolute_coord) in self.speakers_absolute_coord.iter().enumerate() {
             if let Some((volume, interpreter)) =
-                self.get_volume_and_interpreter(*speaker_absolute_coordinates)
+                self.get_volume_and_interpreter(*speaker_absolute_coord)
             {
                 let sample = interpreter.eval_sum(expr).unwrap();
                 frame.0[i] = S::from_f64(sample * volume);
@@ -135,7 +125,7 @@ impl<R: Read, S: Sample> BubbleFrameReader<R, S> {
     }
 }
 
-impl<R: Read, S: Sample> Iterator for BubbleFrameReader<R, S> {
+impl<R: Read, S: Sample> Iterator for BubFrameReader<R, S> {
     type Item = Result<Frame<S>>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -147,87 +137,84 @@ impl<R: Read, S: Sample> Iterator for BubbleFrameReader<R, S> {
 
         self.metadata.init_with_pos(self.pos);
 
-        let channels = self.speakers_absolute_coordinates.len();
+        let channels = self.speakers_absolute_coord.len();
 
         let mut frame: Frame<S> = vec![S::default(); channels].into();
 
-        match self.metadata.bubble_state {
-            BubbleState::Head => {
+        match self.metadata.bub_state {
+            BubState::Head => {
                 if let Err(e) = self.read_head_metadata_and_calc_bytes() {
                     return Some(Err(e));
                 }
 
                 // Read Sample
-                match self.metadata.bubble_sample_kind {
-                    BubbleSampleKind::Lpcm => {
+                match self.metadata.bub_sample_kind {
+                    BubSampleKind::Lpcm => {
                         if let Err(e) = self.read_lpcm_frame(&mut frame) {
                             return Some(Err(e));
                         }
                     }
-                    BubbleSampleKind::Expression(_) => {
+                    BubSampleKind::Expr(_) => {
                         let expr = match self.read_expression_and_crc() {
                             Ok(v) => v,
                             Err(e) => return Some(Err(e)),
                         };
-                        let expr = parse(&expr, &FunctionVariable::Sum).unwrap();
+                        let expr = parse(&expr, &BubFnsVariable::Sum).unwrap();
                         self.expr_frame(&expr, &mut frame);
-                        self.metadata.bubble_sample_kind = expr.into();
+                        self.metadata.bub_sample_kind = expr.into();
                     }
                 }
             }
-            BubbleState::Normal => {
+            BubState::Normal => {
                 // Read Sample
-                match &self.metadata.bubble_sample_kind {
-                    BubbleSampleKind::Lpcm => {
+                match &self.metadata.bub_sample_kind {
+                    BubSampleKind::Lpcm => {
                         if let Err(e) = self.read_lpcm_frame(&mut frame) {
                             return Some(Err(e));
                         }
                     }
-                    BubbleSampleKind::Expression(expr) => self.expr_frame(expr, &mut frame),
+                    BubSampleKind::Expr(expr) => self.expr_frame(expr, &mut frame),
                 }
             }
-            BubbleState::Stopped => (),
-            BubbleState::Ended => (),
+            BubState::Stopped => (),
+            BubState::Ended => (),
         }
 
         Some(Ok(frame))
     }
 }
 
-pub type BubbleFrameReaderKind<R> =
-    FrameIOKind<BubbleFrameReader<R, f32>, BubbleFrameReader<R, f64>>;
+pub type BubFrameReaderKind<R> = FrameIOKind<BubFrameReader<R, f32>, BubFrameReader<R, f64>>;
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::bub::{
-        function::BubbleFunctions, BubbleID, BubbleSampleKind, BubbleState, BubbleState::*,
-    };
+    use crate::bub::{functions::BubFns, BubID, BubSampleKind, BubState, BubState::*};
     use crate::LpcmKind;
 
     #[test]
     fn read_lpcm_frames() {
         let mut metadata = BubbleMetadata {
             spec_version: 0,
-            bubble_id: BubbleID::new(0),
-            bubble_version: 0,
+            bub_id: BubID::new(0),
+            bub_version: 0,
             frames: 8,
             samples_per_sec: 96000.0,
             lpcm_kind: LpcmKind::F32LE,
-            bubble_sample_kind: BubbleSampleKind::Lpcm,
+            bub_sample_kind: BubSampleKind::Lpcm,
             name: String::from("0.1*N"),
 
-            bubble_state: BubbleState::Stopped,
+            bub_state: BubState::Stopped,
             head_absolute_frame: 0,
 
-            bubble_functions: BubbleFunctions::new(),
+            bub_functions: BubFns::new(),
             tail_absolute_frame_plus_one: 0,
             next_head_absolute_frame: Some(1),
 
-            crc: crate::crc::CRC,
+            crc: crate::crc::CRC_32K_4_2,
         };
 
-        let speakers_absolute_coordinates = vec![(0.0, 0.0, 0.0).into(), (3.0, 0.0, 0.0).into()];
+        let speakers_absolute_coord = vec![(0.0, 0.0, 0.0).into(), (3.0, 0.0, 0.0).into()];
 
         // Write Metadata and get CRC
         let mut skip: Vec<u8> = Vec::new();
@@ -272,8 +259,8 @@ mod tests {
         ]
         .concat();
 
-        let mut bub_frame_reader: BubbleFrameReader<&[u8], f32> =
-            BubbleFrameReader::new(data, metadata, speakers_absolute_coordinates);
+        let mut bub_frame_reader: BubFrameReader<&[u8], f32> =
+            BubFrameReader::new(data, metadata, speakers_absolute_coord);
 
         let expects = vec![
             (Head, [0.1, 0.0]),
@@ -288,7 +275,7 @@ mod tests {
 
         for expect in expects {
             let frame = bub_frame_reader.next().unwrap().unwrap();
-            assert_eq!(bub_frame_reader.metadata.bubble_state, expect.0);
+            assert_eq!(bub_frame_reader.metadata.bub_state, expect.0);
             assert_eq!(frame.0, expect.1);
         }
     }
@@ -297,24 +284,24 @@ mod tests {
     fn read_expr_frames() {
         let mut metadata = BubbleMetadata {
             spec_version: 0,
-            bubble_id: BubbleID::new(0),
-            bubble_version: 0,
+            bub_id: BubID::new(0),
+            bub_version: 0,
             frames: 8,
             samples_per_sec: 96000.0,
             lpcm_kind: LpcmKind::F64LE,
-            bubble_sample_kind: BubbleSampleKind::default_expr(),
+            bub_sample_kind: BubSampleKind::default_expr(),
             name: String::from("Expression"),
 
-            bubble_state: BubbleState::Stopped,
+            bub_state: BubState::Stopped,
             head_absolute_frame: 0,
 
-            bubble_functions: BubbleFunctions::new(),
+            bub_functions: BubFns::new(),
             tail_absolute_frame_plus_one: 0,
             next_head_absolute_frame: Some(2),
 
-            crc: crate::crc::CRC,
+            crc: crate::crc::CRC_32K_4_2,
         };
-        let speakers_absolute_coordinates = vec![(0.0, 0.0, 0.0).into(), (0.0, 0.0, 1.0).into()];
+        let speakers_absolute_coord = vec![(0.0, 0.0, 0.0).into(), (0.0, 0.0, 1.0).into()];
 
         // Write Metadata and get CRC
         let mut skip: Vec<u8> = Vec::new();
@@ -360,8 +347,8 @@ mod tests {
                                  // Frame 8
         ]
         .concat();
-        let mut bub_frame_reader: BubbleFrameReader<&[u8], f32> =
-            BubbleFrameReader::new(data, metadata, speakers_absolute_coordinates);
+        let mut bub_frame_reader: BubFrameReader<&[u8], f32> =
+            BubFrameReader::new(data, metadata, speakers_absolute_coord);
 
         let expects = vec![
             (Stopped, [0.0, 0.0]),
@@ -376,7 +363,7 @@ mod tests {
 
         for expect in expects {
             let frame = bub_frame_reader.next().unwrap().unwrap();
-            assert_eq!(bub_frame_reader.metadata.bubble_state, expect.0);
+            assert_eq!(bub_frame_reader.metadata.bub_state, expect.0);
             assert_eq!(frame.0, expect.1);
         }
     }

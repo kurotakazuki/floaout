@@ -2,11 +2,12 @@
 Floaout is the next-generation audio format.
 
 # TODO
-- Add read_bubble_functions_block in BubFrameReader
 - Use `Coord` in InterPreter fields
+- Change `BubFns::to_volume`
+- Add `read_bub_functions_block` in BubFrameReader
 - error handling
 - Clarify whether #[derive(Order)] is needed
-- Add Position in function
+- Add Position field in BubfnsInterpreter
 - Add Functions like pow, sinh, ...
 
 # Bubble File Format Specification
@@ -21,7 +22,7 @@ Floaout is the next-generation audio format.
 | Starting Absolute Frame | `u64` (8) | Starting Absolute Frame |
 | Samples Per Sec | `f64` (8) | Samples per sec |
 | LpcmKind | `u8` (1) | `SampleKind` |
-| BubbleSampleKind | `u8` (1) | `BubbleSampleKind` |
+| BubSampleKind | `u8` (1) | `BubSampleKind` |
 | Name Size | `u8` (1) | Name Size (0~255) |
 | Name | `String` | Name (UTF-8) |
 | CRC-32K/4.2 | `u32` (4) | Max length at Hamming Distance 4 is 2147483615 (bits). And max length at Hamming Distance 6 is 6167 (bits). |
@@ -32,11 +33,11 @@ Floaout is the next-generation audio format.
 | F32LE | `f32` Little Endian | 0 (`u8`) |
 | F64LE | `f64` Little Endian | 1 (`u8`) |
 
-### BubbleSampleKind
+### BubSampleKind
 | Variant  | Description | Value |
 | ------------- | ------------- | ------------- |
 | Lpcm | Lpcm | 0 |
-| Expression | Expression | 1 |
+| Expr | Expr | 1 |
 
 ### CRC
 ```rust ignore
@@ -65,7 +66,7 @@ Algorithm::<u32> {
 | Space | `char` (1) | ' ' |
 | Bubble's Z coordinate | `Sum` | Bubble's Z coordinate (Z_0) |
 | Space | `char` (1) | ' ' |
-| Domain | `OrOrExpression` |  |
+| Domain | `OrOrExpr` |  |
 | Space | `char` (1) | ' ' |
 | Volume | `Sum` |  |
 | Space or Empty | `char` (1) | ' ' if there is another |
@@ -80,11 +81,11 @@ Algorithm::<u32> {
 | ------------- | ------------- | ------------- |
 | Sample | `f32` or `f64` (4 or 8) | depends on `SampleKind` |
 
-#### Expression
+#### Expr
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
-| Expression Size | `u16` (2) | Expression Size |
-| Expression | `Sum` | Expression |
+| Expr Size | `u16` (2) | Expr Size |
+| Expr | `Sum` | Expr |
 
 
 ### Keywords
@@ -148,38 +149,38 @@ Algorithm::<u32> {
 
 ### Syntax
 ```rust ignore
-// BubbleFunctions
-BubbleFunctions = BubbleFunction ZeroOrMoreBubbleFunctions / f
-ZeroOrMoreBubbleFunctions = SpaceAndBubbleFunction ZeroOrMoreBubbleFunctions / ()
+// BubFns
+BubFns = BubFn ZeroOrMoreBubFns / f
+ZeroOrMoreBubFns = SpaceAndBubFn ZeroOrMoreBubFns / ()
 
-SpaceAndBubbleFunction = Space BubbleFunction / f
+SpaceAndBubFn = Space BubFn / f
 
-// BubbleFunction
-// BubbleFunction = Sum Space Sum Space Sum Space OrOrExpression Space Sum
-BubbleFunction = SumAndSpace BubbleFunction1 / f
-BubbleFunction1 = SumAndSpace BubbleFunction2 / f
-BubbleFunction2 = SumAndSpace BubbleFunction3 / f
-BubbleFunction3 = OrOrExpressionAndSpace BubbleFunction4 / f
-BubbleFunction4 = Sum () / f
+// BubFn
+// BubFn = Sum Space Sum Space Sum Space OrOrExpr Space Sum
+BubFn = SumAndSpace BubFn1 / f
+BubFn1 = SumAndSpace BubFn2 / f
+BubFn2 = SumAndSpace BubFn3 / f
+BubFn3 = OrOrExprAndSpace BubFn4 / f
+BubFn4 = Sum () / f
 
 SumAndSpace = Sum Space / f
-OrOrExpressionAndSpace = OrOrExpression Space / f
+OrOrExprAndSpace = OrOrExpr Space / f
 
-// OrOr Expression
-OrOrExpression = AndAndExpression OrOrExpression1 / AndAndExpression
-OrOrExpression1 = OrOr OrOrExpression / f
+// OrOr Expr
+OrOrExpr = AndAndExpr OrOrExpr1 / AndAndExpr
+OrOrExpr1 = OrOr OrOrExpr / f
 
 OrOr = "||" () / f
 
-// AndAnd Expression
-AndAndExpression = ComparisonExpression AndAndExpression1 / ComparisonExpression
-AndAndExpression1 = AndAnd AndAndExpression / f
+// AndAnd Expr
+AndAndExpr = ComparisonExpr AndAndExpr1 / ComparisonExpr
+AndAndExpr1 = AndAnd AndAndExpr / f
 
 AndAnd = "&&" () / f
 
-// Comparison Expression
-ComparisonExpression = Sum ComparisonExpression1 / f
-ComparisonExpression1 = Comparison Sum / f
+// Comparison Expr
+ComparisonExpr = Sum ComparisonExpr1 / f
+ComparisonExpr1 = Comparison Sum / f
 
 Comparison = EqEq () / Comparison1
 Comparison1 = Ne () / Comparison2
@@ -213,7 +214,7 @@ Power = Atom PowerAndFactor / Atom
 PowerAndFactor = '^' Factor / f
 
 // Atom
-Atom = ExpressionInParentheses () / Atom1
+Atom = ExprInParentheses () / Atom1
 Atom1 = FloatLiteral () / Atom2
 Atom2 = IntegerLiteral () / Atom3
 Atom3 = Function () / Atom4
@@ -264,8 +265,8 @@ Ln = "ln" Factor / f
 Lg = "lg" Factor / f
 
 // Delimiters
-ExpressionInParentheses = '(' ExpressionAndClose / f
-ExpressionAndClose = Sum ')' / f
+ExprInParentheses = '(' ExprAndClose / f
+ExprAndClose = Sum ')' / f
 
 // Integer
 IntegerLiteral = DecLiteral () / f

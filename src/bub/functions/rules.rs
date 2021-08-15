@@ -1,74 +1,74 @@
-use crate::bub::function::variable::{FunctionVariable, FunctionVariable::*};
+use crate::bub::functions::variable::{BubFnsVariable, BubFnsVariable::*};
 
 use mpl::choices::{First, Second};
 use mpl::rules::{RightRule, Rules};
 use mpl::symbols::{Metasymbol::*, TerminalSymbol, U8SliceTerminal, U8SliceTerminal::*, E};
 
-pub struct FunctionRules;
+pub struct BubFnsRules;
 
-type Rule<'a> = RightRule<U8SliceTerminal<'a>, FunctionVariable>;
+type Rule<'a> = RightRule<U8SliceTerminal<'a>, BubFnsVariable>;
 
-impl<'a> FunctionRules {
-    // BubbleFunctions
-    /// BubbleFunctions = BubbleFunction ZeroOrMoreBubbleFunctions / f
+impl<'a> BubFnsRules {
+    // BubFns
+    /// BubFns = BubFn ZeroOrMoreBubFns / f
     const BUBBLE_FUNCTIONS_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::V(BubbleFunction),
-            rhs: E::V(ZeroOrMoreBubbleFunctions),
+            lhs: E::V(BubFn),
+            rhs: E::V(ZeroOrMoreBubFns),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// ZeroOrMoreBubbleFunctions = SpaceAndBubbleFunction ZeroOrMoreBubbleFunctions / ()
+    /// ZeroOrMoreBubFns = SpaceAndBubFn ZeroOrMoreBubFns / ()
     const ZERO_OR_MORE_BUBBLE_FUNCTIONS_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::V(SpaceAndBubbleFunction),
-            rhs: E::V(ZeroOrMoreBubbleFunctions),
+            lhs: E::V(SpaceAndBubFn),
+            rhs: E::V(ZeroOrMoreBubFns),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Empty))),
     };
-    /// SpaceAndBubbleFunction = Space BubbleFunction / f
+    /// SpaceAndBubFn = Space BubFn / f
     const SPACE_AND_BUBBLE_FUNCTION_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(Space),
-            rhs: E::V(BubbleFunction),
+            rhs: E::V(BubFn),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
 
-    // BubbleFunction
-    /// BubbleFunction = SumAndSpace BubbleFunction1 / f
+    // BubFn
+    /// BubFn = SumAndSpace BubFn1 / f
     const BUBBLE_FUNCTION_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(SumAndSpace),
-            rhs: E::V(BubbleFunction1),
+            rhs: E::V(BubFn1),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// BubbleFunction1 = SumAndSpace BubbleFunction2 / f
+    /// BubFn1 = SumAndSpace BubFn2 / f
     const BUBBLE_FUNCTION1_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(SumAndSpace),
-            rhs: E::V(BubbleFunction2),
+            rhs: E::V(BubFn2),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// BubbleFunction2 = SumAndSpace BubbleFunction3 / f
+    /// BubFn2 = SumAndSpace BubFn3 / f
     const BUBBLE_FUNCTION2_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(SumAndSpace),
-            rhs: E::V(BubbleFunction3),
+            rhs: E::V(BubFn3),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// BubbleFunction3 = OrOrExpressionAndSpace BubbleFunction4 / f
+    /// BubFn3 = OrOrExprAndSpace BubFn4 / f
     const BUBBLE_FUNCTION3_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::V(OrOrExpressionAndSpace),
-            rhs: E::V(BubbleFunction4),
+            lhs: E::V(OrOrExprAndSpace),
+            rhs: E::V(BubFn4),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// BubbleFunction4 = Sum () / f
+    /// BubFn4 = Sum () / f
     const BUBBLE_FUNCTION4_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(Sum),
@@ -85,29 +85,29 @@ impl<'a> FunctionRules {
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// OrOrExpressionAndSpace = OrOrExpression Space / f
+    /// OrOrExprAndSpace = OrOrExpr Space / f
     const OR_OR_EXPRESSION_AND_SPACE_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::V(OrOrExpression),
+            lhs: E::V(OrOrExpr),
             rhs: E::V(Space),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
 
-    // OrOr Expression
-    /// OrOrExpression = AndAndExpression OrOrExpression1 / AndAndExpression
+    // OrOr Expr
+    /// OrOrExpr = AndAndExpr OrOrExpr1 / AndAndExpr
     const OR_OR_EXPRESSION_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::V(AndAndExpression),
-            rhs: E::V(OrOrExpression1),
+            lhs: E::V(AndAndExpr),
+            rhs: E::V(OrOrExpr1),
         },
-        second: Second(E::V(AndAndExpression)),
+        second: Second(E::V(AndAndExpr)),
     };
-    /// OrOrExpression1 = OrOr OrOrExpression / f
+    /// OrOrExpr1 = OrOr OrOrExpr / f
     const OR_OR_EXPRESSION1_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(OrOr),
-            rhs: E::V(OrOrExpression),
+            rhs: E::V(OrOrExpr),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
@@ -120,20 +120,20 @@ impl<'a> FunctionRules {
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
 
-    // AndAnd Expression
-    /// AndAndExpression = ComparisonExpression AndAndExpression1 / ComparisonExpression
+    // AndAnd Expr
+    /// AndAndExpr = ComparisonExpr AndAndExpr1 / ComparisonExpr
     const AND_AND_EXPRESSION_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::V(ComparisonExpression),
-            rhs: E::V(AndAndExpression1),
+            lhs: E::V(ComparisonExpr),
+            rhs: E::V(AndAndExpr1),
         },
-        second: Second(E::V(ComparisonExpression)),
+        second: Second(E::V(ComparisonExpr)),
     };
-    /// AndAndExpression1 = AndAnd AndAndExpression / f
+    /// AndAndExpr1 = AndAnd AndAndExpr / f
     const AND_AND_EXPRESSION1_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(AndAnd),
-            rhs: E::V(AndAndExpression),
+            rhs: E::V(AndAndExpr),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
@@ -146,16 +146,16 @@ impl<'a> FunctionRules {
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
 
-    // Comparison Expression
-    /// ComparisonExpression = Sum ComparisonExpression1 / f
+    // Comparison Expr
+    /// ComparisonExpr = Sum ComparisonExpr1 / f
     const COMPARISON_EXPRESSION_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(Sum),
-            rhs: E::V(ComparisonExpression1),
+            rhs: E::V(ComparisonExpr1),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// ComparisonExpression1 = Comparison Sum / f
+    /// ComparisonExpr1 = Comparison Sum / f
     const COMPARISON_EXPRESSION1_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(Comparison),
@@ -344,10 +344,10 @@ impl<'a> FunctionRules {
     };
 
     // Atom
-    /// Atom = ExpressionInParentheses () / Atom1
+    /// Atom = ExprInParentheses () / Atom1
     const ATOM_RULE: Rule<'a> = RightRule {
         first: First {
-            lhs: E::V(ExpressionInParentheses),
+            lhs: E::V(ExprInParentheses),
             rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
         },
         second: Second(E::V(Atom1)),
@@ -668,15 +668,15 @@ impl<'a> FunctionRules {
     };
 
     // Delimiters
-    /// ExpressionInParentheses = '(' ExpressionAndClose / f
+    /// ExprInParentheses = '(' ExprAndClose / f
     const EXPRESSION_IN_PARENTHESES_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::T(TerminalSymbol::Original(Char('('))),
-            rhs: E::V(ExpressionAndClose),
+            rhs: E::V(ExprAndClose),
         },
         second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
     };
-    /// ExpressionAndClose = Expression ')' / f
+    /// ExprAndClose = Expr ')' / f
     const EXPRESSION_AND_CLOSE_RULE: Rule<'a> = RightRule {
         first: First {
             lhs: E::V(Sum),
@@ -889,40 +889,40 @@ impl<'a> FunctionRules {
     };
 }
 
-impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
-    fn get(&self, variable: &FunctionVariable) -> Option<&Rule<'a>> {
+impl<'a> Rules<U8SliceTerminal<'a>, BubFnsVariable> for BubFnsRules {
+    fn get(&self, variable: &BubFnsVariable) -> Option<&Rule<'a>> {
         Some(match variable {
-            // BubbleFunctions
-            BubbleFunctions => &Self::BUBBLE_FUNCTIONS_RULE,
-            ZeroOrMoreBubbleFunctions => &Self::ZERO_OR_MORE_BUBBLE_FUNCTIONS_RULE,
+            // BubFns
+            BubFns => &Self::BUBBLE_FUNCTIONS_RULE,
+            ZeroOrMoreBubFns => &Self::ZERO_OR_MORE_BUBBLE_FUNCTIONS_RULE,
 
-            SpaceAndBubbleFunction => &Self::SPACE_AND_BUBBLE_FUNCTION_RULE,
+            SpaceAndBubFn => &Self::SPACE_AND_BUBBLE_FUNCTION_RULE,
 
-            // BubbleFunction
-            BubbleFunction => &Self::BUBBLE_FUNCTION_RULE,
-            BubbleFunction1 => &Self::BUBBLE_FUNCTION1_RULE,
-            BubbleFunction2 => &Self::BUBBLE_FUNCTION2_RULE,
-            BubbleFunction3 => &Self::BUBBLE_FUNCTION3_RULE,
-            BubbleFunction4 => &Self::BUBBLE_FUNCTION4_RULE,
+            // BubFn
+            BubFn => &Self::BUBBLE_FUNCTION_RULE,
+            BubFn1 => &Self::BUBBLE_FUNCTION1_RULE,
+            BubFn2 => &Self::BUBBLE_FUNCTION2_RULE,
+            BubFn3 => &Self::BUBBLE_FUNCTION3_RULE,
+            BubFn4 => &Self::BUBBLE_FUNCTION4_RULE,
 
             SumAndSpace => &Self::SUM_AND_SPACE_RULE,
-            OrOrExpressionAndSpace => &Self::OR_OR_EXPRESSION_AND_SPACE_RULE,
+            OrOrExprAndSpace => &Self::OR_OR_EXPRESSION_AND_SPACE_RULE,
 
-            // OrOr Expression
-            OrOrExpression => &Self::OR_OR_EXPRESSION_RULE,
-            OrOrExpression1 => &Self::OR_OR_EXPRESSION1_RULE,
+            // OrOr Expr
+            OrOrExpr => &Self::OR_OR_EXPRESSION_RULE,
+            OrOrExpr1 => &Self::OR_OR_EXPRESSION1_RULE,
 
             OrOr => &Self::OR_OR_RULE,
 
-            // AndAnd Expression
-            AndAndExpression => &Self::AND_AND_EXPRESSION_RULE,
-            AndAndExpression1 => &Self::AND_AND_EXPRESSION1_RULE,
+            // AndAnd Expr
+            AndAndExpr => &Self::AND_AND_EXPRESSION_RULE,
+            AndAndExpr1 => &Self::AND_AND_EXPRESSION1_RULE,
 
             AndAnd => &Self::AND_AND_RULE,
 
-            // Comparison Expression
-            ComparisonExpression => &Self::COMPARISON_EXPRESSION_RULE,
-            ComparisonExpression1 => &Self::COMPARISON_EXPRESSION1_RULE,
+            // Comparison Expr
+            ComparisonExpr => &Self::COMPARISON_EXPRESSION_RULE,
+            ComparisonExpr1 => &Self::COMPARISON_EXPRESSION1_RULE,
 
             Comparison => &Self::COMPARISON_RULE,
             Comparison1 => &Self::COMPARISON1_RULE,
@@ -1007,8 +1007,8 @@ impl<'a> Rules<U8SliceTerminal<'a>, FunctionVariable> for FunctionRules {
             Lg => &Self::LG_RULE,
 
             // Delimiters
-            ExpressionInParentheses => &Self::EXPRESSION_IN_PARENTHESES_RULE,
-            ExpressionAndClose => &Self::EXPRESSION_AND_CLOSE_RULE,
+            ExprInParentheses => &Self::EXPRESSION_IN_PARENTHESES_RULE,
+            ExprAndClose => &Self::EXPRESSION_AND_CLOSE_RULE,
 
             // Integer
             IntegerLiteral => &Self::INTEGER_LITERAL_RULE,

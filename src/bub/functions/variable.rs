@@ -1,40 +1,40 @@
 use mpl::symbols::Variable;
 
-impl Variable for FunctionVariable {}
+impl Variable for BubFnsVariable {}
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub enum FunctionVariable {
-    // BubbleFunctions
-    BubbleFunctions,
-    ZeroOrMoreBubbleFunctions,
+pub enum BubFnsVariable {
+    // BubFns
+    BubFns,
+    ZeroOrMoreBubFns,
 
-    SpaceAndBubbleFunction,
+    SpaceAndBubFn,
 
-    // BubbleFunction
-    BubbleFunction,
-    BubbleFunction1,
-    BubbleFunction2,
-    BubbleFunction3,
-    BubbleFunction4,
+    // BubFn
+    BubFn,
+    BubFn1,
+    BubFn2,
+    BubFn3,
+    BubFn4,
 
     SumAndSpace,
-    OrOrExpressionAndSpace,
+    OrOrExprAndSpace,
 
-    // OrOr Expression
-    OrOrExpression,
-    OrOrExpression1,
+    // OrOr Expr
+    OrOrExpr,
+    OrOrExpr1,
 
     OrOr,
 
-    // AndAnd Expression
-    AndAndExpression,
-    AndAndExpression1,
+    // AndAnd Expr
+    AndAndExpr,
+    AndAndExpr1,
 
     AndAnd,
 
-    // Comparison Expression
-    ComparisonExpression,
-    ComparisonExpression1,
+    // Comparison Expr
+    ComparisonExpr,
+    ComparisonExpr1,
 
     Comparison,
     Comparison1,
@@ -118,8 +118,8 @@ pub enum FunctionVariable {
     Lg,
 
     // Delimiters
-    ExpressionInParentheses,
-    ExpressionAndClose,
+    ExprInParentheses,
+    ExprAndClose,
 
     // Integer
     IntegerLiteral,

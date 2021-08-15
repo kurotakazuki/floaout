@@ -3,11 +3,11 @@ use mycrc::CRC;
 use std::io::{Read, Result, Write};
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct BubbleID {
+pub struct BubID {
     pub id: u128,
 }
 
-impl BubbleID {
+impl BubID {
     pub fn new(id: u128) -> Self {
         Self { id }
     }

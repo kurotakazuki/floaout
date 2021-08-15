@@ -1,15 +1,14 @@
-pub use self::function::{
-    BubbleFunction, BubbleFunctions, FunctionAST, FunctionInterpreter, FunctionRules,
-    FunctionVariable,
+pub use self::functions::{
+    BubFn, BubFns, BubFnsAST, BubFnsInterpreter, BubFnsRules, BubFnsVariable,
 };
-pub use self::id::BubbleID;
+pub use self::id::BubID;
 pub use self::io::{
-    BubbleFrameReader, BubbleFrameReaderKind, BubbleFrameWriter, BubbleFrameWriterKind,
-    BubbleFunctionsBlock, BubbleReader, BubbleSample, BubbleWriter,
+    BubFnsBlock, BubFrameReader, BubFrameReaderKind, BubFrameWriter, BubFrameWriterKind, BubReader,
+    BubWriter, BubbleSample,
 };
-pub use self::metadata::{BubbleMetadata, BubbleSampleKind, BubbleState};
+pub use self::metadata::{BubSampleKind, BubState, BubbleMetadata};
 
-pub mod function;
+pub mod functions;
 mod id;
 mod io;
 mod metadata;

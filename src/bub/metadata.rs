@@ -1,21 +1,21 @@
 use crate::bub::{
-    function::{parse, BubbleFunctions, FunctionAST, FunctionVariable},
-    BubbleID,
+    functions::{parse, BubFns, BubFnsAST, BubFnsVariable},
+    BubID,
 };
 use crate::io::{ReadExt, WriteExt};
-use crate::{LpcmKind, Metadata, CRC};
+use crate::{LpcmKind, Metadata, CRC_32K_4_2};
 use mycrc::CRC;
 use std::io::{ErrorKind, Read, Result, Write};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub enum BubbleState {
+pub enum BubState {
     Head,
     Normal,
     Stopped,
     Ended,
 }
 
-impl BubbleState {
+impl BubState {
     pub fn is_head(&self) -> bool {
         matches!(self, Self::Head)
     }
@@ -34,22 +34,20 @@ impl BubbleState {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum BubbleSampleKind {
+pub enum BubSampleKind {
     Lpcm,
-    Expression(FunctionAST),
+    Expr(BubFnsAST),
 }
 
-impl From<FunctionAST> for BubbleSampleKind {
-    fn from(ast: FunctionAST) -> Self {
-        Self::Expression(ast)
+impl From<BubFnsAST> for BubSampleKind {
+    fn from(ast: BubFnsAST) -> Self {
+        Self::Expr(ast)
     }
 }
 
-impl BubbleSampleKind {
+impl BubSampleKind {
     pub fn default_expr() -> Self {
-        parse("0".as_bytes(), &FunctionVariable::Sum)
-            .unwrap()
-            .into()
+        parse("0".as_bytes(), &BubFnsVariable::Sum).unwrap().into()
     }
 
     pub fn read<R: Read>(reader: &mut R) -> Result<Self> {
@@ -87,7 +85,7 @@ impl BubbleSampleKind {
     pub const fn to_u8(&self) -> u8 {
         match self {
             Self::Lpcm => 0,
-            Self::Expression(_) => 1,
+            Self::Expr(_) => 1,
         }
     }
 }
@@ -98,9 +96,9 @@ pub struct BubbleMetadata {
     /// Version of Bubble File Format Specification.
     pub spec_version: u8,
     /// Bubble ID
-    pub bubble_id: BubbleID,
+    pub bub_id: BubID,
     /// Version of Bubble
-    pub bubble_version: u16,
+    pub bub_version: u16,
     /// Frames
     pub frames: u64,
     /// Samples Per Sec
@@ -108,17 +106,17 @@ pub struct BubbleMetadata {
     /// Bits Per Sample
     pub lpcm_kind: LpcmKind,
     /// Bubble Sample Kind
-    pub bubble_sample_kind: BubbleSampleKind,
+    pub bub_sample_kind: BubSampleKind,
     /// Name of Bubble
     pub name: String,
 
     /// Bubble State
-    pub bubble_state: BubbleState,
+    pub bub_state: BubState,
     /// Head Absolute Frame
     pub head_absolute_frame: u64,
 
     /// Bubble Functions
-    pub bubble_functions: BubbleFunctions,
+    pub bub_functions: BubFns,
     /// Tail Absolute Frame Plus One
     pub tail_absolute_frame_plus_one: u64,
     /// Next Head Absolute Frame
@@ -144,22 +142,22 @@ impl BubbleMetadata {
 
     pub fn set_as_head(&mut self, pos: u64) {
         self.head_absolute_frame = pos;
-        self.bubble_state = BubbleState::Head;
+        self.bub_state = BubState::Head;
     }
 
     pub fn set_as_normal(&mut self) {
-        self.bubble_state = BubbleState::Normal;
+        self.bub_state = BubState::Normal;
     }
 
     pub fn set_as_stopped(&mut self) {
-        self.bubble_state = BubbleState::Stopped;
+        self.bub_state = BubState::Stopped;
     }
 
     pub fn set_as_ended(&mut self) {
-        self.bubble_state = BubbleState::Ended;
+        self.bub_state = BubState::Ended;
     }
 
-    pub(crate) fn set_bubble_state_from_connected_and_ended(&mut self, pos: u64) {
+    pub(crate) fn set_bub_state_from_connected_and_ended(&mut self, pos: u64) {
         // TODO: Create closures method
         match self.next_head_absolute_frame {
             Some(next_head_absolute_frame) => {
@@ -174,25 +172,25 @@ impl BubbleMetadata {
     }
 
     pub fn init_with_pos(&mut self, pos: u64) {
-        match self.bubble_state {
-            BubbleState::Head => {
+        match self.bub_state {
+            BubState::Head => {
                 if self.tail_absolute_frame_plus_one == pos {
-                    self.set_bubble_state_from_connected_and_ended(pos);
+                    self.set_bub_state_from_connected_and_ended(pos);
                 } else {
                     self.set_as_normal();
                 }
             }
-            BubbleState::Normal => {
+            BubState::Normal => {
                 if self.tail_absolute_frame_plus_one == pos {
-                    self.set_bubble_state_from_connected_and_ended(pos);
+                    self.set_bub_state_from_connected_and_ended(pos);
                 }
             }
-            BubbleState::Stopped => {
+            BubState::Stopped => {
                 if self.next_head_absolute_frame.expect("Some") == pos {
                     self.set_as_head(pos);
                 }
             }
-            BubbleState::Ended => (),
+            BubState::Ended => (),
         }
     }
 
@@ -242,34 +240,33 @@ impl BubbleMetadata {
     pub fn read<R: std::io::Read>(reader: &mut R) -> Result<Self> {
         let mut metadata = Self {
             spec_version: Default::default(),
-            bubble_id: Default::default(),
-            bubble_version: Default::default(),
+            bub_id: Default::default(),
+            bub_version: Default::default(),
             frames: Default::default(),
             samples_per_sec: Default::default(),
             lpcm_kind: LpcmKind::F64LE,
-            bubble_sample_kind: BubbleSampleKind::Lpcm,
+            bub_sample_kind: BubSampleKind::Lpcm,
             name: Default::default(),
 
-            bubble_state: BubbleState::Stopped,
+            bub_state: BubState::Stopped,
             head_absolute_frame: 0,
 
-            bubble_functions: BubbleFunctions::new(),
+            bub_functions: BubFns::new(),
             tail_absolute_frame_plus_one: 0,
             next_head_absolute_frame: None,
 
-            crc: CRC,
+            crc: CRC_32K_4_2,
         };
 
         metadata.spec_version = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
-        metadata.bubble_id = BubbleID::read_and_calc_bytes(reader, &mut metadata.crc)?;
-        metadata.bubble_version = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
+        metadata.bub_id = BubID::read_and_calc_bytes(reader, &mut metadata.crc)?;
+        metadata.bub_version = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
 
         metadata.frames = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
         metadata.read_next_head_absolute_frame_from_relative(reader, 1)?;
         metadata.samples_per_sec = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
         metadata.lpcm_kind = LpcmKind::read_and_calc_bytes(reader, &mut metadata.crc)?;
-        metadata.bubble_sample_kind =
-            BubbleSampleKind::read_and_calc_bytes(reader, &mut metadata.crc)?;
+        metadata.bub_sample_kind = BubSampleKind::read_and_calc_bytes(reader, &mut metadata.crc)?;
 
         let name_size: u8 = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
         metadata.name =
@@ -290,8 +287,8 @@ impl BubbleMetadata {
 
     pub fn write<W: std::io::Write>(&mut self, writer: &mut W) -> Result<()> {
         writer.write_le_and_calc_bytes(self.spec_version, &mut self.crc)?;
-        self.bubble_id.write_and_calc_bytes(writer, &mut self.crc)?;
-        writer.write_le_and_calc_bytes(self.bubble_version, &mut self.crc)?;
+        self.bub_id.write_and_calc_bytes(writer, &mut self.crc)?;
+        writer.write_le_and_calc_bytes(self.bub_version, &mut self.crc)?;
 
         writer.write_le_and_calc_bytes(self.frames, &mut self.crc)?;
         writer.write_le_and_calc_bytes(
@@ -300,7 +297,7 @@ impl BubbleMetadata {
         )?;
         writer.write_le_and_calc_bytes(self.samples_per_sec, &mut self.crc)?;
         self.lpcm_kind.write_and_calc_bytes(writer, &mut self.crc)?;
-        self.bubble_sample_kind
+        self.bub_sample_kind
             .write_and_calc_bytes(writer, &mut self.crc)?;
         writer.write_le_and_calc_bytes(self.name.len() as u8, &mut self.crc)?;
         writer.write_str_and_calc_bytes(&self.name, &mut self.crc)?;
@@ -318,33 +315,33 @@ mod tests {
 
     #[test]
     fn write_and_read() -> Result<()> {
-        let mut bubble_metadata = BubbleMetadata {
+        let mut bub_metadata = BubbleMetadata {
             spec_version: 0,
-            bubble_id: BubbleID::new(0),
-            bubble_version: 0,
+            bub_id: BubID::new(0),
+            bub_version: 0,
             frames: 96000,
             samples_per_sec: 96000.0,
             lpcm_kind: LpcmKind::F32LE,
-            bubble_sample_kind: BubbleSampleKind::Lpcm,
+            bub_sample_kind: BubSampleKind::Lpcm,
             name: String::from("Vocal"),
 
-            bubble_state: BubbleState::Stopped,
+            bub_state: BubState::Stopped,
             head_absolute_frame: 0,
 
-            bubble_functions: BubbleFunctions::new(),
+            bub_functions: BubFns::new(),
             tail_absolute_frame_plus_one: 0,
             next_head_absolute_frame: Some(1),
 
-            crc: crate::crc::CRC,
+            crc: CRC_32K_4_2,
         };
-        let expected = bubble_metadata.clone();
+        let expected = bub_metadata.clone();
 
         let mut v: Vec<u8> = Vec::new();
 
-        bubble_metadata.write(&mut v)?;
+        bub_metadata.write(&mut v)?;
 
         let mut val = BubbleMetadata::read(&mut &v[..])?;
-        val.crc = crate::crc::CRC;
+        val.crc = CRC_32K_4_2;
 
         assert_eq!(val, expected);
 

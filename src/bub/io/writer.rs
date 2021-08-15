@@ -1,15 +1,15 @@
-use crate::bub::{BubbleFrameWriter, BubbleFrameWriterKind, BubbleMetadata};
+use crate::bub::{BubFrameWriter, BubFrameWriterKind, BubbleMetadata};
 use crate::{LpcmKind, Sample};
 use std::fs::File;
 use std::io::{BufWriter, Result, Write};
 use std::path::Path;
 
-pub struct BubbleWriter<W: Write> {
+pub struct BubWriter<W: Write> {
     pub inner: W,
     pub metadata: BubbleMetadata,
 }
 
-impl<W: Write> BubbleWriter<W> {
+impl<W: Write> BubWriter<W> {
     pub fn new(mut inner: W, mut metadata: BubbleMetadata) -> Result<Self> {
         metadata.write(&mut inner)?;
 
@@ -24,25 +24,23 @@ impl<W: Write> BubbleWriter<W> {
     ///
     /// This is unsafe, due to the type of sample isn’t checked:
     /// - type of sample must follow [`SampleKind`]
-    pub unsafe fn into_bub_frame_writer<S: Sample>(self) -> BubbleFrameWriter<W, S> {
-        BubbleFrameWriter::new(self.inner, self.metadata)
+    pub unsafe fn into_bub_frame_writer<S: Sample>(self) -> BubFrameWriter<W, S> {
+        BubFrameWriter::new(self.inner, self.metadata)
     }
 
-    pub fn into_bub_frame_writer_kind(self) -> BubbleFrameWriterKind<W> {
+    pub fn into_bub_frame_writer_kind(self) -> BubFrameWriterKind<W> {
         match self.metadata.lpcm_kind() {
-            LpcmKind::F32LE => BubbleFrameWriterKind::F32LE(BubbleFrameWriter::<W, f32>::new(
-                self.inner,
-                self.metadata,
-            )),
-            LpcmKind::F64LE => BubbleFrameWriterKind::F64LE(BubbleFrameWriter::<W, f64>::new(
-                self.inner,
-                self.metadata,
-            )),
+            LpcmKind::F32LE => {
+                BubFrameWriterKind::F32LE(BubFrameWriter::<W, f32>::new(self.inner, self.metadata))
+            }
+            LpcmKind::F64LE => {
+                BubFrameWriterKind::F64LE(BubFrameWriter::<W, f64>::new(self.inner, self.metadata))
+            }
         }
     }
 }
 
-impl BubbleWriter<BufWriter<File>> {
+impl BubWriter<BufWriter<File>> {
     pub fn create<P: AsRef<Path>>(filename: P, metadata: BubbleMetadata) -> Result<Self> {
         let file = File::create(filename)?;
         let buf_writer = BufWriter::new(file);
