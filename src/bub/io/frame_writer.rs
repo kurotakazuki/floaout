@@ -2,10 +2,58 @@ use crate::bub::{BubbleFunctionsBlock, BubbleMetadata, BubbleSample};
 use crate::io::WriteExt;
 use crate::{FrameWriter, LpcmKind, Sample};
 use std::io::{Error, ErrorKind, Result, Write};
+use std::marker::PhantomData;
 
-pub type BubbleFrameWriter<W, S> = FrameWriter<W, BubbleMetadata, S>;
+pub struct BubbleFrameWriter<W: Write, S: Sample> {
+    pub inner: W,
+    pub metadata: BubbleMetadata,
+    pub pos: u64,
+    _phantom_sample: PhantomData<S>,
+}
+
+impl<W: Write, S: Sample> FrameWriter<W> for BubbleFrameWriter<W, S> {
+    fn flush(&mut self) -> Result<()> {
+        self.inner.flush()
+    }
+    fn get_ref(&self) -> &W {
+        &self.inner
+    }
+    fn get_mut(&mut self) -> &mut W {
+        &mut self.inner
+    }
+    fn into_inner(self) -> W {
+        self.inner
+    }
+}
 
 impl<W: Write, S: Sample> BubbleFrameWriter<W, S> {
+    pub fn new(inner: W, metadata: BubbleMetadata) -> Self {
+        let pos = 0;
+
+        Self {
+            inner,
+            metadata,
+            pos,
+            _phantom_sample: PhantomData,
+        }
+    }
+
+    pub fn flush(&mut self) -> Result<()> {
+        self.inner.flush()
+    }
+
+    pub fn get_ref(&self) -> &W {
+        &self.inner
+    }
+
+    pub fn get_mut(&mut self) -> &mut W {
+        &mut self.inner
+    }
+
+    pub fn into_inner(self) -> W {
+        self.inner
+    }
+
     fn write_head_metadata_and_calc_bytes(
         &mut self,
         head_absolute_frame: u64,

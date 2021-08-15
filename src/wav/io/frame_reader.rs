@@ -1,8 +1,37 @@
 use crate::wav::WavMetadata;
 use crate::{Frame, FrameReader, LpcmKind, Sample};
 use std::io::{Error, ErrorKind, Read, Result};
+use std::marker::PhantomData;
 
-pub type WavFrameReader<R, S> = FrameReader<R, WavMetadata, S>;
+pub struct WavFrameReader<R: Read, S: Sample> {
+    pub inner: R,
+    pub metadata: WavMetadata,
+    pub pos: u64,
+    _phantom_sample: PhantomData<S>,
+}
+
+impl<R: Read, S: Sample> FrameReader<R> for WavFrameReader<R, S> {
+    fn get_ref(&self) -> &R {
+        &self.inner
+    }
+    fn get_mut(&mut self) -> &mut R {
+        &mut self.inner
+    }
+    fn into_inner(self) -> R {
+        self.inner
+    }
+}
+
+impl<R: Read, S: Sample> WavFrameReader<R, S> {
+    pub fn new(inner: R, metadata: WavMetadata) -> Self {
+        Self {
+            inner,
+            metadata,
+            pos: 0,
+            _phantom_sample: PhantomData,
+        }
+    }
+}
 
 impl<R: Read, S: Sample> Iterator for WavFrameReader<R, S> {
     type Item = Result<Frame<S>>;

@@ -1,10 +1,42 @@
 use crate::wav::WavMetadata;
 use crate::{Frame, FrameWriter, LpcmKind, Sample};
 use std::io::{Error, ErrorKind, Result, Write};
+use std::marker::PhantomData;
 
-pub type WavFrameWriter<W, S> = FrameWriter<W, WavMetadata, S>;
+pub struct WavFrameWriter<W: Write, S: Sample> {
+    pub inner: W,
+    pub metadata: WavMetadata,
+    pub pos: u64,
+    _phantom_sample: PhantomData<S>,
+}
+
+impl<W: Write, S: Sample> FrameWriter<W> for WavFrameWriter<W, S> {
+    fn flush(&mut self) -> Result<()> {
+        self.inner.flush()
+    }
+    fn get_ref(&self) -> &W {
+        &self.inner
+    }
+    fn get_mut(&mut self) -> &mut W {
+        &mut self.inner
+    }
+    fn into_inner(self) -> W {
+        self.inner
+    }
+}
 
 impl<W: Write, S: Sample> WavFrameWriter<W, S> {
+    pub fn new(inner: W, metadata: WavMetadata) -> Self {
+        let pos = 0;
+
+        Self {
+            inner,
+            metadata,
+            pos,
+            _phantom_sample: PhantomData,
+        }
+    }
+
     pub fn write_frame(&mut self, wav_frame: Frame<S>) -> Result<()> {
         if wav_frame.0.len() != self.metadata.channels() as usize {
             return Err(ErrorKind::InvalidData.into());

@@ -5,10 +5,37 @@ use crate::bub::{
 use crate::io::ReadExt;
 use crate::{Frame, FrameReader, LpcmKind, Sample};
 use std::io::{Error, ErrorKind, Read, Result};
+use std::marker::PhantomData;
 
-pub type BubbleFrameReader<R, S> = FrameReader<R, BubbleMetadata, S>;
+pub struct BubbleFrameReader<R: Read, S: Sample> {
+    pub inner: R,
+    pub metadata: BubbleMetadata,
+    pub pos: u64,
+    _phantom_sample: PhantomData<S>,
+}
+
+impl<R: Read, S: Sample> FrameReader<R> for BubbleFrameReader<R, S> {
+    fn get_ref(&self) -> &R {
+        &self.inner
+    }
+    fn get_mut(&mut self) -> &mut R {
+        &mut self.inner
+    }
+    fn into_inner(self) -> R {
+        self.inner
+    }
+}
 
 impl<R: Read, S: Sample> BubbleFrameReader<R, S> {
+    pub fn new(inner: R, metadata: BubbleMetadata) -> Self {
+        Self {
+            inner,
+            metadata,
+            pos: 0,
+            _phantom_sample: PhantomData,
+        }
+    }
+
     fn read_head_metadata_and_calc_bytes(&mut self) -> Result<()> {
         let functions_size: u16 = self.inner.read_le_and_calc_bytes(&mut self.metadata.crc)?;
 
