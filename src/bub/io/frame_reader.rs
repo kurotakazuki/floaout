@@ -9,9 +9,11 @@ use std::marker::PhantomData;
 
 pub struct BubbleFrameReader<R: Read, S: Sample> {
     pub inner: R,
-    pub metadata: BubbleMetadata,
     pub pos: u64,
     _phantom_sample: PhantomData<S>,
+    pub metadata: BubbleMetadata,
+    /// Speakers absolute coordinates
+    pub speakers_absolute_coordinates: Vec<Coord>,
 }
 
 impl<R: Read, S: Sample> FrameReader<R> for BubbleFrameReader<R, S> {
@@ -27,12 +29,17 @@ impl<R: Read, S: Sample> FrameReader<R> for BubbleFrameReader<R, S> {
 }
 
 impl<R: Read, S: Sample> BubbleFrameReader<R, S> {
-    pub fn new(inner: R, metadata: BubbleMetadata) -> Self {
+    pub fn new(
+        inner: R,
+        metadata: BubbleMetadata,
+        speakers_absolute_coordinates: Vec<Coord>,
+    ) -> Self {
         Self {
             inner,
-            metadata,
             pos: 0,
             _phantom_sample: PhantomData,
+            metadata,
+            speakers_absolute_coordinates,
         }
     }
 
@@ -100,11 +107,8 @@ impl<R: Read, S: Sample> BubbleFrameReader<R, S> {
 
         if sample != S::default() {
             // TODO: Create method
-            for (i, speaker_absolute_coordinates) in self
-                .metadata
-                .speakers_absolute_coordinates
-                .iter()
-                .enumerate()
+            for (i, speaker_absolute_coordinates) in
+                self.speakers_absolute_coordinates.iter().enumerate()
             {
                 if let Some((volume, _)) =
                     self.get_volume_and_interpreter(*speaker_absolute_coordinates)
@@ -118,11 +122,8 @@ impl<R: Read, S: Sample> BubbleFrameReader<R, S> {
     }
 
     fn expr_frame(&self, expr: &FunctionAST, frame: &mut Frame<S>) {
-        for (i, speaker_absolute_coordinates) in self
-            .metadata
-            .speakers_absolute_coordinates
-            .iter()
-            .enumerate()
+        for (i, speaker_absolute_coordinates) in
+            self.speakers_absolute_coordinates.iter().enumerate()
         {
             if let Some((volume, interpreter)) =
                 self.get_volume_and_interpreter(*speaker_absolute_coordinates)
@@ -146,7 +147,7 @@ impl<R: Read, S: Sample> Iterator for BubbleFrameReader<R, S> {
 
         self.metadata.init_with_pos(self.pos);
 
-        let channels = self.metadata.speakers_absolute_coordinates.len();
+        let channels = self.speakers_absolute_coordinates.len();
 
         let mut frame: Frame<S> = vec![S::default(); channels].into();
 
@@ -259,8 +260,6 @@ mod tests {
             bubble_sample_kind: BubbleSampleKind::Lpcm,
             name: String::from("0.1*N"),
 
-            speakers_absolute_coordinates: vec![(0.0, 0.0, 0.0).into(), (3.0, 0.0, 0.0).into()],
-
             bubble_state: BubbleState::Stopped,
             head_absolute_frame: 0,
 
@@ -270,6 +269,8 @@ mod tests {
 
             crc: crate::crc::CRC,
         };
+
+        let speakers_absolute_coordinates = vec![(0.0, 0.0, 0.0).into(), (3.0, 0.0, 0.0).into()];
 
         // Write Metadata and get CRC
         let mut skip: Vec<u8> = Vec::new();
@@ -315,7 +316,7 @@ mod tests {
         .concat();
 
         let mut bub_frame_reader: BubbleFrameReader<&[u8], f32> =
-            BubbleFrameReader::new(data, metadata);
+            BubbleFrameReader::new(data, metadata, speakers_absolute_coordinates);
 
         let expects = vec![
             (Head, [0.1, 0.0]),
@@ -347,8 +348,6 @@ mod tests {
             bubble_sample_kind: BubbleSampleKind::default_expr(),
             name: String::from("Expression"),
 
-            speakers_absolute_coordinates: vec![(0.0, 0.0, 0.0).into(), (0.0, 0.0, 1.0).into()],
-
             bubble_state: BubbleState::Stopped,
             head_absolute_frame: 0,
 
@@ -358,6 +357,7 @@ mod tests {
 
             crc: crate::crc::CRC,
         };
+        let speakers_absolute_coordinates = vec![(0.0, 0.0, 0.0).into(), (0.0, 0.0, 1.0).into()];
 
         // Write Metadata and get CRC
         let mut skip: Vec<u8> = Vec::new();
@@ -404,7 +404,7 @@ mod tests {
         ]
         .concat();
         let mut bub_frame_reader: BubbleFrameReader<&[u8], f32> =
-            BubbleFrameReader::new(data, metadata);
+            BubbleFrameReader::new(data, metadata, speakers_absolute_coordinates);
 
         let expects = vec![
             (Stopped, [0.0, 0.0]),

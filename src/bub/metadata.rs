@@ -3,7 +3,7 @@ use crate::bub::{
     BubbleID,
 };
 use crate::io::{ReadExt, WriteExt};
-use crate::{Coord, LpcmKind, Metadata, CRC};
+use crate::{LpcmKind, Metadata, CRC};
 use mycrc::CRC;
 use std::io::{ErrorKind, Read, Result, Write};
 
@@ -111,9 +111,6 @@ pub struct BubbleMetadata {
     pub bubble_sample_kind: BubbleSampleKind,
     /// Name of Bubble
     pub name: String,
-
-    /// Speakers absolute coordinates
-    pub speakers_absolute_coordinates: Vec<Coord>,
 
     /// Bubble State
     pub bubble_state: BubbleState,
@@ -253,8 +250,6 @@ impl BubbleMetadata {
             bubble_sample_kind: BubbleSampleKind::Lpcm,
             name: Default::default(),
 
-            speakers_absolute_coordinates: Vec::new(),
-
             bubble_state: BubbleState::Stopped,
             head_absolute_frame: 0,
 
@@ -332,8 +327,6 @@ mod tests {
             lpcm_kind: LpcmKind::F32LE,
             bubble_sample_kind: BubbleSampleKind::Lpcm,
             name: String::from("Vocal"),
-
-            speakers_absolute_coordinates: Vec::new(),
 
             bubble_state: BubbleState::Stopped,
             head_absolute_frame: 0,

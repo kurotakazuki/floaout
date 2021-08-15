@@ -214,6 +214,8 @@ impl<W: Write, S: Sample> BubbleFrameWriter<W, S> {
                 next_head_relative_frame,
                 expression,
             } => {
+                // TODO: Is expression valid?
+
                 self.add_pos_to_less_than_next_head_or_ended(
                     head_absolute_frame,
                     tail_relative_frame,
@@ -330,8 +332,6 @@ mod tests {
             lpcm_kind: LpcmKind::F32LE,
             bubble_sample_kind: BubbleSampleKind::Lpcm,
             name: String::from("0.1*N"),
-
-            speakers_absolute_coordinates: vec![],
 
             bubble_state: BubbleState::Stopped,
             head_absolute_frame: 0,
