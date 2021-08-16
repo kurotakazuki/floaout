@@ -2,6 +2,7 @@
 Floaout is the next-generation audio format.
 
 # TODO
+- Split `CRC` from Metadata
 - Add `read_bub_functions_block` in BubFrameReader
 - error handling
 - Clarify whether #[derive(Order)] is needed
@@ -17,7 +18,7 @@ Floaout is the next-generation audio format.
 | Bubble ID | `u128` (16) | Bubble ID of this file. The value is 0 if the Bubble is undefined. |
 | Bubble Version | `u16` (2) | Version of Bubble |
 | Frames | `u64` (8) | Number of frames |
-| Starting Absolute Frame | `u64` (8) | Starting Absolute Frame |
+| First Head Absolute Frame | `u64` (8) | First Head Absolute Frame |
 | Samples Per Sec | `f64` (8) | Samples per sec |
 | LpcmKind | `u8` (1) | `SampleKind` |
 | BubSampleKind | `u8` (1) | `BubSampleKind` |
@@ -327,7 +328,10 @@ Bubble Files will be 'i.bub' (i = 0, ... , Bubbles - 1)
 
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
+| Name Size | `u8` (1) | Name Size (0~255) |
+| File Name | `String` | Bubble File Name without ".bub" (UTF-8) |
 | Bubble Starting Frames | `u16` (2) | Number of Bubble Starting Frames |
 | Bubble Starting Frame | `u64` (8) | Bubble Starting Frame |
 | ... | ... | ... |
 | Bubble Starting Frame | `u64` (8) | Bubble Starting Frame |
+| CRC-32K/4.2 | `u32` (4) | From the previous CRC. |
