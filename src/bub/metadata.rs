@@ -3,7 +3,7 @@ use crate::bub::{
     BubID,
 };
 use crate::io::{ReadExt, WriteExt};
-use crate::utils;
+use crate::utils::{read_crc, write_crc};
 use crate::{LpcmKind, Metadata, CRC_32K_4_2};
 use mycrc::CRC;
 use std::io::{ErrorKind, Read, Result, Write};
@@ -123,9 +123,6 @@ pub struct BubMetadata {
     /// Next Head Absolute Frame
     /// `None` if 0.
     pub next_head_absolute_frame: Option<u64>,
-
-    /// CRC
-    pub crc: CRC<u32>,
 }
 
 impl BubMetadata {
@@ -195,75 +192,82 @@ impl BubMetadata {
         }
     }
 
+    pub(crate) fn next_head_absolute_frame_from_relative(
+        next_head_relative_frame: u64,
+        pos: u64,
+    ) -> Option<u64> {
+        if next_head_relative_frame != 0 {
+            Some(next_head_relative_frame + pos - 1)
+        } else {
+            None
+        }
+    }
+
     pub(crate) fn set_next_head_absolute_frame_from_relative(
         &mut self,
         next_head_relative_frame: u64,
         pos: u64,
     ) {
-        self.next_head_absolute_frame = if next_head_relative_frame != 0 {
-            Some(next_head_relative_frame + pos - 1)
-        } else {
-            None
-        };
+        self.next_head_absolute_frame =
+            Self::next_head_absolute_frame_from_relative(next_head_relative_frame, pos);
     }
+
     // IO
+    /// TODO: Refactoring
     pub(crate) fn read_next_head_absolute_frame_from_relative<R: std::io::Read>(
         &mut self,
         reader: &mut R,
         pos: u64,
+        crc: &mut CRC<u32>,
     ) -> Result<()> {
-        let next_head_relative_frame: u64 = reader.read_le_and_calc_bytes(&mut self.crc)?;
+        let next_head_relative_frame: u64 = reader.read_le_and_calc_bytes(crc)?;
         self.set_next_head_absolute_frame_from_relative(next_head_relative_frame, pos);
 
         Ok(())
     }
 
-    pub(crate) fn read_crc<R: std::io::Read>(&mut self, reader: &mut R) -> Result<()> {
-        utils::read_crc(reader, &mut self.crc)
-    }
-    pub(crate) fn write_crc<W: std::io::Write>(&mut self, writer: &mut W) -> Result<()> {
-        utils::write_crc(writer, &mut self.crc)
-    }
+    pub fn read<R: std::io::Read>(reader: &mut R) -> Result<(Self, CRC<u32>)> {
+        let mut crc = CRC_32K_4_2;
 
-    pub fn read<R: std::io::Read>(reader: &mut R) -> Result<Self> {
-        let mut metadata = Self {
-            spec_version: Default::default(),
-            bub_id: Default::default(),
-            bub_version: Default::default(),
-            frames: Default::default(),
-            samples_per_sec: Default::default(),
-            lpcm_kind: LpcmKind::F64LE,
-            bub_sample_kind: BubSampleKind::Lpcm,
-            name: Default::default(),
+        let spec_version = reader.read_le_and_calc_bytes(&mut crc)?;
+        let bub_id = BubID::read_and_calc_bytes(reader, &mut crc)?;
+        let bub_version = reader.read_le_and_calc_bytes(&mut crc)?;
 
-            bub_state: BubState::Stopped,
-            head_absolute_frame: 0,
+        let frames = reader.read_le_and_calc_bytes(&mut crc)?;
 
-            bub_functions: BubFns::new(),
-            foot_absolute_frame_plus_one: 0,
-            next_head_absolute_frame: None,
+        let next_head_relative_frame: u64 = reader.read_le_and_calc_bytes(&mut crc)?;
+        let next_head_absolute_frame =
+            Self::next_head_absolute_frame_from_relative(next_head_relative_frame, 1);
+        let samples_per_sec = reader.read_le_and_calc_bytes(&mut crc)?;
+        let lpcm_kind = LpcmKind::read_and_calc_bytes(reader, &mut crc)?;
+        let bub_sample_kind = BubSampleKind::read_and_calc_bytes(reader, &mut crc)?;
 
-            crc: CRC_32K_4_2,
-        };
-
-        metadata.spec_version = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
-        metadata.bub_id = BubID::read_and_calc_bytes(reader, &mut metadata.crc)?;
-        metadata.bub_version = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
-
-        metadata.frames = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
-        metadata.read_next_head_absolute_frame_from_relative(reader, 1)?;
-        metadata.samples_per_sec = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
-        metadata.lpcm_kind = LpcmKind::read_and_calc_bytes(reader, &mut metadata.crc)?;
-        metadata.bub_sample_kind = BubSampleKind::read_and_calc_bytes(reader, &mut metadata.crc)?;
-
-        let name_size: u8 = reader.read_le_and_calc_bytes(&mut metadata.crc)?;
-        metadata.name =
-            reader.read_string_for_and_calc_bytes(name_size as usize, &mut metadata.crc)?;
+        let name_size: u8 = reader.read_le_and_calc_bytes(&mut crc)?;
+        let name = reader.read_string_for_and_calc_bytes(name_size as usize, &mut crc)?;
 
         // CRC
-        metadata.read_crc(reader)?;
+        read_crc(reader, &mut crc)?;
 
-        Ok(metadata)
+        Ok((
+            Self {
+                spec_version,
+                bub_id,
+                bub_version,
+                frames,
+                samples_per_sec,
+                lpcm_kind,
+                bub_sample_kind,
+                name,
+
+                bub_state: BubState::Stopped,
+                head_absolute_frame: 0,
+
+                bub_functions: BubFns::new(),
+                foot_absolute_frame_plus_one: 0,
+                next_head_absolute_frame,
+            },
+            crc,
+        ))
     }
 
     fn next_head_absolute_frame_into_relative(&self, pos: u64) -> u64 {
@@ -273,25 +277,26 @@ impl BubMetadata {
         }
     }
 
-    pub fn write<W: std::io::Write>(&mut self, writer: &mut W) -> Result<()> {
-        writer.write_le_and_calc_bytes(self.spec_version, &mut self.crc)?;
-        self.bub_id.write_and_calc_bytes(writer, &mut self.crc)?;
-        writer.write_le_and_calc_bytes(self.bub_version, &mut self.crc)?;
+    pub fn write<W: std::io::Write>(&self, writer: &mut W) -> Result<CRC<u32>> {
+        let mut crc = CRC_32K_4_2;
 
-        writer.write_le_and_calc_bytes(self.frames, &mut self.crc)?;
-        writer.write_le_and_calc_bytes(
-            self.next_head_absolute_frame_into_relative(1),
-            &mut self.crc,
-        )?;
-        writer.write_le_and_calc_bytes(self.samples_per_sec, &mut self.crc)?;
-        self.lpcm_kind.write_and_calc_bytes(writer, &mut self.crc)?;
+        writer.write_le_and_calc_bytes(self.spec_version, &mut crc)?;
+        self.bub_id.write_and_calc_bytes(writer, &mut crc)?;
+        writer.write_le_and_calc_bytes(self.bub_version, &mut crc)?;
+
+        writer.write_le_and_calc_bytes(self.frames, &mut crc)?;
+        writer.write_le_and_calc_bytes(self.next_head_absolute_frame_into_relative(1), &mut crc)?;
+        writer.write_le_and_calc_bytes(self.samples_per_sec, &mut crc)?;
+        self.lpcm_kind.write_and_calc_bytes(writer, &mut crc)?;
         self.bub_sample_kind
-            .write_and_calc_bytes(writer, &mut self.crc)?;
-        writer.write_le_and_calc_bytes(self.name.len() as u8, &mut self.crc)?;
-        writer.write_str_and_calc_bytes(&self.name, &mut self.crc)?;
+            .write_and_calc_bytes(writer, &mut crc)?;
+        writer.write_le_and_calc_bytes(self.name.len() as u8, &mut crc)?;
+        writer.write_str_and_calc_bytes(&self.name, &mut crc)?;
 
         // CRC
-        self.write_crc(writer)
+        write_crc(writer, &mut crc)?;
+
+        Ok(crc)
     }
 }
 
@@ -303,7 +308,7 @@ mod tests {
 
     #[test]
     fn write_and_read() -> Result<()> {
-        let mut bub_metadata = BubMetadata {
+        let bub_metadata = BubMetadata {
             spec_version: 0,
             bub_id: BubID::new(0),
             bub_version: 0,
@@ -319,8 +324,6 @@ mod tests {
             bub_functions: BubFns::new(),
             foot_absolute_frame_plus_one: 0,
             next_head_absolute_frame: Some(1),
-
-            crc: CRC_32K_4_2,
         };
         let expected = bub_metadata.clone();
 
@@ -328,8 +331,7 @@ mod tests {
 
         bub_metadata.write(&mut v)?;
 
-        let mut val = BubMetadata::read(&mut &v[..])?;
-        val.crc = CRC_32K_4_2;
+        let val = BubMetadata::read(&mut &v[..])?.0;
 
         assert_eq!(val, expected);
 

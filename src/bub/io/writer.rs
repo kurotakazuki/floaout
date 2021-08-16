@@ -1,5 +1,6 @@
 use crate::bub::{BubFrameWriter, BubFrameWriterKind, BubMetadata};
 use crate::{LpcmKind, Sample};
+use mycrc::CRC;
 use std::fs::File;
 use std::io::{BufWriter, Result, Write};
 use std::path::Path;
@@ -7,13 +8,19 @@ use std::path::Path;
 pub struct BubWriter<W: Write> {
     pub inner: W,
     pub metadata: BubMetadata,
+    /// CRC
+    pub crc: CRC<u32>,
 }
 
 impl<W: Write> BubWriter<W> {
-    pub fn new(mut inner: W, mut metadata: BubMetadata) -> Result<Self> {
-        metadata.write(&mut inner)?;
+    pub fn new(mut inner: W, metadata: BubMetadata) -> Result<Self> {
+        let crc = metadata.write(&mut inner)?;
 
-        Ok(Self { inner, metadata })
+        Ok(Self {
+            inner,
+            metadata,
+            crc,
+        })
     }
 
     pub fn flush(&mut self) -> Result<()> {
@@ -25,17 +32,19 @@ impl<W: Write> BubWriter<W> {
     /// This is unsafe, due to the type of sample isn’t checked:
     /// - type of sample must follow [`SampleKind`]
     pub unsafe fn into_bub_frame_writer<S: Sample>(self) -> BubFrameWriter<W, S> {
-        BubFrameWriter::new(self.inner, self.metadata)
+        BubFrameWriter::new(self.inner, (self.metadata, self.crc))
     }
 
     pub fn into_bub_frame_writer_kind(self) -> BubFrameWriterKind<W> {
         match self.metadata.lpcm_kind() {
-            LpcmKind::F32LE => {
-                BubFrameWriterKind::F32LE(BubFrameWriter::<W, f32>::new(self.inner, self.metadata))
-            }
-            LpcmKind::F64LE => {
-                BubFrameWriterKind::F64LE(BubFrameWriter::<W, f64>::new(self.inner, self.metadata))
-            }
+            LpcmKind::F32LE => BubFrameWriterKind::F32LE(BubFrameWriter::<W, f32>::new(
+                self.inner,
+                (self.metadata, self.crc),
+            )),
+            LpcmKind::F64LE => BubFrameWriterKind::F64LE(BubFrameWriter::<W, f64>::new(
+                self.inner,
+                (self.metadata, self.crc),
+            )),
         }
     }
 }

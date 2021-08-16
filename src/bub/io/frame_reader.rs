@@ -3,7 +3,9 @@ use crate::bub::{
     BubMetadata, BubSampleKind, BubState,
 };
 use crate::io::ReadExt;
+use crate::utils::read_crc;
 use crate::{Coord, Frame, FrameIOKind, FrameReader, Sample};
+use mycrc::CRC;
 use std::io::{Read, Result};
 use std::marker::PhantomData;
 
@@ -14,6 +16,8 @@ pub struct BubFrameReader<R: Read, S: Sample> {
     pub metadata: BubMetadata,
     /// Speakers absolute coordinates
     pub speakers_absolute_coord: Vec<Coord>,
+    /// CRC
+    pub crc: CRC<u32>,
 }
 
 impl<R: Read, S: Sample> FrameReader<R> for BubFrameReader<R, S> {
@@ -29,22 +33,27 @@ impl<R: Read, S: Sample> FrameReader<R> for BubFrameReader<R, S> {
 }
 
 impl<R: Read, S: Sample> BubFrameReader<R, S> {
-    pub fn new(inner: R, metadata: BubMetadata, speakers_absolute_coord: Vec<Coord>) -> Self {
+    pub fn new(
+        inner: R,
+        metadata_and_crc: (BubMetadata, CRC<u32>),
+        speakers_absolute_coord: Vec<Coord>,
+    ) -> Self {
         Self {
             inner,
             pos: 0,
             _phantom_sample: PhantomData,
-            metadata,
+            metadata: metadata_and_crc.0,
             speakers_absolute_coord,
+            crc: metadata_and_crc.1,
         }
     }
 
     fn read_head_metadata_and_calc_bytes(&mut self) -> Result<()> {
-        let functions_size: u16 = self.inner.read_le_and_calc_bytes(&mut self.metadata.crc)?;
+        let functions_size: u16 = self.inner.read_le_and_calc_bytes(&mut self.crc)?;
 
         let bub_functions_vec = self
             .inner
-            .read_vec_for_and_calc_bytes(functions_size as usize, &mut self.metadata.crc)?;
+            .read_vec_for_and_calc_bytes(functions_size as usize, &mut self.crc)?;
 
         self.metadata.bub_functions = parse(&bub_functions_vec, &BubFnsVariable::BubFns)
             .unwrap()
@@ -53,34 +62,39 @@ impl<R: Read, S: Sample> BubFrameReader<R, S> {
             .into_bub_functions()
             .unwrap();
         // Foot relative frame
-        self.metadata.foot_absolute_frame_plus_one = self.pos
-            + self
-                .inner
-                .read_le_and_calc_bytes::<u64>(&mut self.metadata.crc)?;
+        self.metadata.foot_absolute_frame_plus_one =
+            self.pos + self.inner.read_le_and_calc_bytes::<u64>(&mut self.crc)?;
         // Next head relative frame
-        self.metadata
-            .read_next_head_absolute_frame_from_relative(&mut self.inner, self.pos)?;
+        self.metadata.read_next_head_absolute_frame_from_relative(
+            &mut self.inner,
+            self.pos,
+            &mut self.crc,
+        )?;
 
         Ok(())
     }
+    // IO
+    pub(crate) fn read_crc(&mut self) -> Result<()> {
+        read_crc(&mut self.inner, &mut self.crc)
+    }
 
     fn read_lpcm_and_crc(&mut self) -> Result<S> {
-        let sample = S::read_and_calc_bytes(&mut self.inner, &mut self.metadata.crc)?;
+        let sample = S::read_and_calc_bytes(&mut self.inner, &mut self.crc)?;
         // Read CRC
         if self.metadata.foot_absolute_frame_plus_one - 1 == self.pos {
-            self.metadata.read_crc(&mut self.inner)?;
+            self.read_crc()?;
         }
 
         Ok(sample)
     }
 
     fn read_expression_and_crc(&mut self) -> Result<Vec<u8>> {
-        let expr_size: u16 = self.inner.read_le_and_calc_bytes(&mut self.metadata.crc)?;
+        let expr_size: u16 = self.inner.read_le_and_calc_bytes(&mut self.crc)?;
         let expr = self
             .inner
-            .read_vec_for_and_calc_bytes(expr_size as usize, &mut self.metadata.crc)?;
+            .read_vec_for_and_calc_bytes(expr_size as usize, &mut self.crc)?;
         // CRC
-        self.metadata.read_crc(&mut self.inner)?;
+        self.read_crc()?;
         Ok(expr)
     }
 
@@ -199,7 +213,7 @@ mod tests {
 
     #[test]
     fn read_lpcm_frames() {
-        let mut metadata = BubMetadata {
+        let metadata = BubMetadata {
             spec_version: 0,
             bub_id: BubID::new(0),
             bub_version: 0,
@@ -215,15 +229,13 @@ mod tests {
             bub_functions: BubFns::new(),
             foot_absolute_frame_plus_one: 0,
             next_head_absolute_frame: Some(1),
-
-            crc: crate::crc::CRC_32K_4_2,
         };
 
         let speakers_absolute_coord = vec![(0.0, 0.0, 0.0).into(), (3.0, 0.0, 0.0).into()];
 
         // Write Metadata and get CRC
         let mut skip: Vec<u8> = Vec::new();
-        metadata.write(&mut skip).unwrap();
+        let crc = metadata.write(&mut skip).unwrap();
 
         let data: &[u8] = &[
             // Frame 1
@@ -265,7 +277,7 @@ mod tests {
         .concat();
 
         let mut bub_frame_reader: BubFrameReader<&[u8], f32> =
-            BubFrameReader::new(data, metadata, speakers_absolute_coord);
+            BubFrameReader::new(data, (metadata, crc), speakers_absolute_coord);
 
         let expects = vec![
             (Head, [0.1, 0.0]),
@@ -287,7 +299,7 @@ mod tests {
 
     #[test]
     fn read_expr_frames() {
-        let mut metadata = BubMetadata {
+        let metadata = BubMetadata {
             spec_version: 0,
             bub_id: BubID::new(0),
             bub_version: 0,
@@ -303,14 +315,12 @@ mod tests {
             bub_functions: BubFns::new(),
             foot_absolute_frame_plus_one: 0,
             next_head_absolute_frame: Some(2),
-
-            crc: crate::crc::CRC_32K_4_2,
         };
         let speakers_absolute_coord = vec![(0.0, 0.0, 0.0).into(), (0.0, 0.0, 1.0).into()];
 
         // Write Metadata and get CRC
         let mut skip: Vec<u8> = Vec::new();
-        metadata.write(&mut skip).unwrap();
+        let crc = metadata.write(&mut skip).unwrap();
 
         let data: &[u8] = &[
             // Frame 1
@@ -353,7 +363,7 @@ mod tests {
         ]
         .concat();
         let mut bub_frame_reader: BubFrameReader<&[u8], f32> =
-            BubFrameReader::new(data, metadata, speakers_absolute_coord);
+            BubFrameReader::new(data, (metadata, crc), speakers_absolute_coord);
 
         let expects = vec![
             (Stopped, [0.0, 0.0]),

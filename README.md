@@ -2,7 +2,6 @@
 Floaout is the next-generation audio format.
 
 # TODO
-- Split `CRC` from Metadata
 - Add `read_bub_functions_block` in BubFrameReader
 - error handling
 - Clarify whether #[derive(Order)] is needed

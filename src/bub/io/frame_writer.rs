@@ -1,14 +1,18 @@
 use crate::bub::{BubFnsBlock, BubMetadata, BubbleSample};
 use crate::io::WriteExt;
+use crate::utils::write_crc;
 use crate::{FrameIOKind, FrameWriter, Sample};
+use mycrc::CRC;
 use std::io::{ErrorKind, Result, Write};
 use std::marker::PhantomData;
 
 pub struct BubFrameWriter<W: Write, S: Sample> {
     pub inner: W,
-    pub metadata: BubMetadata,
     pub pos: u64,
     _phantom_sample: PhantomData<S>,
+    pub metadata: BubMetadata,
+    /// CRC
+    pub crc: CRC<u32>,
 }
 
 impl<W: Write, S: Sample> FrameWriter<W> for BubFrameWriter<W, S> {
@@ -27,31 +31,20 @@ impl<W: Write, S: Sample> FrameWriter<W> for BubFrameWriter<W, S> {
 }
 
 impl<W: Write, S: Sample> BubFrameWriter<W, S> {
-    pub fn new(inner: W, metadata: BubMetadata) -> Self {
+    pub fn new(inner: W, metadata_and_crc: (BubMetadata, CRC<u32>)) -> Self {
         let pos = 0;
 
         Self {
             inner,
-            metadata,
             pos,
             _phantom_sample: PhantomData,
+            metadata: metadata_and_crc.0,
+            crc: metadata_and_crc.1,
         }
     }
 
-    pub fn flush(&mut self) -> Result<()> {
-        self.inner.flush()
-    }
-
-    pub fn get_ref(&self) -> &W {
-        &self.inner
-    }
-
-    pub fn get_mut(&mut self) -> &mut W {
-        &mut self.inner
-    }
-
-    pub fn into_inner(self) -> W {
-        self.inner
+    pub(crate) fn write_crc(&mut self) -> Result<()> {
+        write_crc(&mut self.inner, &mut self.crc)
     }
 
     fn write_head_metadata_and_calc_bytes(
@@ -65,16 +58,16 @@ impl<W: Write, S: Sample> BubFrameWriter<W, S> {
         self.metadata.foot_absolute_frame_plus_one = head_absolute_frame + foot_relative_frame;
         // functions size
         self.inner
-            .write_le_and_calc_bytes(bub_functions.len() as u16, &mut self.metadata.crc)?;
+            .write_le_and_calc_bytes(bub_functions.len() as u16, &mut self.crc)?;
         // Bubble Functions
         self.inner.write_all(bub_functions)?;
-        self.metadata.crc.calc_bytes(bub_functions);
+        self.crc.calc_bytes(bub_functions);
         // Foot Relative Frame
         self.inner
-            .write_le_and_calc_bytes(foot_relative_frame, &mut self.metadata.crc)?;
+            .write_le_and_calc_bytes(foot_relative_frame, &mut self.crc)?;
         // Next head relative frame
         self.inner
-            .write_le_and_calc_bytes(next_head_relative_frame, &mut self.metadata.crc)?;
+            .write_le_and_calc_bytes(next_head_relative_frame, &mut self.crc)?;
         self.metadata.set_next_head_absolute_frame_from_relative(
             next_head_relative_frame,
             head_absolute_frame,
@@ -99,11 +92,11 @@ impl<W: Write, S: Sample> BubFrameWriter<W, S> {
                     next_head_relative_frame.unwrap_or(0),
                 )?;
 
-                sample.write_and_calc_bytes(&mut self.inner, &mut self.metadata.crc)?;
+                sample.write_and_calc_bytes(&mut self.inner, &mut self.crc)?;
             }
             BubbleSample::LpcmBody(sample) => {
                 self.metadata.set_as_body();
-                sample.write_and_calc_bytes(&mut self.inner, &mut self.metadata.crc)?;
+                sample.write_and_calc_bytes(&mut self.inner, &mut self.crc)?;
             }
             BubbleSample::Expr {
                 head_absolute_frame,
@@ -120,9 +113,9 @@ impl<W: Write, S: Sample> BubFrameWriter<W, S> {
                 )?;
                 // Write Expr
                 self.inner
-                    .write_le_and_calc_bytes(expression.len() as u16, &mut self.metadata.crc)?;
+                    .write_le_and_calc_bytes(expression.len() as u16, &mut self.crc)?;
                 self.inner.write_all(expression)?;
-                self.metadata.crc.calc_bytes(expression);
+                self.crc.calc_bytes(expression);
             }
         }
 
@@ -203,7 +196,7 @@ impl<W: Write, S: Sample> BubFrameWriter<W, S> {
                     self.write_sample_and_calc_bytes(BubbleSample::LpcmBody(sample))?;
                 }
                 // Write CRC
-                self.metadata.write_crc(&mut self.inner)?;
+                self.write_crc()?;
                 // Finalize
                 self.metadata
                     .set_bub_state_from_connected_and_ended(self.pos);
@@ -231,7 +224,7 @@ impl<W: Write, S: Sample> BubFrameWriter<W, S> {
                 })?;
 
                 // Write CRC
-                self.metadata.write_crc(&mut self.inner)?;
+                self.write_crc()?;
                 // Finalize
                 self.metadata
                     .set_bub_state_from_connected_and_ended(self.pos);
@@ -279,7 +272,7 @@ mod tests {
 
     #[test]
     fn write_lpcm_frames() -> Result<()> {
-        let mut metadata = BubMetadata {
+        let metadata = BubMetadata {
             spec_version: 0,
             bub_id: BubID::new(0),
             bub_version: 0,
@@ -295,8 +288,6 @@ mod tests {
             bub_functions: BubFns::new(),
             foot_absolute_frame_plus_one: 0,
             next_head_absolute_frame: Some(1),
-
-            crc: crate::crc::CRC_32K_4_2,
         };
 
         let data: &[u8] = &[
@@ -339,11 +330,11 @@ mod tests {
         .concat();
         // Write Metadata
         let mut skip = Vec::new();
-        metadata.write(&mut skip).unwrap();
+        let crc = metadata.write(&mut skip).unwrap();
 
         let vec = Vec::new();
 
-        let mut bub_frame_writer = BubFrameWriter::<Vec<u8>, f32>::new(vec, metadata);
+        let mut bub_frame_writer = BubFrameWriter::<Vec<u8>, f32>::new(vec, (metadata, crc));
 
         // BubFnsBlock 1
         let lpcm = BubFnsBlock::Lpcm {

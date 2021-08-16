@@ -1,5 +1,6 @@
 use crate::bub::{BubFrameReader, BubFrameReaderKind, BubMetadata};
 use crate::{Coord, LpcmKind, Sample};
+use mycrc::CRC;
 use std::fs::File;
 use std::io::{BufReader, Read, Result};
 use std::path::Path;
@@ -9,16 +10,19 @@ pub struct BubReader<R: Read> {
     pub metadata: BubMetadata,
     /// Speakers absolute coordinates
     pub speakers_absolute_coord: Vec<Coord>,
+    /// CRC
+    pub crc: CRC<u32>,
 }
 
 impl<R: Read> BubReader<R> {
     pub fn new(mut inner: R, speakers_absolute_coord: Vec<Coord>) -> Result<Self> {
-        let metadata = BubMetadata::read(&mut inner)?;
+        let metadata_and_crc = BubMetadata::read(&mut inner)?;
 
         Ok(Self {
             inner,
-            metadata,
+            metadata: metadata_and_crc.0,
             speakers_absolute_coord,
+            crc: metadata_and_crc.1,
         })
     }
 
@@ -27,19 +31,23 @@ impl<R: Read> BubReader<R> {
     /// This is unsafe, due to the type of sample isn’t checked:
     /// - type of sample must follow [`SampleKind`]
     pub unsafe fn into_bub_frame_reader<S: Sample>(self) -> BubFrameReader<R, S> {
-        BubFrameReader::new(self.inner, self.metadata, self.speakers_absolute_coord)
+        BubFrameReader::new(
+            self.inner,
+            (self.metadata, self.crc),
+            self.speakers_absolute_coord,
+        )
     }
 
     pub fn into_bub_frame_reader_kind(self) -> BubFrameReaderKind<R> {
         match self.metadata.lpcm_kind() {
             LpcmKind::F32LE => BubFrameReaderKind::F32LE(BubFrameReader::<R, f32>::new(
                 self.inner,
-                self.metadata,
+                (self.metadata, self.crc),
                 self.speakers_absolute_coord,
             )),
             LpcmKind::F64LE => BubFrameReaderKind::F64LE(BubFrameReader::<R, f64>::new(
                 self.inner,
-                self.metadata,
+                (self.metadata, self.crc),
                 self.speakers_absolute_coord,
             )),
         }
@@ -61,7 +69,7 @@ mod tests {
 
     #[test]
     fn open() {
-        let mut bub_reader = BubReader::open("tests/lpcm_test.bub", Vec::new()).unwrap();
+        let bub_reader = BubReader::open("tests/lpcm_test.bub", Vec::new()).unwrap();
 
         let metadata = BubMetadata {
             spec_version: 0,
@@ -79,11 +87,7 @@ mod tests {
             bub_functions: BubFns::new(),
             foot_absolute_frame_plus_one: 0,
             next_head_absolute_frame: Some(1),
-
-            crc: crate::crc::CRC_32K_4_2,
         };
-
-        bub_reader.metadata.crc = crate::crc::CRC_32K_4_2;
 
         assert_eq!(bub_reader.metadata, metadata);
     }
