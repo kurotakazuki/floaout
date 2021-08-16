@@ -77,7 +77,7 @@ mod tests {
             head_absolute_frame: 0,
 
             bub_functions: BubFns::new(),
-            tail_absolute_frame_plus_one: 0,
+            foot_absolute_frame_plus_one: 0,
             next_head_absolute_frame: Some(1),
 
             crc: crate::crc::CRC_32K_4_2,
@@ -103,7 +103,7 @@ mod tests {
 
         let expects = vec![
             (Head, [0.1, 0.0]),
-            (Normal, [0.2, 0.0]),
+            (Body, [0.2, 0.0]),
             (Head, [0.3, 0.0]),
             (Stopped, [0.0, 0.0]),
             (Head, [0.4, 0.4]),
@@ -141,7 +141,7 @@ mod tests {
             (Head, [0.0, 0.1]),
             (Stopped, [0.0, 0.0]),
             (Head, [0.0, 1.0]),
-            (Normal, [0.0, 0.5]),
+            (Body, [0.0, 0.5]),
             (Head, [0.1, 0.0]),
             (Ended, [0.0, 0.0]),
             (Ended, [0.0, 0.0]),

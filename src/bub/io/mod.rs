@@ -16,17 +16,17 @@ pub enum BubbleSample<'a, S: Sample> {
         head_absolute_frame: u64,
 
         bub_functions: &'a [u8],
-        tail_relative_frame: u64,
+        foot_relative_frame: u64,
         next_head_relative_frame: Option<u64>,
         sample: S,
     },
-    LpcmNormal(S),
+    LpcmBody(S),
     // Expression
     Expr {
         head_absolute_frame: u64,
 
         bub_functions: &'a [u8],
-        tail_relative_frame: u64,
+        foot_relative_frame: u64,
         next_head_relative_frame: Option<u64>,
         expression: &'a [u8],
     },
@@ -42,7 +42,7 @@ pub enum BubFnsBlock<'a, S: Sample> {
     // Expression
     Expr {
         bub_functions: &'a [u8],
-        tail_relative_frame: u64,
+        foot_relative_frame: u64,
         next_head_relative_frame: Option<u64>,
         expression: &'a [u8],
     },

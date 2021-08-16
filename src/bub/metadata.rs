@@ -10,7 +10,7 @@ use std::io::{ErrorKind, Read, Result, Write};
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum BubState {
     Head,
-    Normal,
+    Body,
     Stopped,
     Ended,
 }
@@ -20,8 +20,8 @@ impl BubState {
         matches!(self, Self::Head)
     }
 
-    pub fn is_normal(&self) -> bool {
-        matches!(self, Self::Normal)
+    pub fn is_body(&self) -> bool {
+        matches!(self, Self::Body)
     }
 
     pub fn is_stopped(&self) -> bool {
@@ -117,8 +117,8 @@ pub struct BubbleMetadata {
 
     /// Bubble Functions
     pub bub_functions: BubFns,
-    /// Tail Absolute Frame Plus One
-    pub tail_absolute_frame_plus_one: u64,
+    /// Foot Absolute Frame Plus One
+    pub foot_absolute_frame_plus_one: u64,
     /// Next Head Absolute Frame
     /// `None` if 0.
     pub next_head_absolute_frame: Option<u64>,
@@ -145,8 +145,8 @@ impl BubbleMetadata {
         self.bub_state = BubState::Head;
     }
 
-    pub fn set_as_normal(&mut self) {
-        self.bub_state = BubState::Normal;
+    pub fn set_as_body(&mut self) {
+        self.bub_state = BubState::Body;
     }
 
     pub fn set_as_stopped(&mut self) {
@@ -174,14 +174,14 @@ impl BubbleMetadata {
     pub fn init_with_pos(&mut self, pos: u64) {
         match self.bub_state {
             BubState::Head => {
-                if self.tail_absolute_frame_plus_one == pos {
+                if self.foot_absolute_frame_plus_one == pos {
                     self.set_bub_state_from_connected_and_ended(pos);
                 } else {
-                    self.set_as_normal();
+                    self.set_as_body();
                 }
             }
-            BubState::Normal => {
-                if self.tail_absolute_frame_plus_one == pos {
+            BubState::Body => {
+                if self.foot_absolute_frame_plus_one == pos {
                     self.set_bub_state_from_connected_and_ended(pos);
                 }
             }
@@ -252,7 +252,7 @@ impl BubbleMetadata {
             head_absolute_frame: 0,
 
             bub_functions: BubFns::new(),
-            tail_absolute_frame_plus_one: 0,
+            foot_absolute_frame_plus_one: 0,
             next_head_absolute_frame: None,
 
             crc: CRC_32K_4_2,
@@ -329,7 +329,7 @@ mod tests {
             head_absolute_frame: 0,
 
             bub_functions: BubFns::new(),
-            tail_absolute_frame_plus_one: 0,
+            foot_absolute_frame_plus_one: 0,
             next_head_absolute_frame: Some(1),
 
             crc: CRC_32K_4_2,

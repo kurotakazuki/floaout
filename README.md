@@ -70,10 +70,10 @@ Algorithm::<u32> {
 | Space | `char` (1) | ' ' |
 | Volume | `Sum` |  |
 | Space or Empty | `char` (1) | ' ' if there is another |
-| Tail Relative Frame | `u64` (8) | Number of frames at the end of function. |
+| Foot Relative Frame | `u64` (8) | Number of frames at the end of function. |
 | Next Head Relative Frame | `Option<u64>` (8) | Number of frames at the start of the next function. `None` if 0. |
 | Sample Data |  | Sample Data |
-| CRC-32K/4.2 | `u32` (4) | After every tail frames. From the previous CRC. |
+| CRC-32K/4.2 | `u32` (4) | After every foot frames. From the previous CRC. |
 
 ### Sample Data
 #### Lpcm

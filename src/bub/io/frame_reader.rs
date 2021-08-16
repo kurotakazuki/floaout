@@ -52,8 +52,8 @@ impl<R: Read, S: Sample> BubFrameReader<R, S> {
             .unwrap()
             .into_bub_functions()
             .unwrap();
-        // Tail relative frame
-        self.metadata.tail_absolute_frame_plus_one = self.pos
+        // Foot relative frame
+        self.metadata.foot_absolute_frame_plus_one = self.pos
             + self
                 .inner
                 .read_le_and_calc_bytes::<u64>(&mut self.metadata.crc)?;
@@ -67,7 +67,7 @@ impl<R: Read, S: Sample> BubFrameReader<R, S> {
     fn read_lpcm_and_crc(&mut self) -> Result<S> {
         let sample = S::read_and_calc_bytes(&mut self.inner, &mut self.metadata.crc)?;
         // Read CRC
-        if self.metadata.tail_absolute_frame_plus_one - 1 == self.pos {
+        if self.metadata.foot_absolute_frame_plus_one - 1 == self.pos {
             self.metadata.read_crc(&mut self.inner)?;
         }
 
@@ -165,7 +165,7 @@ impl<R: Read, S: Sample> Iterator for BubFrameReader<R, S> {
                     }
                 }
             }
-            BubState::Normal => {
+            BubState::Body => {
                 // Read Sample
                 match &self.metadata.bub_sample_kind {
                     BubSampleKind::Lpcm => {
@@ -208,7 +208,7 @@ mod tests {
             head_absolute_frame: 0,
 
             bub_functions: BubFns::new(),
-            tail_absolute_frame_plus_one: 0,
+            foot_absolute_frame_plus_one: 0,
             next_head_absolute_frame: Some(1),
 
             crc: crate::crc::CRC_32K_4_2,
@@ -264,7 +264,7 @@ mod tests {
 
         let expects = vec![
             (Head, [0.1, 0.0]),
-            (Normal, [0.2, 0.0]),
+            (Body, [0.2, 0.0]),
             (Head, [0.3, 0.0]),
             (Stopped, [0.0, 0.0]),
             (Head, [0.4, 0.4]),
@@ -296,7 +296,7 @@ mod tests {
             head_absolute_frame: 0,
 
             bub_functions: BubFns::new(),
-            tail_absolute_frame_plus_one: 0,
+            foot_absolute_frame_plus_one: 0,
             next_head_absolute_frame: Some(2),
 
             crc: crate::crc::CRC_32K_4_2,
@@ -355,7 +355,7 @@ mod tests {
             (Head, [0.0, 0.1]),
             (Stopped, [0.0, 0.0]),
             (Head, [0.0, 1.0]),
-            (Normal, [0.0, 0.5]),
+            (Body, [0.0, 0.5]),
             (Head, [0.1, 0.0]),
             (Ended, [0.0, 0.0]),
             (Ended, [0.0, 0.0]),
