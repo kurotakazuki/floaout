@@ -1,10 +1,12 @@
 use crate::io::{ReadExt, WriteExt};
 use mycrc::CRC;
 use std::io::{ErrorKind, Read, Result, Write};
-use std::ops::Mul;
+use std::ops::{AddAssign, Mul};
 
 /// Lpcm Sample
-pub trait Sample: Sized + Default + Mul<Output = Self> + Clone + Copy + PartialEq {
+pub trait Sample:
+    Sized + Default + AddAssign + Mul<Output = Self> + Clone + Copy + PartialEq
+{
     fn from_f64(n: f64) -> Self;
     fn read<R: Read>(reader: &mut R) -> Result<Self>;
     fn write<W: Write>(self, writer: &mut W) -> Result<()>;
