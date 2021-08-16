@@ -6,7 +6,7 @@ pub use self::io::{
     BubFnsBlock, BubFrameReader, BubFrameReaderKind, BubFrameWriter, BubFrameWriterKind, BubReader,
     BubWriter, BubbleSample,
 };
-pub use self::metadata::{BubSampleKind, BubState, BubbleMetadata};
+pub use self::metadata::{BubMetadata, BubSampleKind, BubState};
 
 pub mod functions;
 mod id;

@@ -1,4 +1,4 @@
-use crate::bub::{BubFnsBlock, BubbleMetadata, BubbleSample};
+use crate::bub::{BubFnsBlock, BubMetadata, BubbleSample};
 use crate::io::WriteExt;
 use crate::{FrameIOKind, FrameWriter, Sample};
 use std::io::{ErrorKind, Result, Write};
@@ -6,7 +6,7 @@ use std::marker::PhantomData;
 
 pub struct BubFrameWriter<W: Write, S: Sample> {
     pub inner: W,
-    pub metadata: BubbleMetadata,
+    pub metadata: BubMetadata,
     pub pos: u64,
     _phantom_sample: PhantomData<S>,
 }
@@ -27,7 +27,7 @@ impl<W: Write, S: Sample> FrameWriter<W> for BubFrameWriter<W, S> {
 }
 
 impl<W: Write, S: Sample> BubFrameWriter<W, S> {
-    pub fn new(inner: W, metadata: BubbleMetadata) -> Self {
+    pub fn new(inner: W, metadata: BubMetadata) -> Self {
         let pos = 0;
 
         Self {
@@ -279,7 +279,7 @@ mod tests {
 
     #[test]
     fn write_lpcm_frames() -> Result<()> {
-        let mut metadata = BubbleMetadata {
+        let mut metadata = BubMetadata {
             spec_version: 0,
             bub_id: BubID::new(0),
             bub_version: 0,

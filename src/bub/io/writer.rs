@@ -1,4 +1,4 @@
-use crate::bub::{BubFrameWriter, BubFrameWriterKind, BubbleMetadata};
+use crate::bub::{BubFrameWriter, BubFrameWriterKind, BubMetadata};
 use crate::{LpcmKind, Sample};
 use std::fs::File;
 use std::io::{BufWriter, Result, Write};
@@ -6,11 +6,11 @@ use std::path::Path;
 
 pub struct BubWriter<W: Write> {
     pub inner: W,
-    pub metadata: BubbleMetadata,
+    pub metadata: BubMetadata,
 }
 
 impl<W: Write> BubWriter<W> {
-    pub fn new(mut inner: W, mut metadata: BubbleMetadata) -> Result<Self> {
+    pub fn new(mut inner: W, mut metadata: BubMetadata) -> Result<Self> {
         metadata.write(&mut inner)?;
 
         Ok(Self { inner, metadata })
@@ -41,7 +41,7 @@ impl<W: Write> BubWriter<W> {
 }
 
 impl BubWriter<BufWriter<File>> {
-    pub fn create<P: AsRef<Path>>(filename: P, metadata: BubbleMetadata) -> Result<Self> {
+    pub fn create<P: AsRef<Path>>(filename: P, metadata: BubMetadata) -> Result<Self> {
         let file = File::create(filename)?;
         let buf_writer = BufWriter::new(file);
         Self::new(buf_writer, metadata)

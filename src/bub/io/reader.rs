@@ -1,4 +1,4 @@
-use crate::bub::{BubFrameReader, BubFrameReaderKind, BubbleMetadata};
+use crate::bub::{BubFrameReader, BubFrameReaderKind, BubMetadata};
 use crate::{Coord, LpcmKind, Sample};
 use std::fs::File;
 use std::io::{BufReader, Read, Result};
@@ -6,14 +6,14 @@ use std::path::Path;
 
 pub struct BubReader<R: Read> {
     pub inner: R,
-    pub metadata: BubbleMetadata,
+    pub metadata: BubMetadata,
     /// Speakers absolute coordinates
     pub speakers_absolute_coord: Vec<Coord>,
 }
 
 impl<R: Read> BubReader<R> {
     pub fn new(mut inner: R, speakers_absolute_coord: Vec<Coord>) -> Result<Self> {
-        let metadata = BubbleMetadata::read(&mut inner)?;
+        let metadata = BubMetadata::read(&mut inner)?;
 
         Ok(Self {
             inner,
@@ -63,7 +63,7 @@ mod tests {
     fn open() {
         let mut bub_reader = BubReader::open("tests/lpcm_test.bub", Vec::new()).unwrap();
 
-        let metadata = BubbleMetadata {
+        let metadata = BubMetadata {
             spec_version: 0,
             bub_id: BubID::new(0),
             bub_version: 0,

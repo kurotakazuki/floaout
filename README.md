@@ -310,8 +310,8 @@ Space = ' ' () / f
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
 | Spec Version | `u8` (1) | Version of Floaout File Format Specification. |
-| Song ID | `u128` (16) | Song ID of this file. The value is 0 if the song is undefined. |
-| Song Version | `u16` (2) | Version of Song |
+| Floaout ID | `u128` (16) | Floaout ID of this file. The value is 0 if the song is undefined. |
+| Floaout Version | `u16` (2) | Version of Floaout |
 | Bubbles | `u16` (2) | Number of Bubbles |
 | Frames | `u64` (8) | Number of frames |
 | Samples Per Sec | `f64` (8) | Samples per sec |

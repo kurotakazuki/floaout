@@ -1,6 +1,6 @@
 use crate::bub::{
     functions::{parse, BubFnsAST, BubFnsInterpreter, BubFnsVariable},
-    BubSampleKind, BubState, BubbleMetadata,
+    BubMetadata, BubSampleKind, BubState,
 };
 use crate::io::ReadExt;
 use crate::{Coord, Frame, FrameIOKind, FrameReader, Sample};
@@ -11,7 +11,7 @@ pub struct BubFrameReader<R: Read, S: Sample> {
     pub inner: R,
     pub pos: u64,
     _phantom_sample: PhantomData<S>,
-    pub metadata: BubbleMetadata,
+    pub metadata: BubMetadata,
     /// Speakers absolute coordinates
     pub speakers_absolute_coord: Vec<Coord>,
 }
@@ -29,7 +29,7 @@ impl<R: Read, S: Sample> FrameReader<R> for BubFrameReader<R, S> {
 }
 
 impl<R: Read, S: Sample> BubFrameReader<R, S> {
-    pub fn new(inner: R, metadata: BubbleMetadata, speakers_absolute_coord: Vec<Coord>) -> Self {
+    pub fn new(inner: R, metadata: BubMetadata, speakers_absolute_coord: Vec<Coord>) -> Self {
         Self {
             inner,
             pos: 0,
@@ -199,7 +199,7 @@ mod tests {
 
     #[test]
     fn read_lpcm_frames() {
-        let mut metadata = BubbleMetadata {
+        let mut metadata = BubMetadata {
             spec_version: 0,
             bub_id: BubID::new(0),
             bub_version: 0,
@@ -287,7 +287,7 @@ mod tests {
 
     #[test]
     fn read_expr_frames() {
-        let mut metadata = BubbleMetadata {
+        let mut metadata = BubMetadata {
             spec_version: 0,
             bub_id: BubID::new(0),
             bub_version: 0,

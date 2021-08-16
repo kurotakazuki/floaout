@@ -3,6 +3,7 @@ use crate::bub::{
     BubID,
 };
 use crate::io::{ReadExt, WriteExt};
+use crate::utils;
 use crate::{LpcmKind, Metadata, CRC_32K_4_2};
 use mycrc::CRC;
 use std::io::{ErrorKind, Read, Result, Write};
@@ -91,7 +92,7 @@ impl BubSampleKind {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct BubbleMetadata {
+pub struct BubMetadata {
     // In File Header
     /// Version of Bubble File Format Specification.
     pub spec_version: u8,
@@ -127,7 +128,7 @@ pub struct BubbleMetadata {
     pub crc: CRC<u32>,
 }
 
-impl BubbleMetadata {
+impl BubMetadata {
     pub const fn frames(&self) -> u64 {
         self.frames
     }
@@ -218,23 +219,10 @@ impl BubbleMetadata {
     }
 
     pub(crate) fn read_crc<R: std::io::Read>(&mut self, reader: &mut R) -> Result<()> {
-        let mut buf = [0; 4];
-        reader.read_exact(&mut buf)?;
-        self.crc.calc_bytes(&buf);
-        // TODO: Return Error
-        assert!(self.crc.is_error_free());
-
-        self.crc.initialize().calc_bytes(&buf);
-
-        Ok(())
+        utils::read_crc(reader, &mut self.crc)
     }
     pub(crate) fn write_crc<W: std::io::Write>(&mut self, writer: &mut W) -> Result<()> {
-        let checksum_bytes = self.crc.finalize_to_endian_bytes();
-        writer.write_all(&checksum_bytes)?;
-
-        self.crc.initialize().calc_bytes(&checksum_bytes);
-
-        Ok(())
+        utils::write_crc(writer, &mut self.crc)
     }
 
     pub fn read<R: std::io::Read>(reader: &mut R) -> Result<Self> {
@@ -307,7 +295,7 @@ impl BubbleMetadata {
     }
 }
 
-impl Metadata for BubbleMetadata {}
+impl Metadata for BubMetadata {}
 
 #[cfg(test)]
 mod tests {
@@ -315,7 +303,7 @@ mod tests {
 
     #[test]
     fn write_and_read() -> Result<()> {
-        let mut bub_metadata = BubbleMetadata {
+        let mut bub_metadata = BubMetadata {
             spec_version: 0,
             bub_id: BubID::new(0),
             bub_version: 0,
@@ -340,7 +328,7 @@ mod tests {
 
         bub_metadata.write(&mut v)?;
 
-        let mut val = BubbleMetadata::read(&mut &v[..])?;
+        let mut val = BubMetadata::read(&mut &v[..])?;
         val.crc = CRC_32K_4_2;
 
         assert_eq!(val, expected);
