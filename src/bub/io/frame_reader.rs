@@ -87,7 +87,7 @@ impl<R: Read, S: Sample> BubFrameReader<R, S> {
     fn get_volume_and_interpreter(
         &self,
         speaker_absolute_coord: Coord,
-    ) -> Option<(f64, BubFnsInterpreter)> {
+    ) -> Option<(f64, Vec<BubFnsInterpreter>)> {
         self.metadata.bub_functions.to_volume(
             speaker_absolute_coord,
             self.pos as f64,
@@ -115,11 +115,13 @@ impl<R: Read, S: Sample> BubFrameReader<R, S> {
 
     fn expr_frame(&self, expr: &BubFnsAST, frame: &mut Frame<S>) {
         for (i, speaker_absolute_coord) in self.speakers_absolute_coord.iter().enumerate() {
-            if let Some((volume, interpreter)) =
+            if let Some((volume, interpreters)) =
                 self.get_volume_and_interpreter(*speaker_absolute_coord)
             {
-                let sample = interpreter.eval_sum(expr).unwrap();
-                frame.0[i] = S::from_f64(sample * volume);
+                for interpreter in interpreters {
+                    let sample = interpreter.eval_sum(expr).unwrap();
+                    frame.0[i] = S::from_f64(sample * volume);
+                }
             }
         }
     }

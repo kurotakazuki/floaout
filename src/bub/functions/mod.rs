@@ -57,7 +57,9 @@ impl BubFns {
         relative_frame: f64,
         frames: f64,
         samples_per_sec: f64,
-    ) -> Option<(f64, BubFnsInterpreter)> {
+    ) -> Option<(f64, Vec<BubFnsInterpreter>)> {
+        let mut volume = 0.0;
+        let mut interpreters = Vec::new();
         for bub_function in self.0.iter() {
             let bub_absolute_coord = Coord::default();
             let mut interpreter = BubFnsInterpreter::new(
@@ -85,11 +87,18 @@ impl BubFns {
             let domain = interpreter.eval_or_or_expr(&bub_function.domain).unwrap();
 
             if domain {
-                let volume = interpreter.eval_sum(&bub_function.volume).unwrap();
-                return Some((volume, interpreter));
+                let this_volume = interpreter.eval_sum(&bub_function.volume).unwrap();
+                if this_volume != 0.0 {
+                    volume += this_volume;
+                    interpreters.push(interpreter);
+                }
             }
         }
 
-        None
+        if interpreters.is_empty() {
+            None
+        } else {
+            Some((volume, interpreters))
+        }
     }
 }
