@@ -4,7 +4,7 @@ use crate::utils::{read_crc, write_crc};
 use crate::{LpcmKind, Metadata, CRC_32K_4_2};
 use std::io::Result;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct BubInOao {
     file_name: String,
     starting_frames: Vec<u64>,
@@ -31,7 +31,7 @@ pub struct OaoMetadata {
     pub artist: String,
 
     // Each Bubble
-    bubs: Vec<BubInOao>,
+    pub bubs: Vec<BubInOao>,
 }
 
 impl OaoMetadata {
