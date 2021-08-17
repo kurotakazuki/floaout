@@ -120,9 +120,11 @@ impl<R: Read, S: Sample> BubFrameReader<R, S> {
                 if let Some(volume_and_interpreter_vec) =
                     self.get_volume_and_interpreter(*speaker_absolute_coord)
                 {
+                    let mut volumes = 0.0;
                     for (volume, _) in volume_and_interpreter_vec {
-                        frame.0[i] += sample * S::from_f64(volume);
+                        volumes += volume;
                     }
+                    frame.0[i] = sample * S::from_f64(volumes);
                 }
             }
         }
