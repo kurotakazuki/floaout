@@ -1,12 +1,13 @@
 use crate::io::{ReadExt, WriteExt};
 use mycrc::CRC;
-use std::io::{ErrorKind, Read, Result, Write};
+use std::io::{Error, ErrorKind, Read, Result, Write};
 use std::ops::{AddAssign, Mul};
 
 /// Lpcm Sample
 pub trait Sample:
     Sized + Default + AddAssign + Mul<Output = Self> + Clone + Copy + PartialEq
 {
+    fn from_f32(n: f32) -> Self;
     fn from_f64(n: f64) -> Self;
     fn read<R: Read>(reader: &mut R) -> Result<Self>;
     fn write<W: Write>(self, writer: &mut W) -> Result<()>;
@@ -18,6 +19,10 @@ pub trait Sample:
 macro_rules! le_sample_impl {
     ( $( $t:ty ),* ) => ($(
         impl Sample for $t {
+            fn from_f32(n: f32) -> Self {
+                n as $t
+            }
+
             fn from_f64(n: f64) -> Self {
                 n as $t
             }
@@ -54,6 +59,27 @@ impl<S: Sample> From<Frame<S>> for Vec<S> {
 impl<S: Sample> From<Vec<S>> for Frame<S> {
     fn from(value: Vec<S>) -> Self {
         Frame(value)
+    }
+}
+
+impl<S: Sample> Frame<S> {
+    pub fn add(&mut self, other: Self) -> Result<()> {
+        if self.0.len() != other.0.len() {
+            return Err(Error::new(
+                ErrorKind::Other,
+                format!(
+                    "The frames are not the same length. expected `{:?}`, found `{:?}`",
+                    self.0.len(),
+                    other.0.len()
+                ),
+            ));
+        }
+
+        for i in 0..self.0.len() {
+            self.0[i] += other.0[i];
+        }
+
+        Ok(())
     }
 }
 

@@ -4,7 +4,7 @@ use crate::bub::{
 };
 use crate::io::ReadExt;
 use crate::utils::read_crc;
-use crate::{Coord, Frame, FrameIOKind, FrameReader, Sample};
+use crate::{Coord, Frame, FrameIOKind, FrameReader, LpcmKind, Sample};
 use mycrc::CRC;
 use std::io::{Read, Result};
 use std::marker::PhantomData;
@@ -78,8 +78,15 @@ impl<R: Read, S: Sample> BubFrameReader<R, S> {
         read_crc(&mut self.inner, &mut self.crc)
     }
 
-    fn read_lpcm_and_crc(&mut self) -> Result<S> {
-        let sample = S::read_and_calc_bytes(&mut self.inner, &mut self.crc)?;
+    fn read_lpcm_sample_and_crc(&mut self) -> Result<S> {
+        let sample: S = match self.metadata.lpcm_kind() {
+            LpcmKind::F32LE => {
+                S::from_f32(f32::read_and_calc_bytes(&mut self.inner, &mut self.crc)?)
+            }
+            LpcmKind::F64LE => {
+                S::from_f64(f64::read_and_calc_bytes(&mut self.inner, &mut self.crc)?)
+            }
+        };
         // Read CRC
         if self.metadata.foot_absolute_frame_plus_one - 1 == self.pos {
             self.read_crc()?;
@@ -112,7 +119,7 @@ impl<R: Read, S: Sample> BubFrameReader<R, S> {
     }
 
     fn read_lpcm_frame(&mut self, frame: &mut Frame<S>) -> Result<()> {
-        let sample = self.read_lpcm_and_crc()?;
+        let sample = self.read_lpcm_sample_and_crc()?;
 
         if sample != S::default() {
             // TODO: Create method
@@ -211,7 +218,6 @@ pub type BubFrameReaderKind<R> = FrameIOKind<BubFrameReader<R, f32>, BubFrameRea
 mod tests {
     use super::*;
     use crate::bub::{functions::BubFns, BubID, BubSampleKind, BubState, BubState::*};
-    use crate::LpcmKind;
 
     #[test]
     fn read_lpcm_frames() {

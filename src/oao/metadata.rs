@@ -2,12 +2,13 @@ use crate::io::{ReadExt, WriteExt};
 use crate::oao::OaoID;
 use crate::utils::{read_crc, write_crc};
 use crate::{LpcmKind, Metadata, CRC_32K_4_2};
+use std::collections::VecDeque;
 use std::io::Result;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct BubInOao {
-    file_name: String,
-    starting_frames: Vec<u64>,
+    pub file_name: String,
+    pub starting_frames: VecDeque<u64>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -77,11 +78,11 @@ impl OaoMetadata {
             let file_name =
                 reader.read_string_for_and_calc_bytes(file_name_size as usize, &mut crc)?;
             // Starting Frames
-            let mut starting_frames = Vec::new();
+            let mut starting_frames = VecDeque::new();
             let num_of_starting_frames: u16 = reader.read_le_and_calc_bytes(&mut crc)?;
             for _ in 0..num_of_starting_frames {
                 let starting_frame: u64 = reader.read_le_and_calc_bytes(&mut crc)?;
-                starting_frames.push(starting_frame);
+                starting_frames.push_back(starting_frame);
             }
             bubs.push(BubInOao {
                 file_name,
@@ -165,15 +166,15 @@ mod tests {
         };
         let bub0 = BubInOao {
             file_name: "".into(),
-            starting_frames: vec![],
+            starting_frames: vec![].into(),
         };
         let bub1 = BubInOao {
             file_name: "a".into(),
-            starting_frames: vec![1],
+            starting_frames: vec![1].into(),
         };
         let bub2 = BubInOao {
             file_name: "abc".into(),
-            starting_frames: vec![1, 2, 3],
+            starting_frames: vec![1, 2, 3].into(),
         };
         let metadata_3_bubs = OaoMetadata {
             spec_version: 0,
