@@ -3,7 +3,7 @@ use crate::io::WriteExt;
 use crate::utils::write_crc;
 use crate::{FrameIOKind, FrameWriter, Sample};
 use mycrc::CRC;
-use std::io::{ErrorKind, Result, Write};
+use std::io::{Error, ErrorKind, Result, Write};
 use std::marker::PhantomData;
 
 pub struct BubFrameWriter<W: Write, S: Sample> {
@@ -172,7 +172,7 @@ impl<W: Write, S: Sample> BubFrameWriter<W, S> {
             } => {
                 // Check if samples have Head frame sample.
                 if samples.is_empty() {
-                    return Err(ErrorKind::InvalidData.into());
+                    return Err(Error::new(ErrorKind::Other, "samples must not be empty"));
                 }
 
                 let foot_relative_frame = samples.len() as u64;
@@ -274,7 +274,7 @@ mod tests {
     fn write_lpcm_frames() -> Result<()> {
         let metadata = BubMetadata::new(
             8,
-            Some(1),
+            1,
             96000.0,
             LpcmKind::F32LE,
             BubSampleKind::Lpcm,

@@ -69,7 +69,7 @@ mod tests {
 
         let metadata = BubMetadata::new(
             8,
-            Some(1),
+            1,
             96000.0,
             LpcmKind::F32LE,
             BubSampleKind::Lpcm,

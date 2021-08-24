@@ -128,7 +128,7 @@ pub struct BubMetadata {
 impl BubMetadata {
     pub const fn new(
         frames: u64,
-        first_head_absolute_frame: Option<u64>,
+        first_head_absolute_frame: u64,
         samples_per_sec: f64,
         lpcm_kind: LpcmKind,
         bub_sample_kind: BubSampleKind,
@@ -145,11 +145,12 @@ impl BubMetadata {
             name,
 
             bub_state: BubState::Stopped,
-            head_absolute_frame: 0,
+            head_absolute_frame: first_head_absolute_frame,
 
             bub_fns: BubFns::new(),
             foot_absolute_frame_plus_one: 0,
-            next_head_absolute_frame: first_head_absolute_frame,
+            // TODO: Value must not be 0
+            next_head_absolute_frame: Some(first_head_absolute_frame),
         }
     }
 
@@ -262,9 +263,9 @@ impl BubMetadata {
 
         let frames = reader.read_le_and_calc_bytes(&mut crc)?;
 
-        let next_head_relative_frame: u64 = reader.read_le_and_calc_bytes(&mut crc)?;
+        let first_head_absolute_frame: u64 = reader.read_le_and_calc_bytes(&mut crc)?;
         let next_head_absolute_frame =
-            Self::next_head_absolute_frame_from_relative(next_head_relative_frame, 1);
+            Self::next_head_absolute_frame_from_relative(first_head_absolute_frame, 1);
         let samples_per_sec = reader.read_le_and_calc_bytes(&mut crc)?;
         let lpcm_kind = LpcmKind::read_and_calc_bytes(reader, &mut crc)?;
         let bub_sample_kind = BubSampleKind::read_and_calc_bytes(reader, &mut crc)?;
@@ -287,7 +288,7 @@ impl BubMetadata {
                 name,
 
                 bub_state: BubState::Stopped,
-                head_absolute_frame: 0,
+                head_absolute_frame: first_head_absolute_frame,
 
                 bub_fns: BubFns::new(),
                 foot_absolute_frame_plus_one: 0,
@@ -297,12 +298,12 @@ impl BubMetadata {
         ))
     }
 
-    fn next_head_absolute_frame_into_relative(&self, pos: u64) -> u64 {
-        match self.next_head_absolute_frame {
-            Some(n) => 1 + n - pos,
-            None => 0,
-        }
-    }
+    // fn next_head_absolute_frame_into_relative(&self, pos: u64) -> u64 {
+    //     match self.next_head_absolute_frame {
+    //         Some(n) => 1 + n - pos,
+    //         None => 0,
+    //     }
+    // }
 
     pub fn write<W: std::io::Write>(&self, writer: &mut W) -> Result<CRC<u32>> {
         let mut crc = CRC_32K_4_2;
@@ -312,7 +313,7 @@ impl BubMetadata {
         writer.write_le_and_calc_bytes(self.bub_version, &mut crc)?;
 
         writer.write_le_and_calc_bytes(self.frames, &mut crc)?;
-        writer.write_le_and_calc_bytes(self.next_head_absolute_frame_into_relative(1), &mut crc)?;
+        writer.write_le_and_calc_bytes(self.head_absolute_frame, &mut crc)?;
         writer.write_le_and_calc_bytes(self.samples_per_sec, &mut crc)?;
         self.lpcm_kind.write_and_calc_bytes(writer, &mut crc)?;
         self.bub_sample_kind
@@ -337,7 +338,7 @@ mod tests {
     fn write_and_read() -> Result<()> {
         let bub_metadata = BubMetadata::new(
             96000,
-            Some(1),
+            1,
             96000.0,
             LpcmKind::F32LE,
             BubSampleKind::Lpcm,

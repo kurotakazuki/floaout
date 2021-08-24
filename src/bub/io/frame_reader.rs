@@ -223,7 +223,7 @@ mod tests {
     fn read_lpcm_frames() {
         let metadata = BubMetadata::new(
             8,
-            Some(1),
+            1,
             96000.0,
             LpcmKind::F32LE,
             BubSampleKind::Lpcm,
@@ -300,7 +300,7 @@ mod tests {
     fn read_expr_frames() {
         let metadata = BubMetadata::new(
             8,
-            Some(2),
+            2,
             96000.0,
             LpcmKind::F64LE,
             BubSampleKind::default_expr(),
