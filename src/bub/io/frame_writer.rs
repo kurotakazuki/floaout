@@ -135,17 +135,39 @@ impl<W: Write, S: Sample> BubFrameWriter<W, S> {
                     if self.metadata.frames()
                         < head_absolute_frame + next_head_relative_frame_minus_one
                     {
-                        return Err(ErrorKind::InvalidData.into());
+                        return Err(Error::new(
+                            ErrorKind::Other,
+                            format!(
+                                // TODO: Change the sentence
+                                "can write remaining {} frames, but trying to write {} frames",
+                                self.metadata.frames() - self.pos,
+                                next_head_relative_frame_minus_one,
+                            ),
+                        ));
                     }
                     self.pos += next_head_relative_frame_minus_one;
                 } else {
-                    return Err(ErrorKind::InvalidData.into());
+                    return Err(Error::new(
+                        ErrorKind::Other,
+                        format!(
+                            "foot_relative_frame: {} must be grater than next_head_relative_frame: {}",
+                            foot_relative_frame,
+                            next_head_relative_frame,
+                        ),
+                    ));
                 }
             }
             // Ended
             None => {
-                if self.metadata.frames() <= head_absolute_frame + foot_relative_frame {
-                    return Err(ErrorKind::InvalidData.into());
+                if self.metadata.frames() < self.pos + foot_relative_frame {
+                    return Err(Error::new(
+                        ErrorKind::Other,
+                        format!(
+                            "can write remaining {} frames, but trying to write {} frames",
+                            self.metadata.frames() - self.pos,
+                            foot_relative_frame,
+                        ),
+                    ));
                 }
                 self.pos = self.metadata.frames();
             }
@@ -159,7 +181,10 @@ impl<W: Write, S: Sample> BubFrameWriter<W, S> {
         bub_fns_block: BubFnsBlock<S>,
     ) -> Result<()> {
         if self.metadata.frames() <= self.pos {
-            return Err(ErrorKind::InvalidData.into());
+            return Err(Error::new(
+                ErrorKind::Other,
+                "all frames have already been written",
+            ));
         }
 
         let head_absolute_frame = self.pos + 1;
