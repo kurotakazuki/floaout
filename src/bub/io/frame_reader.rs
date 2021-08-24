@@ -217,27 +217,18 @@ pub type BubFrameReaderKind<R> = FrameIOKind<BubFrameReader<R, f32>, BubFrameRea
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::bub::{functions::BubFns, BubID, BubSampleKind, BubState, BubState::*};
+    use crate::bub::{BubSampleKind, BubState::*};
 
     #[test]
     fn read_lpcm_frames() {
-        let metadata = BubMetadata {
-            spec_version: 0,
-            bub_id: BubID::new(0),
-            bub_version: 0,
-            frames: 8,
-            samples_per_sec: 96000.0,
-            lpcm_kind: LpcmKind::F32LE,
-            bub_sample_kind: BubSampleKind::Lpcm,
-            name: String::from("0.1*N"),
-
-            bub_state: BubState::Stopped,
-            head_absolute_frame: 0,
-
-            bub_functions: BubFns::new(),
-            foot_absolute_frame_plus_one: 0,
-            next_head_absolute_frame: Some(1),
-        };
+        let metadata = BubMetadata::new(
+            8,
+            Some(1),
+            96000.0,
+            LpcmKind::F32LE,
+            BubSampleKind::Lpcm,
+            String::from("0.1*N"),
+        );
 
         let speakers_absolute_coord = vec![(0.0, 0.0, 0.0).into(), (3.0, 0.0, 0.0).into()];
 
@@ -307,23 +298,15 @@ mod tests {
 
     #[test]
     fn read_expr_frames() {
-        let metadata = BubMetadata {
-            spec_version: 0,
-            bub_id: BubID::new(0),
-            bub_version: 0,
-            frames: 8,
-            samples_per_sec: 96000.0,
-            lpcm_kind: LpcmKind::F64LE,
-            bub_sample_kind: BubSampleKind::default_expr(),
-            name: String::from("Expression"),
+        let metadata = BubMetadata::new(
+            8,
+            Some(2),
+            96000.0,
+            LpcmKind::F64LE,
+            BubSampleKind::default_expr(),
+            String::from("Expression"),
+        );
 
-            bub_state: BubState::Stopped,
-            head_absolute_frame: 0,
-
-            bub_functions: BubFns::new(),
-            foot_absolute_frame_plus_one: 0,
-            next_head_absolute_frame: Some(2),
-        };
         let speakers_absolute_coord = vec![(0.0, 0.0, 0.0).into(), (0.0, 0.0, 1.0).into()];
 
         // Write Metadata and get CRC

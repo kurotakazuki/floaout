@@ -267,28 +267,19 @@ pub type BubFrameWriterKind<W> = FrameIOKind<BubFrameWriter<W, f32>, BubFrameWri
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::bub::{functions::BubFns, BubID, BubSampleKind, BubState};
+    use crate::bub::BubSampleKind;
     use crate::LpcmKind;
 
     #[test]
     fn write_lpcm_frames() -> Result<()> {
-        let metadata = BubMetadata {
-            spec_version: 0,
-            bub_id: BubID::new(0),
-            bub_version: 0,
-            frames: 8,
-            samples_per_sec: 96000.0,
-            lpcm_kind: LpcmKind::F32LE,
-            bub_sample_kind: BubSampleKind::Lpcm,
-            name: String::from("0.1*N"),
-
-            bub_state: BubState::Stopped,
-            head_absolute_frame: 0,
-
-            bub_functions: BubFns::new(),
-            foot_absolute_frame_plus_one: 0,
-            next_head_absolute_frame: Some(1),
-        };
+        let metadata = BubMetadata::new(
+            8,
+            Some(1),
+            96000.0,
+            LpcmKind::F32LE,
+            BubSampleKind::Lpcm,
+            String::from("0.1*N"),
+        );
 
         let data: &[u8] = &[
             // Frame 1

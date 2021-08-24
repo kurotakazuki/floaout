@@ -61,29 +61,20 @@ impl BubReader<BufReader<File>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::bub::{BubFns, BubID, BubSampleKind, BubState, BubState::*};
+    use crate::bub::{BubSampleKind, BubState::*};
 
     #[test]
     fn open() {
         let bub_reader = BubReader::open("tests/lpcm_test.bub", Vec::new()).unwrap();
 
-        let metadata = BubMetadata {
-            spec_version: 0,
-            bub_id: BubID::new(0),
-            bub_version: 0,
-            frames: 8,
-            samples_per_sec: 96000.0,
-            lpcm_kind: LpcmKind::F32LE,
-            bub_sample_kind: BubSampleKind::Lpcm,
-            name: String::from("0.1*N"),
-
-            bub_state: BubState::Stopped,
-            head_absolute_frame: 0,
-
-            bub_functions: BubFns::new(),
-            foot_absolute_frame_plus_one: 0,
-            next_head_absolute_frame: Some(1),
-        };
+        let metadata = BubMetadata::new(
+            8,
+            Some(1),
+            96000.0,
+            LpcmKind::F32LE,
+            BubSampleKind::Lpcm,
+            String::from("0.1*N"),
+        );
 
         assert_eq!(bub_reader.metadata, metadata);
     }

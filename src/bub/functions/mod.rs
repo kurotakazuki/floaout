@@ -42,7 +42,7 @@ impl From<BubFns> for Vec<BubFn> {
 }
 
 impl BubFns {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self(Vec::new())
     }
 

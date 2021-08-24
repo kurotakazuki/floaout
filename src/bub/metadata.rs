@@ -126,6 +126,33 @@ pub struct BubMetadata {
 }
 
 impl BubMetadata {
+    pub const fn new(
+        frames: u64,
+        first_head_absolute_frame: Option<u64>,
+        samples_per_sec: f64,
+        lpcm_kind: LpcmKind,
+        bub_sample_kind: BubSampleKind,
+        name: String,
+    ) -> Self {
+        Self {
+            spec_version: 0,
+            bub_id: BubID::new(0),
+            bub_version: 0,
+            frames,
+            samples_per_sec,
+            lpcm_kind,
+            bub_sample_kind,
+            name,
+
+            bub_state: BubState::Stopped,
+            head_absolute_frame: 0,
+
+            bub_functions: BubFns::new(),
+            foot_absolute_frame_plus_one: 0,
+            next_head_absolute_frame: first_head_absolute_frame,
+        }
+    }
+
     pub const fn frames(&self) -> u64 {
         self.frames
     }
@@ -308,23 +335,14 @@ mod tests {
 
     #[test]
     fn write_and_read() -> Result<()> {
-        let bub_metadata = BubMetadata {
-            spec_version: 0,
-            bub_id: BubID::new(0),
-            bub_version: 0,
-            frames: 96000,
-            samples_per_sec: 96000.0,
-            lpcm_kind: LpcmKind::F32LE,
-            bub_sample_kind: BubSampleKind::Lpcm,
-            name: String::from("Vocal"),
-
-            bub_state: BubState::Stopped,
-            head_absolute_frame: 0,
-
-            bub_functions: BubFns::new(),
-            foot_absolute_frame_plus_one: 0,
-            next_head_absolute_frame: Some(1),
-        };
+        let bub_metadata = BubMetadata::new(
+            96000,
+            Some(1),
+            96000.0,
+            LpcmKind::F32LE,
+            BubSampleKind::Lpcm,
+            String::from("Vocal"),
+        );
         let expected = bub_metadata.clone();
 
         let mut v: Vec<u8> = Vec::new();
