@@ -46,8 +46,8 @@ impl BubFns {
         Self(Vec::new())
     }
 
-    pub fn push(&mut self, bub_function: BubFn) {
-        self.0.push(bub_function)
+    pub fn push(&mut self, bub_fn: BubFn) {
+        self.0.push(bub_fn)
     }
 
     pub fn to_volume(
@@ -59,7 +59,7 @@ impl BubFns {
         samples_per_sec: f64,
     ) -> Option<Vec<(f64, BubFnsInterpreter)>> {
         let mut volume_and_interpreter_vec = Vec::new();
-        for bub_function in self.0.iter() {
+        for bub_fn in self.0.iter() {
             let bub_absolute_coord = Coord::default();
             let mut interpreter = BubFnsInterpreter::new(
                 speaker_absolute_coord,
@@ -71,22 +71,16 @@ impl BubFns {
             );
 
             interpreter.lowercase.x = interpreter.uppercase.x
-                - interpreter
-                    .eval_sum(&bub_function.bub_absolute_coord.0)
-                    .unwrap();
+                - interpreter.eval_sum(&bub_fn.bub_absolute_coord.0).unwrap();
             interpreter.lowercase.y = interpreter.uppercase.y
-                - interpreter
-                    .eval_sum(&bub_function.bub_absolute_coord.1)
-                    .unwrap();
+                - interpreter.eval_sum(&bub_fn.bub_absolute_coord.1).unwrap();
             interpreter.lowercase.z = interpreter.uppercase.z
-                - interpreter
-                    .eval_sum(&bub_function.bub_absolute_coord.2)
-                    .unwrap();
+                - interpreter.eval_sum(&bub_fn.bub_absolute_coord.2).unwrap();
 
-            let domain = interpreter.eval_or_or_expr(&bub_function.domain).unwrap();
+            let domain = interpreter.eval_or_or_expr(&bub_fn.domain).unwrap();
 
             if domain {
-                let volume = interpreter.eval_sum(&bub_function.volume).unwrap();
+                let volume = interpreter.eval_sum(&bub_fn.volume).unwrap();
                 if volume != 0.0 {
                     volume_and_interpreter_vec.push((volume, interpreter));
                 }

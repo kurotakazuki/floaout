@@ -15,7 +15,7 @@ pub enum BubbleSample<'a, S: Sample> {
     LpcmHead {
         head_absolute_frame: u64,
 
-        bub_functions: &'a [u8],
+        bub_fns: &'a [u8],
         foot_relative_frame: u64,
         next_head_relative_frame: Option<u64>,
         sample: S,
@@ -25,7 +25,7 @@ pub enum BubbleSample<'a, S: Sample> {
     Expr {
         head_absolute_frame: u64,
 
-        bub_functions: &'a [u8],
+        bub_fns: &'a [u8],
         foot_relative_frame: u64,
         next_head_relative_frame: Option<u64>,
         expression: &'a [u8],
@@ -35,13 +35,13 @@ pub enum BubbleSample<'a, S: Sample> {
 pub enum BubFnsBlock<'a, S: Sample> {
     // Lpcm
     Lpcm {
-        bub_functions: &'a [u8],
+        bub_fns: &'a [u8],
         next_head_relative_frame: Option<u64>,
         samples: Vec<S>,
     },
     // Expression
     Expr {
-        bub_functions: &'a [u8],
+        bub_fns: &'a [u8],
         foot_relative_frame: u64,
         next_head_relative_frame: Option<u64>,
         expression: &'a [u8],

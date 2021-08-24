@@ -32,16 +32,16 @@ impl From<f64> for BubFnsOutput {
 }
 
 impl BubFnsOutput {
-    pub fn as_bub_functions(&self) -> Option<&BubFns> {
+    pub fn as_bub_fns(&self) -> Option<&BubFns> {
         match self {
-            Self::BubFns(bub_functions) => Some(bub_functions),
+            Self::BubFns(bub_fns) => Some(bub_fns),
             _ => None,
         }
     }
 
-    pub fn as_bub_function(&self) -> Option<&BubFn> {
+    pub fn as_bub_fn(&self) -> Option<&BubFn> {
         match self {
-            Self::BubFn(bub_function) => Some(bub_function),
+            Self::BubFn(bub_fn) => Some(bub_fn),
             _ => None,
         }
     }
@@ -53,16 +53,16 @@ impl BubFnsOutput {
         }
     }
 
-    pub fn into_bub_functions(self) -> Option<BubFns> {
+    pub fn into_bub_fns(self) -> Option<BubFns> {
         match self {
-            Self::BubFns(bub_functions) => Some(bub_functions),
+            Self::BubFns(bub_fns) => Some(bub_fns),
             _ => None,
         }
     }
 
-    pub fn into_bub_function(self) -> Option<Box<BubFn>> {
+    pub fn into_bub_fn(self) -> Option<Box<BubFn>> {
         match self {
-            Self::BubFn(bub_function) => Some(bub_function),
+            Self::BubFn(bub_fn) => Some(bub_fn),
             _ => None,
         }
     }
@@ -83,17 +83,10 @@ impl<'input> Output<'input, [u8], BubFnsVariable, StartAndLenSpan<u16, u16>> for
         match cst.node.value {
             BubFnsVariable::BubFns => {
                 let span = cst.span;
-                let mut bub_functions = BubFns::new();
+                let mut bub_fns = BubFns::new();
                 let mut first = cst.node.equal.into_first().unwrap();
                 loop {
-                    bub_functions.push(
-                        *first
-                            .lhs
-                            .into_original()
-                            .unwrap()
-                            .into_bub_function()
-                            .unwrap(),
-                    );
+                    bub_fns.push(*first.lhs.into_original().unwrap().into_bub_fn().unwrap());
                     match first.rhs.node {
                         // ZeroOrMoreBubFns
                         Node::Internal(internal) => {
@@ -101,10 +94,7 @@ impl<'input> Output<'input, [u8], BubFnsVariable, StartAndLenSpan<u16, u16>> for
                         }
                         // ()
                         Node::Leaf(_) => {
-                            return AST::from_leaf(
-                                TerminalSymbol::Original(bub_functions.into()),
-                                span,
-                            );
+                            return AST::from_leaf(TerminalSymbol::Original(bub_fns.into()), span);
                         }
                     }
                 }
@@ -119,28 +109,28 @@ impl<'input> Output<'input, [u8], BubFnsVariable, StartAndLenSpan<u16, u16>> for
             }
             BubFnsVariable::BubFn => {
                 let span = cst.span;
-                let bub_function_equal = cst.node.equal.into_first().unwrap();
-                let x0 = bub_function_equal.lhs;
+                let bub_fn_equal = cst.node.equal.into_first().unwrap();
+                let x0 = bub_fn_equal.lhs;
 
-                let bub_function1_equal = bub_function_equal.rhs.into_first().unwrap();
-                let y0 = bub_function1_equal.lhs;
+                let bub_fn1_equal = bub_fn_equal.rhs.into_first().unwrap();
+                let y0 = bub_fn1_equal.lhs;
 
-                let bub_function2_equal = bub_function1_equal.rhs.into_first().unwrap();
-                let z0 = bub_function2_equal.lhs;
+                let bub_fn2_equal = bub_fn1_equal.rhs.into_first().unwrap();
+                let z0 = bub_fn2_equal.lhs;
 
-                let bub_function3_equal = bub_function2_equal.rhs.into_first().unwrap();
-                let domain = bub_function3_equal.lhs;
+                let bub_fn3_equal = bub_fn2_equal.rhs.into_first().unwrap();
+                let domain = bub_fn3_equal.lhs;
 
-                let bub_function4_equal = bub_function3_equal.rhs.into_second().unwrap();
-                let volume = bub_function4_equal.0;
+                let bub_fn4_equal = bub_fn3_equal.rhs.into_second().unwrap();
+                let volume = bub_fn4_equal.0;
 
-                let bub_function = BubFn {
+                let bub_fn = BubFn {
                     bub_absolute_coord: (x0, y0, z0),
                     domain,
                     volume,
                 };
 
-                AST::from_leaf(TerminalSymbol::Original(bub_function.into()), span)
+                AST::from_leaf(TerminalSymbol::Original(bub_fn.into()), span)
             }
             // Into First lhs Child Node
             BubFnsVariable::SumAndSpace | BubFnsVariable::OrOrExprAndSpace => {

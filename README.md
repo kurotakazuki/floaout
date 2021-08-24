@@ -2,7 +2,7 @@
 Floaout is the next-generation audio format.
 
 # TODO
-- Add `read_bub_functions_block` in BubFrameReader
+- Add `read_bub_fns_block` in BubFrameReader
 - error handling
 - Clarify whether #[derive(Order)] is needed
 - Add Position field in BubfnsInterpreter

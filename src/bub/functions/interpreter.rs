@@ -241,16 +241,12 @@ mod tests {
     use crate::bub::{functions::parse, BubFnsVariable};
 
     #[test]
-    fn bub_functions() {
+    fn bub_fns() {
         let input: &[u8] = "1 2 3 0!=1 sin(2*PI*440*n/S) 1 2 3 0!=1 sin(2*PI*440*n/S) 1 2 3 0!=1 sin(2*PI*440*n/S)".as_bytes();
         let result = parse(&input, &BubFnsVariable::BubFns).unwrap();
-        let bub_functions = result
-            .into_original()
-            .unwrap()
-            .into_bub_functions()
-            .unwrap();
+        let bub_fns = result.into_original().unwrap().into_bub_fns().unwrap();
 
-        for bub_function in bub_functions.0 {
+        for bub_fn in bub_fns.0 {
             let speaker_absolute_coord = (-1.0, 1.0, 0.0).into();
             let bub_absolute_coord = (0.0, 0.0, 0.0).into();
             let absolute_frame = 12.0;
@@ -267,20 +263,14 @@ mod tests {
             );
 
             interpreter.lowercase.x = interpreter.uppercase.x
-                - interpreter
-                    .eval_sum(&bub_function.bub_absolute_coord.0)
-                    .unwrap();
+                - interpreter.eval_sum(&bub_fn.bub_absolute_coord.0).unwrap();
             interpreter.lowercase.y = interpreter.uppercase.y
-                - interpreter
-                    .eval_sum(&bub_function.bub_absolute_coord.1)
-                    .unwrap();
+                - interpreter.eval_sum(&bub_fn.bub_absolute_coord.1).unwrap();
             interpreter.lowercase.z = interpreter.uppercase.z
-                - interpreter
-                    .eval_sum(&bub_function.bub_absolute_coord.2)
-                    .unwrap();
+                - interpreter.eval_sum(&bub_fn.bub_absolute_coord.2).unwrap();
 
-            let domain = interpreter.eval_or_or_expr(&bub_function.domain).unwrap();
-            let volume = interpreter.eval_sum(&bub_function.volume).unwrap();
+            let domain = interpreter.eval_or_or_expr(&bub_fn.domain).unwrap();
+            let volume = interpreter.eval_sum(&bub_fn.volume).unwrap();
 
             assert_eq!(interpreter.lowercase.x, -2.0);
             assert_eq!(interpreter.lowercase.y, -1.0);

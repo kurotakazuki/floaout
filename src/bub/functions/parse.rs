@@ -15,7 +15,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn bub_functions() {
+    fn bub_fns() {
         // Bubble Function
         let input: &[u8] = "1 2 3 0!=1 sin(2*PI*440*n/S)".as_bytes();
         let result = parse(&input, &BubFnsVariable::BubFn);

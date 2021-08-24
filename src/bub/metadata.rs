@@ -117,7 +117,7 @@ pub struct BubMetadata {
     pub head_absolute_frame: u64,
 
     /// Bubble Functions
-    pub bub_functions: BubFns,
+    pub bub_fns: BubFns,
     /// Foot Absolute Frame Plus One
     pub foot_absolute_frame_plus_one: u64,
     /// Next Head Absolute Frame
@@ -147,7 +147,7 @@ impl BubMetadata {
             bub_state: BubState::Stopped,
             head_absolute_frame: 0,
 
-            bub_functions: BubFns::new(),
+            bub_fns: BubFns::new(),
             foot_absolute_frame_plus_one: 0,
             next_head_absolute_frame: first_head_absolute_frame,
         }
@@ -289,7 +289,7 @@ impl BubMetadata {
                 bub_state: BubState::Stopped,
                 head_absolute_frame: 0,
 
-                bub_functions: BubFns::new(),
+                bub_fns: BubFns::new(),
                 foot_absolute_frame_plus_one: 0,
                 next_head_absolute_frame,
             },

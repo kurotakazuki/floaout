@@ -51,15 +51,15 @@ impl<R: Read, S: Sample> BubFrameReader<R, S> {
     fn read_head_metadata_and_calc_bytes(&mut self) -> Result<()> {
         let functions_size: u16 = self.inner.read_le_and_calc_bytes(&mut self.crc)?;
 
-        let bub_functions_vec = self
+        let bub_fns_vec = self
             .inner
             .read_vec_for_and_calc_bytes(functions_size as usize, &mut self.crc)?;
 
-        self.metadata.bub_functions = parse(&bub_functions_vec, &BubFnsVariable::BubFns)
+        self.metadata.bub_fns = parse(&bub_fns_vec, &BubFnsVariable::BubFns)
             .unwrap()
             .into_original()
             .unwrap()
-            .into_bub_functions()
+            .into_bub_fns()
             .unwrap();
         // Foot relative frame
         self.metadata.foot_absolute_frame_plus_one =
@@ -109,7 +109,7 @@ impl<R: Read, S: Sample> BubFrameReader<R, S> {
         &self,
         speaker_absolute_coord: Coord,
     ) -> Option<Vec<(f64, BubFnsInterpreter)>> {
-        self.metadata.bub_functions.to_volume(
+        self.metadata.bub_fns.to_volume(
             speaker_absolute_coord,
             self.pos as f64,
             (self.pos - self.metadata.head_absolute_frame + 1) as f64,
