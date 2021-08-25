@@ -67,8 +67,20 @@ impl WavMetadata {
         4 + 24 + 8 + self.data_chunk_size()
     }
 
-    pub fn secs(&self) -> f64 {
-        f64::from(self.frames() as u32) / self.samples_per_sec()
+    pub const fn secs(&self) -> u64 {
+        self.frames() / self.samples_per_sec() as u64
+    }
+
+    pub const fn millis(&self) -> u128 {
+        self.frames() as u128 * 1_000 / self.samples_per_sec() as u128
+    }
+
+    pub const fn micros(&self) -> u128 {
+        self.frames() as u128 * 1_000_000 / self.samples_per_sec() as u128
+    }
+
+    pub const fn nanos(&self) -> u128 {
+        self.frames() as u128 * 1_000_000_000 / self.samples_per_sec() as u128
     }
 
     // IO
@@ -173,6 +185,40 @@ mod tests {
     use std::io::Result;
 
     #[test]
+    fn duration() {
+        let metadata = WavMetadata {
+            frames: 48000,
+            lpcm_kind: LpcmKind::F32LE,
+            channels: 1,
+            samples_per_sec: 48000.0,
+        };
+        assert_eq!(metadata.secs(), 1);
+        assert_eq!(metadata.millis(), 1_000);
+        assert_eq!(metadata.micros(), 1_000_000);
+        assert_eq!(metadata.nanos(), 1_000_000_000);
+        let metadata = WavMetadata {
+            frames: 48001,
+            lpcm_kind: LpcmKind::F32LE,
+            channels: 1,
+            samples_per_sec: 48000.0,
+        };
+        assert_eq!(metadata.secs(), 1);
+        assert_eq!(metadata.millis(), 1_000);
+        assert_eq!(metadata.micros(), 1_000_020);
+        assert_eq!(metadata.nanos(), 1_000_020_833);
+        let metadata = WavMetadata {
+            frames: 95999,
+            lpcm_kind: LpcmKind::F32LE,
+            channels: 1,
+            samples_per_sec: 48000.0,
+        };
+        assert_eq!(metadata.secs(), 1);
+        assert_eq!(metadata.millis(), 1_999);
+        assert_eq!(metadata.micros(), 1_999_979);
+        assert_eq!(metadata.nanos(), 1_999_979_166);
+    }
+
+    #[test]
     fn info() {
         let lpcm_kind = LpcmKind::F32LE;
         let frames = 0;
@@ -191,7 +237,7 @@ mod tests {
         assert_eq!(metadata.block_align(), 4);
         assert_eq!(metadata.bits_per_sample(), 32);
         assert_eq!(metadata.bytes_per_sample(), 4);
-        assert_eq!(metadata.secs(), 0.0);
+        assert_eq!(metadata.secs(), 0);
 
         let metadata = WavMetadata {
             frames: 88200,
@@ -208,7 +254,7 @@ mod tests {
         assert_eq!(metadata.bytes_per_sample(), 4);
         assert_eq!(metadata.data_chunk_size(), 352800);
         assert_eq!(metadata.standard_riff_chunk_size(), 352836);
-        assert_eq!(metadata.secs(), 2.0);
+        assert_eq!(metadata.secs(), 2);
 
         let metadata = WavMetadata {
             frames,

@@ -166,6 +166,22 @@ impl BubMetadata {
         self.samples_per_sec
     }
 
+    pub const fn secs(&self) -> u64 {
+        self.frames() / self.samples_per_sec() as u64
+    }
+
+    pub const fn millis(&self) -> u128 {
+        self.frames() as u128 * 1_000 / self.samples_per_sec() as u128
+    }
+
+    pub const fn micros(&self) -> u128 {
+        self.frames() as u128 * 1_000_000 / self.samples_per_sec() as u128
+    }
+
+    pub const fn nanos(&self) -> u128 {
+        self.frames() as u128 * 1_000_000_000 / self.samples_per_sec() as u128
+    }
+
     pub fn set_as_head(&mut self, pos: u64) {
         self.head_absolute_frame = pos;
         self.bub_state = BubState::Head;

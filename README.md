@@ -1,8 +1,7 @@
 # Floaout
 Floaout is the next-generation audio format.
 
-# TOD
-- Change type: u32 -> f64 in WavMetadata::samples_per_sec
+# TODO
 - Add secs method in metadata trait
 - Add `read_bub_fns_block` in BubFrameReader
 - error handling

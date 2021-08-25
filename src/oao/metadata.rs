@@ -48,6 +48,22 @@ impl OaoMetadata {
         self.samples_per_sec
     }
 
+    pub const fn secs(&self) -> u64 {
+        self.frames() / self.samples_per_sec() as u64
+    }
+
+    pub const fn millis(&self) -> u128 {
+        self.frames() as u128 * 1_000 / self.samples_per_sec() as u128
+    }
+
+    pub const fn micros(&self) -> u128 {
+        self.frames() as u128 * 1_000_000 / self.samples_per_sec() as u128
+    }
+
+    pub const fn nanos(&self) -> u128 {
+        self.frames() as u128 * 1_000_000_000 / self.samples_per_sec() as u128
+    }
+
     // IO
     pub fn read<R: std::io::Read>(reader: &mut R) -> Result<Self> {
         let mut crc = CRC_32K_4_2;
