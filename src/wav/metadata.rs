@@ -3,7 +3,7 @@ use crate::utils::return_invalid_data_if_not_equal;
 use crate::{LpcmKind, Metadata};
 use std::io::Result;
 
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct WavMetadata {
     /// Number of sample frames
     pub frames: u64,
@@ -12,7 +12,7 @@ pub struct WavMetadata {
     /// Channels
     pub channels: u16,
     /// Samples per sec
-    pub samples_per_sec: u32,
+    pub samples_per_sec: f64,
 }
 
 impl Metadata for WavMetadata {}
@@ -38,7 +38,7 @@ impl WavMetadata {
         self.channels
     }
 
-    pub const fn samples_per_sec(&self) -> u32 {
+    pub const fn samples_per_sec(&self) -> f64 {
         self.samples_per_sec
     }
 
@@ -55,7 +55,7 @@ impl WavMetadata {
     }
 
     pub const fn avg_bytes_per_sec(&self) -> u32 {
-        self.samples_per_sec() * self.block_align() as u32
+        self.samples_per_sec() as u32 * self.block_align() as u32
     }
 
     pub const fn data_chunk_size(&self) -> u32 {
@@ -68,7 +68,7 @@ impl WavMetadata {
     }
 
     pub fn secs(&self) -> f64 {
-        f64::from(self.frames() as u32) / f64::from(self.samples_per_sec())
+        f64::from(self.frames() as u32) / self.samples_per_sec()
     }
 
     // IO
@@ -122,7 +122,7 @@ impl WavMetadata {
                                         bits_per_sample,
                                     ),
                                     channels,
-                                    samples_per_sec,
+                                    samples_per_sec: samples_per_sec as f64,
                                 };
 
                                 return_invalid_data_if_not_equal(
@@ -155,7 +155,7 @@ impl WavMetadata {
         writer.write_le(16_u32)?;
         self.format_tag().write_le_bytes(writer)?;
         self.channels().write_le_bytes(writer)?;
-        self.samples_per_sec().write_le_bytes(writer)?;
+        (self.samples_per_sec() as u32).write_le_bytes(writer)?;
         self.avg_bytes_per_sec().write_le_bytes(writer)?;
         self.block_align().write_le_bytes(writer)?;
         self.bits_per_sample().write_le_bytes(writer)?;
@@ -176,7 +176,7 @@ mod tests {
     fn info() {
         let lpcm_kind = LpcmKind::F32LE;
         let frames = 0;
-        let samples_per_sec = 44100;
+        let samples_per_sec = 44100.0;
 
         let metadata = WavMetadata {
             frames,
@@ -186,7 +186,7 @@ mod tests {
         };
         assert_eq!(metadata.format_tag(), 3);
         assert_eq!(metadata.channels(), 1);
-        assert_eq!(metadata.samples_per_sec(), 44100);
+        assert_eq!(metadata.samples_per_sec(), 44100.0);
         assert_eq!(metadata.avg_bytes_per_sec(), 176400);
         assert_eq!(metadata.block_align(), 4);
         assert_eq!(metadata.bits_per_sample(), 32);
@@ -201,7 +201,7 @@ mod tests {
         };
         assert_eq!(metadata.format_tag(), 3);
         assert_eq!(metadata.channels(), 1);
-        assert_eq!(metadata.samples_per_sec(), 44100);
+        assert_eq!(metadata.samples_per_sec(), 44100.0);
         assert_eq!(metadata.avg_bytes_per_sec(), 176400);
         assert_eq!(metadata.block_align(), 4);
         assert_eq!(metadata.bits_per_sample(), 32);
@@ -218,7 +218,7 @@ mod tests {
         };
         assert_eq!(metadata.format_tag(), 3);
         assert_eq!(metadata.channels(), 2);
-        assert_eq!(metadata.samples_per_sec(), 44100);
+        assert_eq!(metadata.samples_per_sec(), 44100.0);
         assert_eq!(metadata.avg_bytes_per_sec(), 352800);
         assert_eq!(metadata.block_align(), 8);
         assert_eq!(metadata.bits_per_sample(), 32);
@@ -240,7 +240,7 @@ mod tests {
             frames: 88200,
             lpcm_kind,
             channels: 1,
-            samples_per_sec: 44100,
+            samples_per_sec: 44100.0,
         };
         assert_eq!(val, expect);
 
@@ -307,7 +307,7 @@ mod tests {
             frames: 5250,
             lpcm_kind,
             channels: 2,
-            samples_per_sec: 44100,
+            samples_per_sec: 44100.0,
         };
         assert_eq!(val, expect);
 
@@ -331,7 +331,7 @@ mod tests {
             frames: 88200,
             lpcm_kind: LpcmKind::F32LE,
             channels: 1,
-            samples_per_sec: 44100,
+            samples_per_sec: 44100.0,
         };
         let mut data: &[u8] = &[
             0x52, 0x49, 0x46, 0x46, 0x44, 0x62, 0x05, 0x00, 0x57, 0x41, 0x56, 0x45, 0x66, 0x6D,

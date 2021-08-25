@@ -56,7 +56,7 @@ mod tests {
             frames: 176400,
             lpcm_kind: LpcmKind::F32LE,
             channels: 2,
-            samples_per_sec: 44100,
+            samples_per_sec: 44100.0,
         };
 
         assert_eq!(wav_reader.metadata, metadata);
