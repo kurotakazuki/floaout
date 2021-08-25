@@ -22,11 +22,11 @@ impl<R: Read> OaoReader<R> {
         })
     }
 
-    pub fn into_bub_frame_reader<S: Sample>(self) -> OaoFrameReader<R, S> {
+    pub fn into_oao_frame_reader<S: Sample>(self) -> OaoFrameReader<R, S> {
         OaoFrameReader::new(self.inner, self.metadata, self.speakers_absolute_coord)
     }
 
-    pub fn into_bub_frame_reader_kind(self) -> OaoFrameReaderKind<R> {
+    pub fn into_oao_frame_reader_kind(self) -> OaoFrameReaderKind<R> {
         match self.metadata.lpcm_kind() {
             LpcmKind::F32LE => OaoFrameReaderKind::F32LE(OaoFrameReader::<R, f32>::new(
                 self.inner,

@@ -47,7 +47,8 @@ impl<R: Read, S: Sample> OaoFrameReader<R, S> {
     }
 
     fn set_new_bub_frame_readers(&mut self) -> Result<()> {
-        for i in 0..self.bubs.len() {
+        let mut i = 0;
+        while i < self.bubs.len() {
             if let Some(starting_frame) = self.bubs[i].starting_frames.front() {
                 if starting_frame == &self.pos {
                     self.bubs[i].starting_frames.pop_front();
@@ -59,6 +60,7 @@ impl<R: Read, S: Sample> OaoFrameReader<R, S> {
                     let bub_frame_reader = bub_reader.into_bub_frame_reader::<S>();
                     self.bub_frame_readers.push(bub_frame_reader);
                 }
+                i += 1;
             } else {
                 // If there is no more starting frames.
                 self.bubs.remove(i);
@@ -69,10 +71,12 @@ impl<R: Read, S: Sample> OaoFrameReader<R, S> {
     }
 
     fn read_bub_frame_readers_frame(&mut self, frame: &mut Frame<S>) -> Result<()> {
-        for i in 0..self.bub_frame_readers.len() {
+        let mut i = 0;
+        while i < self.bub_frame_readers.len() {
             match self.bub_frame_readers[i].next() {
                 Some(result) => {
                     frame.add(result?)?;
+                    i += 1;
                 }
                 None => {
                     self.bub_frame_readers.remove(i);
