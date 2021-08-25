@@ -36,6 +36,27 @@ pub struct OaoMetadata {
 }
 
 impl OaoMetadata {
+    pub const fn new(
+        frames: u64,
+        samples_per_sec: f64,
+        lpcm_kind: LpcmKind,
+        title: String,
+        artist: String,
+        bubs: Vec<BubInOao>,
+    ) -> Self {
+        Self {
+            spec_version: 0,
+            oao_id: OaoID::new(0),
+            oao_version: 0,
+            frames,
+            samples_per_sec,
+            lpcm_kind,
+            title,
+            artist,
+            bubs,
+        }
+    }
+
     pub const fn frames(&self) -> u64 {
         self.frames
     }
@@ -168,18 +189,14 @@ mod tests {
 
     #[test]
     fn write_and_read() -> Result<()> {
-        let metadata_0_bubs = OaoMetadata {
-            spec_version: 0,
-            oao_id: OaoID::new(0),
-            oao_version: 0,
-            frames: 96000,
-            samples_per_sec: 96000.0,
-            lpcm_kind: LpcmKind::F32LE,
-            title: String::from("untitled"),
-            artist: String::from("undefined"),
-
-            bubs: Vec::new(),
-        };
+        let metadata_0_bubs = OaoMetadata::new(
+            96000,
+            96000.0,
+            LpcmKind::F32LE,
+            String::from("untitled"),
+            String::from("undefined"),
+            Vec::new(),
+        );
         let bub0 = BubInOao {
             file_name: "".into(),
             starting_frames: vec![].into(),
@@ -192,18 +209,14 @@ mod tests {
             file_name: "abc".into(),
             starting_frames: vec![1, 2, 3].into(),
         };
-        let metadata_3_bubs = OaoMetadata {
-            spec_version: 0,
-            oao_id: OaoID::new(0),
-            oao_version: 0,
-            frames: 96000,
-            samples_per_sec: 96000.0,
-            lpcm_kind: LpcmKind::F32LE,
-            title: String::from("untitled"),
-            artist: String::from("undefined"),
-
-            bubs: vec![bub0, bub1, bub2],
-        };
+        let metadata_3_bubs = OaoMetadata::new(
+            96000,
+            96000.0,
+            LpcmKind::F32LE,
+            String::from("untitled"),
+            String::from("undefined"),
+            vec![bub0, bub1, bub2],
+        );
         let metadatas = [metadata_0_bubs, metadata_3_bubs];
 
         for metadata in metadatas {

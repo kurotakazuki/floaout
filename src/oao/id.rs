@@ -8,7 +8,7 @@ pub struct OaoID {
 }
 
 impl OaoID {
-    pub fn new(id: u128) -> Self {
+    pub const fn new(id: u128) -> Self {
         Self { id }
     }
 

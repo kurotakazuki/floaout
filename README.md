@@ -7,6 +7,7 @@ Floaout is the next-generation audio format.
 - error handling
 - Clarify whether #[derive(Order)] is needed
 - Add Position field in BubfnsInterpreter
+- Check file is supported version or not
 - Parallel computing
 - Add Functions like pow, sinh, ...
 
