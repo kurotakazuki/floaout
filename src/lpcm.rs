@@ -9,6 +9,8 @@ pub trait Sample:
 {
     fn from_f32(n: f32) -> Self;
     fn from_f64(n: f64) -> Self;
+    fn to_f32(self) -> f32;
+    fn to_f64(self) -> f64;
     fn read<R: Read>(reader: &mut R) -> Result<Self>;
     fn write<W: Write>(self, writer: &mut W) -> Result<()>;
 
@@ -25,6 +27,14 @@ macro_rules! le_sample_impl {
 
             fn from_f64(n: f64) -> Self {
                 n as $t
+            }
+
+            fn to_f32(self) -> f32 {
+                self as f32
+            }
+
+            fn to_f64(self) -> f64 {
+                self as f64
             }
 
             fn read<R: Read>(reader: &mut R) -> Result<Self> {
