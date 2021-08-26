@@ -18,7 +18,21 @@ pub struct WavMetadata {
 impl Metadata for WavMetadata {}
 
 impl WavMetadata {
-    pub fn calculate_frames(data_size: u32, channels: u16, bits_per_sample: u16) -> u64 {
+    pub const fn new(
+        frames: u64,
+        lpcm_kind: LpcmKind,
+        channels: u16,
+        samples_per_sec: f64,
+    ) -> Self {
+        Self {
+            frames,
+            lpcm_kind,
+            channels,
+            samples_per_sec,
+        }
+    }
+
+    pub const fn calculate_frames(data_size: u32, channels: u16, bits_per_sample: u16) -> u64 {
         data_size as u64 / (channels * bits_per_sample / 8) as u64
     }
 
