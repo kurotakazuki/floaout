@@ -26,7 +26,11 @@ impl<R: Read> BubReader<R> {
         })
     }
 
-    pub fn into_bub_frame_reader<S: Sample>(self) -> BubFrameReader<R, S> {
+    /// # Safety
+    ///
+    /// This is unsafe, due to the type of sample isn’t checked:
+    /// - type of sample must follow [`LpcmKind`]
+    pub unsafe fn into_bub_frame_reader<S: Sample>(self) -> BubFrameReader<R, S> {
         BubFrameReader::new(
             self.inner,
             (self.metadata, self.crc),

@@ -2,7 +2,6 @@
 Floaout is the next-generation audio format.
 
 # TODO
-- Add secs method in metadata trait
 - Add `read_bub_fns_block` in BubFrameReader
 - error handling
 - Clarify whether #[derive(Order)] is needed
@@ -22,7 +21,7 @@ Floaout is the next-generation audio format.
 | Frames | `u64` (8) | Number of frames |
 | First Head Absolute Frame | `u64` (8) | First Head Absolute Frame |
 | Samples Per Sec | `f64` (8) | Samples per sec |
-| LpcmKind | `u8` (1) | `SampleKind` |
+| LpcmKind | `u8` (1) | `LpcmKind` |
 | BubSampleKind | `u8` (1) | `BubSampleKind` |
 | Name Size | `u8` (1) | Name Size (0~255) |
 | Name | `String` | Name (UTF-8) |
@@ -80,7 +79,7 @@ Algorithm::<u32> {
 #### Lpcm
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
-| Sample | `f32` or `f64` (4 or 8) | depends on `SampleKind` |
+| Sample | `f32` or `f64` (4 or 8) | depends on `LpcmKind` |
 
 #### Expr
 | Name | `Type` (Bytes) | Description |
@@ -318,7 +317,7 @@ Space = ' ' () / f
 | Bubbles | `u16` (2) | Number of Bubbles |
 | Frames | `u64` (8) | Number of frames |
 | Samples Per Sec | `f64` (8) | Samples per sec |
-| LpcmKind | `u8` (1) | `SampleKind` |
+| LpcmKind | `u8` (1) | `LpcmKind` |
 | Title Size | `u8` (1) | Title Size (0~255) |
 | Title | `String` | Title (UTF-8) |
 | Artist Size | `u8` (1) | Artist Size (0~255) |

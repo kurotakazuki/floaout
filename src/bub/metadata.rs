@@ -106,7 +106,7 @@ pub struct BubMetadata {
     pub samples_per_sec: f64,
     /// Bits Per Sample
     pub lpcm_kind: LpcmKind,
-    /// Bubble Sample Kind
+    /// Bubble LPCM Kind
     pub bub_sample_kind: BubSampleKind,
     /// Name of Bubble
     pub name: String,

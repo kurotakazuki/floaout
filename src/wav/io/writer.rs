@@ -23,7 +23,7 @@ impl<W: Write> WavWriter<W> {
     /// # Safety
     ///
     /// This is unsafe, due to the type of sample isn’t checked:
-    /// - type of sample must follow [`SampleKind`]
+    /// - type of sample must follow [`LpcmKind`]
     pub unsafe fn into_wav_frame_writer<S: Sample>(self) -> WavFrameWriter<W, S> {
         WavFrameWriter::new(self.inner, self.metadata)
     }

@@ -30,7 +30,7 @@ impl<W: Write> BubWriter<W> {
     /// # Safety
     ///
     /// This is unsafe, due to the type of sample isn’t checked:
-    /// - type of sample must follow [`SampleKind`]
+    /// - type of sample must follow [`LpcmKind`]
     pub unsafe fn into_bub_frame_writer<S: Sample>(self) -> BubFrameWriter<W, S> {
         BubFrameWriter::new(self.inner, (self.metadata, self.crc))
     }

@@ -57,7 +57,8 @@ impl<R: Read, S: Sample> OaoFrameReader<R, S> {
                         format!("{}.bub", self.bubs[i].file_name),
                         self.speakers_absolute_coord.clone(),
                     )?;
-                    let bub_frame_reader = bub_reader.into_bub_frame_reader::<S>();
+                    // TODO
+                    let bub_frame_reader = unsafe { bub_reader.into_bub_frame_reader::<S>() };
                     self.bub_frame_readers.push(bub_frame_reader);
                 }
                 i += 1;

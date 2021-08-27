@@ -22,7 +22,11 @@ impl<R: Read> OaoReader<R> {
         })
     }
 
-    pub fn into_oao_frame_reader<S: Sample>(self) -> OaoFrameReader<R, S> {
+    /// # Safety
+    ///
+    /// This is unsafe, due to the type of sample isn’t checked:
+    /// - type of sample must follow [`LpcmKind`]
+    pub unsafe fn into_oao_frame_reader<S: Sample>(self) -> OaoFrameReader<R, S> {
         OaoFrameReader::new(self.inner, self.metadata, self.speakers_absolute_coord)
     }
 

@@ -19,7 +19,7 @@ impl<R: Read> WavReader<R> {
     /// # Safety
     ///
     /// This is unsafe, due to the type of sample isn’t checked:
-    /// - type of sample must follow [`SampleKind`]
+    /// - type of sample must follow [`LpcmKind`]
     pub unsafe fn into_wav_frame_reader<S: Sample>(self) -> WavFrameReader<R, S> {
         WavFrameReader::new(self.inner, self.metadata)
     }

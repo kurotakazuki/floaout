@@ -7,7 +7,7 @@ use std::io::Result;
 pub struct WavMetadata {
     /// Number of sample frames
     pub frames: u64,
-    // Sample Kind
+    // LPCM Kind
     pub lpcm_kind: LpcmKind,
     /// Channels
     pub channels: u16,
