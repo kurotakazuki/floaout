@@ -20,6 +20,18 @@ impl<R: Read, S: Sample> FrameReader<R> for WavFrameReader<R, S> {
     fn into_inner(self) -> R {
         self.inner
     }
+
+    fn frames(&self) -> u64 {
+        self.metadata.frames()
+    }
+
+    fn samples_per_sec(&self) -> f64 {
+        self.metadata.samples_per_sec()
+    }
+
+    fn number_of_channels(&self) -> u32 {
+        self.metadata.channels() as u32
+    }
 }
 
 impl<R: Read, S: Sample> WavFrameReader<R, S> {

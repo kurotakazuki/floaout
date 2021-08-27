@@ -49,10 +49,16 @@ impl<F32LE, F64LE> FrameIOKind<F32LE, F64LE> {
 }
 
 /// Frame Reader
-pub trait FrameReader<R: Read> {
+pub trait FrameReader<R: Read>: Iterator {
     fn get_ref(&self) -> &R;
     fn get_mut(&mut self) -> &mut R;
     fn into_inner(self) -> R;
+    // From Metadata
+    fn frames(&self) -> u64;
+    fn samples_per_sec(&self) -> f64;
+
+    /// Number of channels
+    fn number_of_channels(&self) -> u32;
 }
 /// Reader
 pub trait Reader {}

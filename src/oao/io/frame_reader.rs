@@ -28,6 +28,18 @@ impl<R: Read, B: Read + Clone, S: Sample> FrameReader<R> for OaoFrameReader<R, B
     fn into_inner(self) -> R {
         self.inner
     }
+
+    fn frames(&self) -> u64 {
+        self.metadata.frames()
+    }
+
+    fn samples_per_sec(&self) -> f64 {
+        self.metadata.samples_per_sec()
+    }
+
+    fn number_of_channels(&self) -> u32 {
+        self.speakers_absolute_coord.len() as u32
+    }
 }
 
 impl<R: Read, B: Read + Clone, S: Sample> OaoFrameReader<R, B, S> {
