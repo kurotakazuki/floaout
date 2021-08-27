@@ -20,7 +20,7 @@ pub struct OaoMetadata {
     pub oao_id: OaoID,
     /// Version of Floaout
     pub oao_version: u16,
-    /// Frames
+    /// Number of frames
     pub frames: u64,
     /// Samples Per Sec
     pub samples_per_sec: f64,

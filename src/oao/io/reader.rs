@@ -1,5 +1,6 @@
-use crate::oao::{OaoFrameReader, OaoFrameReaderKind, OaoMetadata};
-use crate::{Coord, LpcmKind, Sample};
+use crate::bub::BubFrameReader;
+use crate::oao::{OaoFrameReader, OaoMetadata};
+use crate::{Coord, Sample};
 use std::fs::File;
 use std::io::{BufReader, Read, Result};
 use std::path::Path;
@@ -26,24 +27,33 @@ impl<R: Read> OaoReader<R> {
     ///
     /// This is unsafe, due to the type of sample isn’t checked:
     /// - type of sample must follow [`LpcmKind`]
-    pub unsafe fn into_oao_frame_reader<S: Sample>(self) -> OaoFrameReader<R, S> {
-        OaoFrameReader::new(self.inner, self.metadata, self.speakers_absolute_coord)
+    // TODO: Is metadata.bubs.len() equals to bub_frame_readers.len()?
+    pub unsafe fn into_oao_frame_reader<B: Read + Clone, S: Sample>(
+        self,
+        bub_frame_readers: Vec<BubFrameReader<B, S>>,
+    ) -> OaoFrameReader<R, B, S> {
+        OaoFrameReader::new(
+            self.inner,
+            self.metadata,
+            self.speakers_absolute_coord,
+            bub_frame_readers,
+        )
     }
 
-    pub fn into_oao_frame_reader_kind(self) -> OaoFrameReaderKind<R> {
-        match self.metadata.lpcm_kind() {
-            LpcmKind::F32LE => OaoFrameReaderKind::F32LE(OaoFrameReader::<R, f32>::new(
-                self.inner,
-                self.metadata,
-                self.speakers_absolute_coord,
-            )),
-            LpcmKind::F64LE => OaoFrameReaderKind::F64LE(OaoFrameReader::<R, f64>::new(
-                self.inner,
-                self.metadata,
-                self.speakers_absolute_coord,
-            )),
-        }
-    }
+    // pub fn into_oao_frame_reader_kind<B: Read + Clone, S: Sample>(self, bub_frame_readers: Vec<BubFrameReader<B, S>>) -> OaoFrameReaderKind<R, B> {
+    //     match self.metadata.lpcm_kind() {
+    //         LpcmKind::F32LE => OaoFrameReaderKind::F32LE(OaoFrameReader::<R, f32>::new(
+    //             self.inner,
+    //             self.metadata,
+    //             self.speakers_absolute_coord,
+    //         )),
+    //         LpcmKind::F64LE => OaoFrameReaderKind::F64LE(OaoFrameReader::<R, f64>::new(
+    //             self.inner,
+    //             self.metadata,
+    //             self.speakers_absolute_coord,
+    //         )),
+    //     }
+    // }
 }
 
 impl OaoReader<BufReader<File>> {
@@ -52,6 +62,7 @@ impl OaoReader<BufReader<File>> {
         let buf_reader = BufReader::new(file);
         Self::new(buf_reader, speakers_absolute_coord)
     }
+    // TODO: Add open_and_into_oao_frame_reader_kind method
 }
 
 // #[cfg(test)]

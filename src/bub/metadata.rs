@@ -100,7 +100,7 @@ pub struct BubMetadata {
     pub bub_id: BubID,
     /// Version of Bubble
     pub bub_version: u16,
-    /// Frames
+    /// Number of frames
     pub frames: u64,
     /// Samples Per Sec
     pub samples_per_sec: f64,

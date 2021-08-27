@@ -1,11 +1,10 @@
-use crate::bub::{BubFrameReader, BubReader};
+use crate::bub::BubFrameReader;
 use crate::oao::{BubInOao, OaoMetadata};
 use crate::{Coord, Frame, FrameIOKind, FrameReader, Sample};
-use std::fs::File;
-use std::io::{BufReader, Read, Result};
+use std::io::{Read, Result};
 use std::marker::PhantomData;
 
-pub struct OaoFrameReader<R: Read, S: Sample> {
+pub struct OaoFrameReader<R: Read, B: Read + Clone, S: Sample> {
     pub inner: R,
     pub pos: u64,
     _phantom_sample: PhantomData<S>,
@@ -14,12 +13,12 @@ pub struct OaoFrameReader<R: Read, S: Sample> {
     pub speakers_absolute_coord: Vec<Coord>,
 
     // Buffers
-    pub bubs: Vec<BubInOao>,
+    pub bubs: Vec<(BubInOao, BubFrameReader<B, S>)>,
     /// Bubble Frame Readers
-    pub bub_frame_readers: Vec<BubFrameReader<BufReader<File>, S>>,
+    pub bub_frame_readers: Vec<BubFrameReader<B, S>>,
 }
 
-impl<R: Read, S: Sample> FrameReader<R> for OaoFrameReader<R, S> {
+impl<R: Read, B: Read + Clone, S: Sample> FrameReader<R> for OaoFrameReader<R, B, S> {
     fn get_ref(&self) -> &R {
         &self.inner
     }
@@ -31,9 +30,18 @@ impl<R: Read, S: Sample> FrameReader<R> for OaoFrameReader<R, S> {
     }
 }
 
-impl<R: Read, S: Sample> OaoFrameReader<R, S> {
-    pub fn new(inner: R, metadata: OaoMetadata, speakers_absolute_coord: Vec<Coord>) -> Self {
-        let bubs = metadata.bubs.clone();
+impl<R: Read, B: Read + Clone, S: Sample> OaoFrameReader<R, B, S> {
+    pub fn new(
+        inner: R,
+        metadata: OaoMetadata,
+        speakers_absolute_coord: Vec<Coord>,
+        bub_frame_readers: Vec<BubFrameReader<B, S>>,
+    ) -> Self {
+        // TODO: Is same bubs length?
+        let mut bubs = Vec::with_capacity(metadata.bubs.len());
+        for (i, bub_frame_reader) in bub_frame_readers.into_iter().enumerate() {
+            bubs.push((metadata.bubs[i].clone(), bub_frame_reader));
+        }
         Self {
             inner,
             pos: 0,
@@ -49,17 +57,11 @@ impl<R: Read, S: Sample> OaoFrameReader<R, S> {
     fn set_new_bub_frame_readers(&mut self) -> Result<()> {
         let mut i = 0;
         while i < self.bubs.len() {
-            if let Some(starting_frame) = self.bubs[i].starting_frames.front() {
+            if let Some(starting_frame) = self.bubs[i].0.starting_frames.front() {
                 if starting_frame == &self.pos {
-                    self.bubs[i].starting_frames.pop_front();
+                    self.bubs[i].0.starting_frames.pop_front();
                     // Push BubFrameReader
-                    let bub_reader = BubReader::open(
-                        format!("{}.bub", self.bubs[i].file_name),
-                        self.speakers_absolute_coord.clone(),
-                    )?;
-                    // TODO
-                    let bub_frame_reader = unsafe { bub_reader.into_bub_frame_reader::<S>() };
-                    self.bub_frame_readers.push(bub_frame_reader);
+                    self.bub_frame_readers.push(self.bubs[i].1.clone());
                 }
                 i += 1;
             } else {
@@ -89,7 +91,7 @@ impl<R: Read, S: Sample> OaoFrameReader<R, S> {
     }
 }
 
-impl<R: Read, S: Sample> Iterator for OaoFrameReader<R, S> {
+impl<R: Read, B: Read + Clone, S: Sample> Iterator for OaoFrameReader<R, B, S> {
     type Item = Result<Frame<S>>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -114,7 +116,8 @@ impl<R: Read, S: Sample> Iterator for OaoFrameReader<R, S> {
     }
 }
 
-pub type OaoFrameReaderKind<R> = FrameIOKind<OaoFrameReader<R, f32>, OaoFrameReader<R, f64>>;
+pub type OaoFrameReaderKind<R, B> =
+    FrameIOKind<OaoFrameReader<R, B, f32>, OaoFrameReader<R, B, f64>>;
 
 // #[cfg(test)]
 // mod tests {
