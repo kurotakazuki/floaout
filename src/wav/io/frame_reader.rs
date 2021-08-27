@@ -10,7 +10,7 @@ pub struct WavFrameReader<R: Read, S: Sample> {
     _phantom_sample: PhantomData<S>,
 }
 
-impl<R: Read, S: Sample> FrameReader<R> for WavFrameReader<R, S> {
+impl<R: Read, S: Sample> FrameReader<R, S> for WavFrameReader<R, S> {
     fn get_ref(&self) -> &R {
         &self.inner
     }

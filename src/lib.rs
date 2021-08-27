@@ -49,7 +49,7 @@ impl<F32LE, F64LE> FrameIOKind<F32LE, F64LE> {
 }
 
 /// Frame Reader
-pub trait FrameReader<R: Read>: Iterator {
+pub trait FrameReader<R: Read, S: Sample>: Iterator<Item = Result<Frame<S>>> {
     fn get_ref(&self) -> &R;
     fn get_mut(&mut self) -> &mut R;
     fn into_inner(self) -> R;

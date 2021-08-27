@@ -21,7 +21,7 @@ pub struct BubFrameReader<R: Read, S: Sample> {
     pub crc: CRC<u32>,
 }
 
-impl<R: Read, S: Sample> FrameReader<R> for BubFrameReader<R, S> {
+impl<R: Read, S: Sample> FrameReader<R, S> for BubFrameReader<R, S> {
     fn get_ref(&self) -> &R {
         &self.inner
     }

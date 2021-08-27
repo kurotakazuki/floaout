@@ -18,7 +18,7 @@ pub struct OaoFrameReader<R: Read, B: Read + Clone, S: Sample> {
     pub bub_frame_readers: Vec<BubFrameReader<B, S>>,
 }
 
-impl<R: Read, B: Read + Clone, S: Sample> FrameReader<R> for OaoFrameReader<R, B, S> {
+impl<R: Read, B: Read + Clone, S: Sample> FrameReader<R, S> for OaoFrameReader<R, B, S> {
     fn get_ref(&self) -> &R {
         &self.inner
     }
