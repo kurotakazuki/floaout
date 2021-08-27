@@ -9,6 +9,7 @@ use mycrc::CRC;
 use std::io::{Read, Result};
 use std::marker::PhantomData;
 
+#[derive(Clone)]
 pub struct BubFrameReader<R: Read, S: Sample> {
     pub inner: R,
     pub pos: u64,
