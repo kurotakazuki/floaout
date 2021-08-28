@@ -1,4 +1,5 @@
 /// RGB
+/// 0.0 ~ 1.0
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Rgb {
     pub red: f32,
@@ -23,6 +24,7 @@ impl From<Rgb> for (f32, f32, f32) {
 }
 
 /// RGBA
+/// 0.0 ~ 1.0
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Rgba {
     pub red: f32,

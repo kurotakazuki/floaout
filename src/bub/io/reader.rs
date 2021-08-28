@@ -1,5 +1,5 @@
 use crate::bub::{BubFrameReader, BubFrameReaderKind, BubMetadata};
-use crate::{Coord, LpcmKind, OaoSpaces, Sample};
+use crate::{BubFnsCoord, LpcmKind, OaoSpaces, Sample};
 use mycrc::CRC;
 use std::fs::File;
 use std::io::{BufReader, Read, Result};
@@ -9,13 +9,13 @@ pub struct BubReader<R: Read> {
     pub inner: R,
     pub metadata: BubMetadata,
     /// Speakers absolute coordinates
-    pub speakers_absolute_coord: Vec<Coord>,
+    pub speakers_absolute_coord: Vec<BubFnsCoord>,
     /// CRC
     pub crc: CRC<u32>,
 }
 
 impl<R: Read> BubReader<R> {
-    pub fn new(mut inner: R, speakers_absolute_coord: Vec<Coord>) -> Result<Self> {
+    pub fn new(mut inner: R, speakers_absolute_coord: Vec<BubFnsCoord>) -> Result<Self> {
         let metadata_and_crc = BubMetadata::read(&mut inner)?;
 
         Ok(Self {
@@ -64,7 +64,10 @@ impl<R: Read> BubReader<R> {
 }
 
 impl BubReader<BufReader<File>> {
-    pub fn open<P: AsRef<Path>>(filename: P, speakers_absolute_coord: Vec<Coord>) -> Result<Self> {
+    pub fn open<P: AsRef<Path>>(
+        filename: P,
+        speakers_absolute_coord: Vec<BubFnsCoord>,
+    ) -> Result<Self> {
         let file = File::open(filename)?;
         let buf_reader = BufReader::new(file);
         Self::new(buf_reader, speakers_absolute_coord)

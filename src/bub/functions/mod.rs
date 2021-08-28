@@ -1,4 +1,4 @@
-use crate::Coord;
+use crate::BubFnsCoord;
 use mpl::span::StartAndLenSpan;
 use mpl::trees::AST;
 
@@ -52,7 +52,7 @@ impl BubFns {
 
     pub fn to_volume(
         &self,
-        speaker_absolute_coord: Coord,
+        speaker_absolute_coord: BubFnsCoord,
         absolute_frame: f64,
         relative_frame: f64,
         frames: f64,
@@ -60,7 +60,7 @@ impl BubFns {
     ) -> Option<Vec<(f64, BubFnsInterpreter)>> {
         let mut volume_and_interpreter_vec = Vec::new();
         for bub_fn in self.0.iter() {
-            let bub_absolute_coord = Coord::default();
+            let bub_absolute_coord = BubFnsCoord::default();
             let mut interpreter = BubFnsInterpreter::new(
                 speaker_absolute_coord,
                 bub_absolute_coord,

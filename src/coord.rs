@@ -1,15 +1,17 @@
 use std::ops::Sub;
 
+pub type BubFnsCoord = Coord<f64>;
+
 /// Coordinates
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
-pub struct Coord {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64,
+pub struct Coord<T> {
+    pub x: T,
+    pub y: T,
+    pub z: T,
 }
 
-impl From<(f64, f64, f64)> for Coord {
-    fn from(coord: (f64, f64, f64)) -> Self {
+impl<T> From<(T, T, T)> for Coord<T> {
+    fn from(coord: (T, T, T)) -> Self {
         Self {
             x: coord.0,
             y: coord.1,
@@ -18,13 +20,22 @@ impl From<(f64, f64, f64)> for Coord {
     }
 }
 
-impl From<Coord> for (f64, f64, f64) {
-    fn from(coord: Coord) -> Self {
+impl<T> From<Coord<T>> for (T, T, T) {
+    fn from(coord: Coord<T>) -> Self {
         (coord.x, coord.y, coord.z)
     }
 }
 
-impl Sub for Coord {
+impl<T> From<Coord<T>> for [T; 3] {
+    fn from(coord: Coord<T>) -> Self {
+        [coord.x, coord.y, coord.z]
+    }
+}
+
+impl<T> Sub for Coord<T>
+where
+    T: Sub<Output = T>,
+{
     type Output = Self;
 
     fn sub(self, other: Self) -> Self::Output {

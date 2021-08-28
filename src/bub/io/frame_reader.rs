@@ -4,7 +4,7 @@ use crate::bub::{
 };
 use crate::io::ReadExt;
 use crate::utils::read_crc;
-use crate::{Coord, Frame, FrameIOKind, FrameReader, OaoSpace, OaoSpaces, Sample};
+use crate::{BubFnsCoord, Frame, FrameIOKind, FrameReader, OaoSpace, OaoSpaces, Sample};
 use mycrc::CRC;
 use std::io::{Read, Result};
 use std::marker::PhantomData;
@@ -16,7 +16,7 @@ pub struct BubFrameReader<R: Read, S: Sample> {
     _phantom_sample: PhantomData<S>,
     pub metadata: BubMetadata,
     /// Speakers absolute coordinates
-    pub speakers_absolute_coord: Vec<Coord>,
+    pub speakers_absolute_coord: Vec<BubFnsCoord>,
     /// CRC
     pub crc: CRC<u32>,
     /// Floaout Spaces
@@ -51,7 +51,7 @@ impl<R: Read, S: Sample> BubFrameReader<R, S> {
     pub fn new(
         inner: R,
         metadata_and_crc: (BubMetadata, CRC<u32>),
-        speakers_absolute_coord: Vec<Coord>,
+        speakers_absolute_coord: Vec<BubFnsCoord>,
         oao_spaces: Option<OaoSpaces>,
     ) -> Self {
         Self {
@@ -117,7 +117,7 @@ impl<R: Read, S: Sample> BubFrameReader<R, S> {
 
     fn get_volume_and_interpreter(
         &self,
-        speaker_absolute_coord: Coord,
+        speaker_absolute_coord: BubFnsCoord,
     ) -> Option<Vec<(f64, BubFnsInterpreter)>> {
         self.metadata.bub_fns.to_volume(
             speaker_absolute_coord,

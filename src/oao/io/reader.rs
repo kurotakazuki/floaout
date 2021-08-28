@@ -1,6 +1,6 @@
 use crate::bub::BubFrameReader;
 use crate::oao::{OaoFrameReader, OaoMetadata};
-use crate::{Coord, Sample};
+use crate::{BubFnsCoord, Sample};
 use std::fs::File;
 use std::io::{BufReader, Read, Result};
 use std::path::Path;
@@ -9,11 +9,11 @@ pub struct OaoReader<R: Read> {
     pub inner: R,
     pub metadata: OaoMetadata,
     /// Speakers absolute coordinates
-    pub speakers_absolute_coord: Vec<Coord>,
+    pub speakers_absolute_coord: Vec<BubFnsCoord>,
 }
 
 impl<R: Read> OaoReader<R> {
-    pub fn new(mut inner: R, speakers_absolute_coord: Vec<Coord>) -> Result<Self> {
+    pub fn new(mut inner: R, speakers_absolute_coord: Vec<BubFnsCoord>) -> Result<Self> {
         let metadata = OaoMetadata::read(&mut inner)?;
 
         Ok(Self {
@@ -57,7 +57,10 @@ impl<R: Read> OaoReader<R> {
 }
 
 impl OaoReader<BufReader<File>> {
-    pub fn open<P: AsRef<Path>>(filename: P, speakers_absolute_coord: Vec<Coord>) -> Result<Self> {
+    pub fn open<P: AsRef<Path>>(
+        filename: P,
+        speakers_absolute_coord: Vec<BubFnsCoord>,
+    ) -> Result<Self> {
         let file = File::open(filename)?;
         let buf_reader = BufReader::new(file);
         Self::new(buf_reader, speakers_absolute_coord)

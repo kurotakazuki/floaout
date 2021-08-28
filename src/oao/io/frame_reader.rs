@@ -1,6 +1,6 @@
 use crate::bub::BubFrameReader;
 use crate::oao::{BubInOao, OaoMetadata};
-use crate::{Coord, Frame, FrameIOKind, FrameReader, Sample};
+use crate::{BubFnsCoord, Frame, FrameIOKind, FrameReader, Sample};
 use std::io::{Read, Result};
 use std::marker::PhantomData;
 
@@ -10,7 +10,7 @@ pub struct OaoFrameReader<R: Read, B: Read + Clone, S: Sample> {
     _phantom_sample: PhantomData<S>,
     pub metadata: OaoMetadata,
     /// Speakers absolute coordinates
-    pub speakers_absolute_coord: Vec<Coord>,
+    pub speakers_absolute_coord: Vec<BubFnsCoord>,
 
     // Buffers
     pub bubs: Vec<(BubInOao, BubFrameReader<B, S>)>,
@@ -46,7 +46,7 @@ impl<R: Read, B: Read + Clone, S: Sample> OaoFrameReader<R, B, S> {
     pub fn new(
         inner: R,
         metadata: OaoMetadata,
-        speakers_absolute_coord: Vec<Coord>,
+        speakers_absolute_coord: Vec<BubFnsCoord>,
         bub_frame_readers: Vec<BubFrameReader<B, S>>,
     ) -> Self {
         // TODO: Is same bubs length?

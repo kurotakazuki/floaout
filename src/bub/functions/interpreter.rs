@@ -1,13 +1,13 @@
 use crate::bub::functions::{BubFnsAST, BubFnsVariable::*};
-use crate::Coord;
+use crate::BubFnsCoord;
 use mpl::choices::Choice;
 use mpl::trees::Node::*;
 
 pub struct BubFnsInterpreter {
     // Speaker absolute coordinates
-    pub uppercase: Coord,
+    pub uppercase: BubFnsCoord,
     // Speaker relative coordinates
-    pub lowercase: Coord,
+    pub lowercase: BubFnsCoord,
     /// Number of frames starting from the file. Absolute Time
     pub uppercase_n: f64,
     /// Number of frames starting from the function. Relative Time
@@ -18,8 +18,8 @@ pub struct BubFnsInterpreter {
 
 impl BubFnsInterpreter {
     pub fn new(
-        speaker_absolute_coord: Coord,
-        bub_absolute_coord: Coord,
+        speaker_absolute_coord: BubFnsCoord,
+        bub_absolute_coord: BubFnsCoord,
         absolute_frame: f64,
         relative_frame: f64,
         frames: f64,

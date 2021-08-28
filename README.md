@@ -2,6 +2,7 @@
 Floaout is the next-generation audio format.
 
 # TODO
+- Use generic type in `Color` and `Space`.
 - Add `read_bub_fns_block` in BubFrameReader
 - error handling
 - Clarify whether #[derive(Order)] is needed

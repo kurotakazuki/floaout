@@ -3,7 +3,7 @@
 use std::io::{ErrorKind, Read, Result, Write};
 
 pub use crate::colors::{Rgb, Rgba};
-pub use crate::coord::Coord;
+pub use crate::coord::{BubFnsCoord, Coord};
 pub use crate::crc::CRC_32K_4_2;
 pub use crate::lpcm::{Frame, LpcmKind, Sample};
 pub use crate::space::{OaoSpace, OaoSpaces};
