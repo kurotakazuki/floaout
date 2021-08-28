@@ -223,11 +223,14 @@ impl<R: Read, S: Sample> Iterator for BubFrameReader<R, S> {
             if self.pos % volume_spaces.frames_between_spaces == 0 {
                 let mut volume_space = VolumeSpace::new();
                 for x in 0..volume_spaces.range {
-                    let x = x as f64 * volume_spaces.vertex_spacing + volume_spaces.start;
+                    let x =
+                        x as f64 * volume_spaces.vertex_spacing as f64 + volume_spaces.start as f64;
                     for y in 0..volume_spaces.range {
-                        let y = y as f64 * volume_spaces.vertex_spacing + volume_spaces.start;
+                        let y = y as f64 * volume_spaces.vertex_spacing as f64
+                            + volume_spaces.start as f64;
                         for z in 0..volume_spaces.range {
-                            let z = z as f64 * volume_spaces.vertex_spacing + volume_spaces.start;
+                            let z = z as f64 * volume_spaces.vertex_spacing as f64
+                                + volume_spaces.start as f64;
                             let mut volumes = 0.0;
                             if let Some(volume_and_interpreter_vec) =
                                 // TODO : Create method
@@ -243,7 +246,7 @@ impl<R: Read, S: Sample> Iterator for BubFrameReader<R, S> {
                                     volumes += volume;
                                 }
                             }
-                            volume_space.space.push(volumes);
+                            volume_space.space.push(volumes as f32);
                         }
                     }
                 }

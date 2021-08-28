@@ -1,7 +1,8 @@
 // TODO: Add feilds like frame_span, vertex_spacing, colors, and so on.
+// f32 -> f64 in the future
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct VolumeSpace {
-    pub space: Vec<f64>,
+    pub space: Vec<f32>,
 }
 
 impl VolumeSpace {
@@ -14,8 +15,8 @@ impl VolumeSpace {
 pub struct VolumeSpaces {
     /// Number of frames between spaces
     pub frames_between_spaces: u64,
-    pub vertex_spacing: f64,
-    pub start: f64,
+    pub vertex_spacing: f32,
+    pub start: f32,
     pub range: usize,
     pub spaces: Vec<VolumeSpace>,
 }
