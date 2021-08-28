@@ -136,7 +136,7 @@ impl BubMetadata {
     ) -> Self {
         Self {
             spec_version: 0,
-            bub_id: BubID::new(0),
+            bub_id: BubID::new(0, None),
             bub_version: 0,
             frames,
             samples_per_sec,

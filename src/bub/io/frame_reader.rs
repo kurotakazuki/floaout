@@ -4,7 +4,7 @@ use crate::bub::{
 };
 use crate::io::ReadExt;
 use crate::utils::read_crc;
-use crate::{Coord, Frame, FrameIOKind, FrameReader, Sample, VolumeSpace, VolumeSpaces};
+use crate::{Coord, Frame, FrameIOKind, FrameReader, OaoSpace, OaoSpaces, Sample};
 use mycrc::CRC;
 use std::io::{Read, Result};
 use std::marker::PhantomData;
@@ -19,8 +19,8 @@ pub struct BubFrameReader<R: Read, S: Sample> {
     pub speakers_absolute_coord: Vec<Coord>,
     /// CRC
     pub crc: CRC<u32>,
-    /// Volume Spaces
-    pub volume_spaces: Option<VolumeSpaces>,
+    /// Floaout Spaces
+    pub oao_spaces: Option<OaoSpaces>,
 }
 
 impl<R: Read, S: Sample> FrameReader<R, S> for BubFrameReader<R, S> {
@@ -52,7 +52,7 @@ impl<R: Read, S: Sample> BubFrameReader<R, S> {
         inner: R,
         metadata_and_crc: (BubMetadata, CRC<u32>),
         speakers_absolute_coord: Vec<Coord>,
-        volume_spaces: Option<VolumeSpaces>,
+        oao_spaces: Option<OaoSpaces>,
     ) -> Self {
         Self {
             inner,
@@ -61,7 +61,7 @@ impl<R: Read, S: Sample> BubFrameReader<R, S> {
             metadata: metadata_and_crc.0,
             speakers_absolute_coord,
             crc: metadata_and_crc.1,
-            volume_spaces,
+            oao_spaces,
         }
     }
 
@@ -219,38 +219,41 @@ impl<R: Read, S: Sample> Iterator for BubFrameReader<R, S> {
         }
 
         // Volume Space
-        if let Some(volume_spaces) = &mut self.volume_spaces {
-            if self.pos % volume_spaces.frames_between_spaces == 0 {
-                let mut volume_space = VolumeSpace::new();
-                for x in 0..volume_spaces.range {
-                    let x =
-                        x as f64 * volume_spaces.vertex_spacing as f64 + volume_spaces.start as f64;
-                    for y in 0..volume_spaces.range {
-                        let y = y as f64 * volume_spaces.vertex_spacing as f64
-                            + volume_spaces.start as f64;
-                        for z in 0..volume_spaces.range {
-                            let z = z as f64 * volume_spaces.vertex_spacing as f64
-                                + volume_spaces.start as f64;
-                            let mut volumes = 0.0;
-                            if let Some(volume_and_interpreter_vec) =
-                                // TODO : Create method
-                                self.metadata.bub_fns.to_volume(
-                                        (x, y, z).into(),
-                                        self.pos as f64,
-                                        (self.pos - self.metadata.head_absolute_frame + 1) as f64,
-                                        self.metadata.frames as f64,
-                                        self.metadata.samples_per_sec,
-                                    )
-                            {
-                                for (volume, _) in volume_and_interpreter_vec {
-                                    volumes += volume;
+        if let Some(oao_spaces) = &mut self.oao_spaces {
+            if let Some(rgb) = self.metadata.bub_id.rgb {
+                if self.pos % oao_spaces.frames_between_spaces == 0 {
+                    let mut oao_space = OaoSpace::new();
+                    for x in 0..oao_spaces.range {
+                        let x =
+                            x as f64 * oao_spaces.vertex_spacing as f64 + oao_spaces.start as f64;
+                        for y in 0..oao_spaces.range {
+                            let y = y as f64 * oao_spaces.vertex_spacing as f64
+                                + oao_spaces.start as f64;
+                            for z in 0..oao_spaces.range {
+                                let z = z as f64 * oao_spaces.vertex_spacing as f64
+                                    + oao_spaces.start as f64;
+                                let mut volumes = 0.0;
+                                if let Some(volume_and_interpreter_vec) =
+                                    // TODO : Create method
+                                    self.metadata.bub_fns.to_volume(
+                                            (x, y, z).into(),
+                                            self.pos as f64,
+                                            (self.pos - self.metadata.head_absolute_frame + 1)
+                                                as f64,
+                                            self.metadata.frames as f64,
+                                            self.metadata.samples_per_sec,
+                                        )
+                                {
+                                    for (volume, _) in volume_and_interpreter_vec {
+                                        volumes += volume;
+                                    }
                                 }
+                                oao_space.vertices.push((rgb, volumes as f32).into());
                             }
-                            volume_space.space.push(volumes as f32);
                         }
                     }
+                    oao_spaces.spaces.push(oao_space);
                 }
-                volume_spaces.spaces.push(volume_space);
             }
         }
 

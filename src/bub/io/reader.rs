@@ -1,5 +1,5 @@
 use crate::bub::{BubFrameReader, BubFrameReaderKind, BubMetadata};
-use crate::{Coord, LpcmKind, Sample, VolumeSpaces};
+use crate::{Coord, LpcmKind, OaoSpaces, Sample};
 use mycrc::CRC;
 use std::fs::File;
 use std::io::{BufReader, Read, Result};
@@ -32,32 +32,32 @@ impl<R: Read> BubReader<R> {
     /// - type of sample must follow [`LpcmKind`]
     pub unsafe fn into_bub_frame_reader<S: Sample>(
         self,
-        volume_spaces: Option<VolumeSpaces>,
+        oao_spaces: Option<OaoSpaces>,
     ) -> BubFrameReader<R, S> {
         BubFrameReader::new(
             self.inner,
             (self.metadata, self.crc),
             self.speakers_absolute_coord,
-            volume_spaces,
+            oao_spaces,
         )
     }
 
     pub fn into_bub_frame_reader_kind(
         self,
-        volume_spaces: Option<VolumeSpaces>,
+        oao_spaces: Option<OaoSpaces>,
     ) -> BubFrameReaderKind<R> {
         match self.metadata.lpcm_kind() {
             LpcmKind::F32LE => BubFrameReaderKind::F32LE(BubFrameReader::<R, f32>::new(
                 self.inner,
                 (self.metadata, self.crc),
                 self.speakers_absolute_coord,
-                volume_spaces,
+                oao_spaces,
             )),
             LpcmKind::F64LE => BubFrameReaderKind::F64LE(BubFrameReader::<R, f64>::new(
                 self.inner,
                 (self.metadata, self.crc),
                 self.speakers_absolute_coord,
-                volume_spaces,
+                oao_spaces,
             )),
         }
     }

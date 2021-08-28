@@ -1,27 +1,31 @@
+use crate::Rgba;
+
 // TODO: Add feilds like frame_span, vertex_spacing, colors, and so on.
 // f32 -> f64 in the future
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct VolumeSpace {
-    pub space: Vec<f32>,
+pub struct OaoSpace {
+    pub vertices: Vec<Rgba>,
 }
 
-impl VolumeSpace {
+impl OaoSpace {
     pub const fn new() -> Self {
-        Self { space: Vec::new() }
+        Self {
+            vertices: Vec::new(),
+        }
     }
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct VolumeSpaces {
+pub struct OaoSpaces {
     /// Number of frames between spaces
     pub frames_between_spaces: u64,
     pub vertex_spacing: f32,
     pub start: f32,
     pub range: usize,
-    pub spaces: Vec<VolumeSpace>,
+    pub spaces: Vec<OaoSpace>,
 }
 
-impl VolumeSpaces {
+impl OaoSpaces {
     pub const fn new() -> Self {
         Self {
             frames_between_spaces: 3200,

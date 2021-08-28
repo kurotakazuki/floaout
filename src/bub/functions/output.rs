@@ -239,10 +239,8 @@ impl<'input> Output<'input, [u8], BubFnsVariable, StartAndLenSpan<u16, u16>> for
             | BubFnsVariable::Space => {
                 if let Choice::First(first) = cst.node.equal {
                     cst.node.equal = first.lhs.into();
-                    AST::from_cst(cst)
-                } else {
-                    AST::from_cst(cst)
                 }
+                AST::from_cst(cst)
             }
             // TODO
             // ExprInParentheses => {

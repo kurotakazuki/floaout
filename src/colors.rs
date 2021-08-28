@@ -42,6 +42,17 @@ impl From<(f32, f32, f32, f32)> for Rgba {
     }
 }
 
+impl From<(Rgb, f32)> for Rgba {
+    fn from(rgba: (Rgb, f32)) -> Self {
+        Self {
+            red: rgba.0.red,
+            green: rgba.0.green,
+            blue: rgba.0.blue,
+            alpha: rgba.1,
+        }
+    }
+}
+
 impl From<[f32; 4]> for Rgba {
     fn from(rgba: [f32; 4]) -> Self {
         Self {
