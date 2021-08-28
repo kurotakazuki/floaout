@@ -8,6 +8,7 @@ pub use crate::lpcm::{Frame, LpcmKind, Sample};
 pub use crate::space::{VolumeSpace, VolumeSpaces};
 
 pub mod bub;
+pub mod colors;
 pub mod coord;
 pub mod crc;
 pub mod io;
