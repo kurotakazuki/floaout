@@ -5,6 +5,7 @@ use std::io::{ErrorKind, Read, Result, Write};
 pub use crate::coord::Coord;
 pub use crate::crc::CRC_32K_4_2;
 pub use crate::lpcm::{Frame, LpcmKind, Sample};
+pub use crate::space::{VolumeSpace, VolumeSpaces};
 
 pub mod bub;
 pub mod coord;
@@ -12,6 +13,7 @@ pub mod crc;
 pub mod io;
 pub mod lpcm;
 pub mod oao;
+pub mod space;
 pub mod utils;
 pub mod wav;
 

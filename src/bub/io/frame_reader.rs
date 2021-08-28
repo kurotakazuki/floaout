@@ -4,7 +4,7 @@ use crate::bub::{
 };
 use crate::io::ReadExt;
 use crate::utils::read_crc;
-use crate::{Coord, Frame, FrameIOKind, FrameReader, Sample};
+use crate::{Coord, Frame, FrameIOKind, FrameReader, Sample, VolumeSpace, VolumeSpaces};
 use mycrc::CRC;
 use std::io::{Read, Result};
 use std::marker::PhantomData;
@@ -19,6 +19,8 @@ pub struct BubFrameReader<R: Read, S: Sample> {
     pub speakers_absolute_coord: Vec<Coord>,
     /// CRC
     pub crc: CRC<u32>,
+    /// Volume Spaces
+    pub volume_spaces: Option<VolumeSpaces>,
 }
 
 impl<R: Read, S: Sample> FrameReader<R, S> for BubFrameReader<R, S> {
@@ -50,6 +52,7 @@ impl<R: Read, S: Sample> BubFrameReader<R, S> {
         inner: R,
         metadata_and_crc: (BubMetadata, CRC<u32>),
         speakers_absolute_coord: Vec<Coord>,
+        volume_spaces: Option<VolumeSpaces>,
     ) -> Self {
         Self {
             inner,
@@ -58,6 +61,7 @@ impl<R: Read, S: Sample> BubFrameReader<R, S> {
             metadata: metadata_and_crc.0,
             speakers_absolute_coord,
             crc: metadata_and_crc.1,
+            volume_spaces,
         }
     }
 
@@ -87,7 +91,7 @@ impl<R: Read, S: Sample> BubFrameReader<R, S> {
         Ok(())
     }
     // IO
-    pub(crate) fn read_crc(&mut self) -> Result<()> {
+    fn read_crc(&mut self) -> Result<()> {
         read_crc(&mut self.inner, &mut self.crc)
     }
 
@@ -214,6 +218,39 @@ impl<R: Read, S: Sample> Iterator for BubFrameReader<R, S> {
             BubState::Ended => (),
         }
 
+        // Volume Space
+        if let Some(volume_spaces) = &mut self.volume_spaces {
+            if self.pos % volume_spaces.frames_between_spaces == 0 {
+                let mut volume_space = VolumeSpace::new();
+                for x in 0..volume_spaces.range {
+                    let x = x as f64 * volume_spaces.vertex_interval + volume_spaces.start;
+                    for y in 0..volume_spaces.range {
+                        let y = y as f64 * volume_spaces.vertex_interval + volume_spaces.start;
+                        for z in 0..volume_spaces.range {
+                            let z = z as f64 * volume_spaces.vertex_interval + volume_spaces.start;
+                            let mut volumes = 0.0;
+                            if let Some(volume_and_interpreter_vec) =
+                                // TODO : Create method
+                                self.metadata.bub_fns.to_volume(
+                                        (x, y, z).into(),
+                                        self.pos as f64,
+                                        (self.pos - self.metadata.head_absolute_frame + 1) as f64,
+                                        self.metadata.frames as f64,
+                                        self.metadata.samples_per_sec,
+                                    )
+                            {
+                                for (volume, _) in volume_and_interpreter_vec {
+                                    volumes += volume;
+                                }
+                            }
+                            volume_space.space.push(volumes);
+                        }
+                    }
+                }
+                volume_spaces.spaces.push(volume_space);
+            }
+        }
+
         Some(Ok(frame))
     }
 }
@@ -283,7 +320,7 @@ mod tests {
         .concat();
 
         let mut bub_frame_reader: BubFrameReader<&[u8], f32> =
-            BubFrameReader::new(data, (metadata, crc), speakers_absolute_coord);
+            BubFrameReader::new(data, (metadata, crc), speakers_absolute_coord, None);
 
         let expects = vec![
             (Head, [0.1, 0.0]),
@@ -361,7 +398,7 @@ mod tests {
         ]
         .concat();
         let mut bub_frame_reader: BubFrameReader<&[u8], f32> =
-            BubFrameReader::new(data, (metadata, crc), speakers_absolute_coord);
+            BubFrameReader::new(data, (metadata, crc), speakers_absolute_coord, None);
 
         let expects = vec![
             (Stopped, [0.0, 0.0]),

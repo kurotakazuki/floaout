@@ -1,5 +1,5 @@
 use crate::bub::{BubFrameReader, BubFrameReaderKind, BubMetadata};
-use crate::{Coord, LpcmKind, Sample};
+use crate::{Coord, LpcmKind, Sample, VolumeSpaces};
 use mycrc::CRC;
 use std::fs::File;
 use std::io::{BufReader, Read, Result};
@@ -30,25 +30,34 @@ impl<R: Read> BubReader<R> {
     ///
     /// This is unsafe, due to the type of sample isn’t checked:
     /// - type of sample must follow [`LpcmKind`]
-    pub unsafe fn into_bub_frame_reader<S: Sample>(self) -> BubFrameReader<R, S> {
+    pub unsafe fn into_bub_frame_reader<S: Sample>(
+        self,
+        volume_spaces: Option<VolumeSpaces>,
+    ) -> BubFrameReader<R, S> {
         BubFrameReader::new(
             self.inner,
             (self.metadata, self.crc),
             self.speakers_absolute_coord,
+            volume_spaces,
         )
     }
 
-    pub fn into_bub_frame_reader_kind(self) -> BubFrameReaderKind<R> {
+    pub fn into_bub_frame_reader_kind(
+        self,
+        volume_spaces: Option<VolumeSpaces>,
+    ) -> BubFrameReaderKind<R> {
         match self.metadata.lpcm_kind() {
             LpcmKind::F32LE => BubFrameReaderKind::F32LE(BubFrameReader::<R, f32>::new(
                 self.inner,
                 (self.metadata, self.crc),
                 self.speakers_absolute_coord,
+                volume_spaces,
             )),
             LpcmKind::F64LE => BubFrameReaderKind::F64LE(BubFrameReader::<R, f64>::new(
                 self.inner,
                 (self.metadata, self.crc),
                 self.speakers_absolute_coord,
+                volume_spaces,
             )),
         }
     }
@@ -90,11 +99,11 @@ mod tests {
         let bub_reader =
             BubReader::open("tests/lpcm_test.bub", speakers_absolute_coord.clone()).unwrap();
         assert!(bub_reader
-            .into_bub_frame_reader_kind()
+            .into_bub_frame_reader_kind(None)
             .into_f64_le()
             .is_err());
         let bub_reader = BubReader::open("tests/lpcm_test.bub", speakers_absolute_coord).unwrap();
-        let mut bub_frame_reader = bub_reader.into_bub_frame_reader_kind().into_f32_le()?;
+        let mut bub_frame_reader = bub_reader.into_bub_frame_reader_kind(None).into_f32_le()?;
 
         let expects = vec![
             (Head, [0.1, 0.0]),
@@ -125,11 +134,11 @@ mod tests {
         let bub_reader =
             BubReader::open("tests/expr_test.bub", speakers_absolute_coord.clone()).unwrap();
         assert!(bub_reader
-            .into_bub_frame_reader_kind()
+            .into_bub_frame_reader_kind(None)
             .into_f32_le()
             .is_err());
         let bub_reader = BubReader::open("tests/expr_test.bub", speakers_absolute_coord).unwrap();
-        let mut bub_frame_reader = bub_reader.into_bub_frame_reader_kind().into_f64_le()?;
+        let mut bub_frame_reader = bub_reader.into_bub_frame_reader_kind(None).into_f64_le()?;
 
         let expects = vec![
             (Stopped, [0.0, 0.0]),
