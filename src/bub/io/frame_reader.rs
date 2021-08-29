@@ -232,6 +232,7 @@ impl<R: Read, S: Sample> Iterator for BubFrameReader<R, S> {
                             for z in 0..oao_spaces.range {
                                 let z = z as f64 * oao_spaces.vertex_spacing as f64
                                     + oao_spaces.start as f64;
+                                // Get Volumes
                                 let mut volumes = 0.0;
                                 if let Some(volume_and_interpreter_vec) =
                                     // TODO : Create method
