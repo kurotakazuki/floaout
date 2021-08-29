@@ -145,22 +145,20 @@ impl<R: Read, B: Read + Clone, S: Sample> Iterator for OaoFrameReader<R, B, S> {
                     if let Some(spaces) = &self.bub_frame_readers[i].oao_spaces {
                         if let Some(last_space) = spaces.spaces.last() {
                             for pos in 0..num_of_vertices {
+                                let last_alpha = last_space.vertices[pos].alpha;
                                 let r = soft_light(
                                     oao_space.vertices[pos].red,
-                                    last_space.vertices[pos].red,
+                                    last_space.vertices[pos].red * last_alpha,
                                 );
                                 let g = soft_light(
                                     oao_space.vertices[pos].green,
-                                    last_space.vertices[pos].green,
+                                    last_space.vertices[pos].green * last_alpha,
                                 );
                                 let b = soft_light(
                                     oao_space.vertices[pos].blue,
-                                    last_space.vertices[pos].blue,
+                                    last_space.vertices[pos].blue * last_alpha,
                                 );
-                                let a = soft_light(
-                                    oao_space.vertices[pos].alpha,
-                                    last_space.vertices[pos].alpha,
-                                );
+                                let a = soft_light(oao_space.vertices[pos].alpha, last_alpha);
                                 oao_space.vertices[pos] = (r, g, b, a).into();
                             }
                         }

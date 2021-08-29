@@ -7,7 +7,7 @@ pub fn soft_light(a: f32, b: f32) -> f32 {
         } else {
             a.sqrt()
         };
-        a + (2.0 * b) * (g_a - a)
+        a + (2.0 * b - 1.0) * (g_a - a)
     }
 }
 
