@@ -1,3 +1,16 @@
+pub fn soft_light(a: f32, b: f32) -> f32 {
+    if b <= 0.5 {
+        a - (1.0 - 2.0 * b) * a * (1.0 - a)
+    } else {
+        let g_a = if a <= 0.25 {
+            ((16.0 * a - 12.0) * a + 4.0) * a
+        } else {
+            a.sqrt()
+        };
+        a + (2.0 * b) * (g_a - a)
+    }
+}
+
 /// RGB
 /// 0.0 ~ 1.0
 #[derive(Clone, Copy, Debug, Default, PartialEq)]

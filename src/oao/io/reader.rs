@@ -1,6 +1,6 @@
 use crate::bub::BubFrameReader;
 use crate::oao::{OaoFrameReader, OaoMetadata};
-use crate::{BubFnsCoord, Sample};
+use crate::{BubFnsCoord, OaoSpaces, Sample};
 use std::fs::File;
 use std::io::{BufReader, Read, Result};
 use std::path::Path;
@@ -31,12 +31,14 @@ impl<R: Read> OaoReader<R> {
     pub unsafe fn into_oao_frame_reader<B: Read + Clone, S: Sample>(
         self,
         bub_frame_readers: Vec<BubFrameReader<B, S>>,
+        oao_spaces: Option<OaoSpaces>,
     ) -> OaoFrameReader<R, B, S> {
         OaoFrameReader::new(
             self.inner,
             self.metadata,
             self.speakers_absolute_coord,
             bub_frame_readers,
+            oao_spaces,
         )
     }
 

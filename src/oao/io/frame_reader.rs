@@ -1,6 +1,7 @@
 use crate::bub::BubFrameReader;
+use crate::colors::soft_light;
 use crate::oao::{BubInOao, OaoMetadata};
-use crate::{BubFnsCoord, Frame, FrameIOKind, FrameReader, Sample};
+use crate::{BubFnsCoord, Frame, FrameIOKind, FrameReader, OaoSpace, OaoSpaces, Sample};
 use std::io::{Read, Result};
 use std::marker::PhantomData;
 
@@ -16,6 +17,9 @@ pub struct OaoFrameReader<R: Read, B: Read + Clone, S: Sample> {
     pub bubs: Vec<(BubInOao, BubFrameReader<B, S>)>,
     /// Bubble Frame Readers
     pub bub_frame_readers: Vec<BubFrameReader<B, S>>,
+
+    /// Floaout Spaces
+    pub oao_spaces: Option<OaoSpaces>,
 }
 
 impl<R: Read, B: Read + Clone, S: Sample> FrameReader<R, S> for OaoFrameReader<R, B, S> {
@@ -48,6 +52,7 @@ impl<R: Read, B: Read + Clone, S: Sample> OaoFrameReader<R, B, S> {
         metadata: OaoMetadata,
         speakers_absolute_coord: Vec<BubFnsCoord>,
         bub_frame_readers: Vec<BubFrameReader<B, S>>,
+        oao_spaces: Option<OaoSpaces>,
     ) -> Self {
         // TODO: Is same bubs length?
         let mut bubs = Vec::with_capacity(metadata.bubs.len());
@@ -63,6 +68,7 @@ impl<R: Read, B: Read + Clone, S: Sample> OaoFrameReader<R, B, S> {
             // Buffers
             bubs,
             bub_frame_readers: Vec::new(),
+            oao_spaces,
         }
     }
 
@@ -122,6 +128,47 @@ impl<R: Read, B: Read + Clone, S: Sample> Iterator for OaoFrameReader<R, B, S> {
 
         if let Err(e) = self.read_bub_frame_readers_frame(&mut frame) {
             return Some(Err(e));
+        }
+
+        // Volume Space
+        if let Some(oao_spaces) = &mut self.oao_spaces {
+            if self.pos % oao_spaces.frames_between_spaces == 0 {
+                let num_of_vertices = oao_spaces.range.pow(3);
+                let num_of_bub_frame_reader = self.bub_frame_readers.len();
+                let mut oao_space = OaoSpace::new();
+                oao_space
+                    .vertices
+                    .resize(num_of_vertices, (0.5, 0.5, 0.5, 0.5).into());
+
+                // Each current bub_frame_reader
+                for i in 0..num_of_bub_frame_reader {
+                    if let Some(spaces) = &self.bub_frame_readers[i].oao_spaces {
+                        if let Some(last_space) = spaces.spaces.last() {
+                            for pos in 0..num_of_vertices {
+                                let r = soft_light(
+                                    oao_space.vertices[pos].red,
+                                    last_space.vertices[pos].red,
+                                );
+                                let g = soft_light(
+                                    oao_space.vertices[pos].green,
+                                    last_space.vertices[pos].green,
+                                );
+                                let b = soft_light(
+                                    oao_space.vertices[pos].blue,
+                                    last_space.vertices[pos].blue,
+                                );
+                                let a = soft_light(
+                                    oao_space.vertices[pos].alpha,
+                                    last_space.vertices[pos].alpha,
+                                );
+                                oao_space.vertices[pos] = (r, g, b, a).into();
+                            }
+                        }
+                    }
+                }
+
+                oao_spaces.spaces.push(oao_space);
+            }
         }
 
         Some(Ok(frame))
