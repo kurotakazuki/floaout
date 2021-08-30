@@ -1,4 +1,7 @@
 # Floaout
+[![Crate](https://img.shields.io/crates/v/floaout.svg)](https://crates.io/crates/floaout)
+[![API](https://docs.rs/floaout/badge.svg)](https://docs.rs/floaout)
+
 Floaout is the next-generation audio format.
 
 # Bubble File Format Specification
