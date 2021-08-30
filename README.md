@@ -1,16 +1,6 @@
 # Floaout
 Floaout is the next-generation audio format.
 
-# TODO
-- Use generic type in `Color` and `Space`.
-- Add `read_bub_fns_block` in BubFrameReader
-- error handling
-- Clarify whether #[derive(Order)] is needed
-- Add Position field in BubfnsInterpreter
-- Check file is supported version or not
-- Parallel computing
-- Add Functions like pow, sinh, ...
-
 # Bubble File Format Specification
 
 ## Metadata
@@ -337,3 +327,14 @@ Bubble Files will be 'i.bub' (i = 0, ... , Bubbles - 1)
 | ... | ... | ... |
 | Bubble Starting Frame | `u64` (8) | Bubble Starting Frame |
 | CRC-32K/4.2 | `u32` (4) | From the previous CRC. |
+
+
+# TODO
+- Use generic type in `Color` and `Space`.
+- Add `read_bub_fns_block` in BubFrameReader
+- error handling
+- Clarify whether #[derive(Order)] is needed
+- Add Position field in BubfnsInterpreter
+- Check file is supported version or not
+- Parallel computing
+- Add Functions like pow, sinh, ...
