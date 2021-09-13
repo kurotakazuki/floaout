@@ -53,19 +53,19 @@ Algorithm::<u32> {
 ## Bubble Sample
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
-| Functions size | `u16` (1) | Functions size |
-| Bubble's X coordinate | `Sum` | Bubble's X coordinate (X_0) |
+| Bubble Functions size | `u16` (1) | Bubble Functions size |
+| Bubble's absolute X coordinate | `Sum` | Bubble's absolute X coordinate (X_0) |
 | Space | `char` (1) | ' ' |
-| Bubble's Y coordinate | `Sum` | Bubble's Y coordinate (Y_0) |
+| Bubble's absolute Y coordinate | `Sum` | Bubble's absolute Y coordinate (Y_0) |
 | Space | `char` (1) | ' ' |
-| Bubble's Z coordinate | `Sum` | Bubble's Z coordinate (Z_0) |
+| Bubble's absolute Z coordinate | `Sum` | Bubble's absolute Z coordinate (Z_0) |
 | Space | `char` (1) | ' ' |
 | Domain | `OrOrExpr` |  |
 | Space | `char` (1) | ' ' |
 | Volume | `Sum` |  |
 | Space or Empty | `char` (1) | ' ' if there is another |
-| Foot Relative Frame | `u64` (8) | Number of frames at the end of function. |
-| Next Head Relative Frame | `Option<u64>` (8) | Number of frames at the start of the next function. `None` if 0. |
+| Foot Relative Frame | `u64` (8) | Number of frames at the end of `BubFnsBlock`. |
+| Next Head Relative Frame | `Option<u64>` (8) | Number of frames at the start of the next `BubFnsBlock`. `None` if 0. |
 | Sample Data |  | Sample Data |
 | CRC-32K/4.2 | `u32` (4) | After every foot frames. From the previous CRC. |
 
@@ -94,7 +94,7 @@ Algorithm::<u32> {
 | y | y = Y - Y_0 (Y_0 is Bubble's absolute Y coordinate). Speaker's relative Y coordinate. |
 | z | z = Z - Z_0 (Z_0 is Bubble's absolute Z coordinate). Speaker's relative Z coordinate. |
 | N | Absolute frame n. Number of frames starting from the file. (`as f64`) |
-| n | Relative frame n. Number of frames starting from the function.(`as f64`) |
+| n | Relative frame n. Number of frames starting from at the start of `BubFnsBlock`.(`as f64`) |
 | F | Frames (`as f64`) |
 | S | Samples per sec |
 
@@ -323,7 +323,7 @@ Bubble Files will be 'i.bub' (i = 0, ... , Bubbles - 1)
 
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
-| Name Size | `u8` (1) | Name Size (0~255) |
+| File Name Size | `u8` (1) | File Name Size (0~255) |
 | File Name | `String` | Bubble File Name without ".bub" (UTF-8) |
 | Bubble Starting Frames | `u16` (2) | Number of Bubble Starting Frames |
 | Bubble Starting Frame | `u64` (8) | Bubble Starting Frame |
