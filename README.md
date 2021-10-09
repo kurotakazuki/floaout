@@ -10,7 +10,7 @@ Floaout is the next-generation audio format.
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
 | Spec Version | `u8` (1) | Version of Bubble File Format Specification. |
-| Bubble ID | `u128` (16) | Bubble ID of this file. The value is 0 if the Bubble is undefined. |
+| Bubble ID | `u128` (16) | Bubble ID of this file. The value is 0 if the Bubble is undefined. If it is not 0, it must be based on the ID managed by bkbkb.net. |
 | Bubble Version | `u16` (2) | Version of Bubble |
 | Frames | `u64` (8) | Number of frames |
 | First Head Absolute Frame | `u64` (8) | First Head Absolute Frame |
@@ -306,7 +306,7 @@ Space = ' ' () / f
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
 | Spec Version | `u8` (1) | Version of Floaout File Format Specification. |
-| Floaout ID | `u128` (16) | Floaout ID of this file. The value is 0 if the song is undefined. |
+| Floaout ID | `u128` (16) | Floaout ID of this file. The value is 0 if the song is undefined. If it is not 0, it must be based on the ID managed by bkbkb.net. |
 | Floaout Version | `u16` (2) | Version of Floaout |
 | Bubbles | `u16` (2) | Number of Bubbles |
 | Frames | `u64` (8) | Number of frames |
@@ -331,6 +331,15 @@ Bubble Files will be 'i.bub' (i = 0, ... , Bubbles - 1)
 | Bubble Starting Frame | `u64` (8) | Bubble Starting Frame |
 | CRC-32K/4.2 | `u32` (4) | From the previous CRC. |
 
+
+# Library License
+
+- [MIT](LICENSE-MIT) OR [Apache-2.0](LICENSE-APACHE)
+
+# Format License
+- Except modify or derive from these formats specification, anyone can use or create these formats the way each wants.
+
+- these formats = { Bubble, Floaout }
 
 # TODO
 - Use generic type in `Color` and `Space`.
