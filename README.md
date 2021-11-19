@@ -341,6 +341,9 @@ Bubble Files will be 'i.bub' (i = 0, ... , Bubbles - 1)
 
 - these formats = { Bubble, Floaout }
 
+
+(As a precaution, copyrights and other intellectual property rights belong to the artists and their associates.)
+
 # TODO
 - Use generic type in `Color` and `Space`.
 - Add `read_bub_fns_block` in BubFrameReader
