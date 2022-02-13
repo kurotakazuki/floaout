@@ -1,1049 +1,166 @@
-use crate::bub::functions::variable::{BubFnsVariable, BubFnsVariable::*};
+use crate::bub::functions::BubFnsRules;
+use crate::bub::functions::{BubFnsVariable, BubFnsVariable::*};
 
-use mpl::choices::{First, Second};
 use mpl::rules::{RightRule, Rules};
-use mpl::symbols::{Metasymbol::*, TerminalSymbol, U8SliceTerminal, U8SliceTerminal::*, E};
-
-pub struct BubFnsRules;
+use mpl::symbols::U8SliceTerminal;
 
 type Rule<'a> = RightRule<U8SliceTerminal<'a>, BubFnsVariable>;
-
-impl<'a> BubFnsRules {
-    // BubFns
-    /// BubFns = BubFn ZeroOrMoreBubFns / f
-    const BUBBLE_FUNCTIONS_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(BubFn),
-            rhs: E::V(ZeroOrMoreBubFns),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// ZeroOrMoreBubFns = SpaceAndBubFn ZeroOrMoreBubFns / ()
-    const ZERO_OR_MORE_BUBBLE_FUNCTIONS_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(SpaceAndBubFn),
-            rhs: E::V(ZeroOrMoreBubFns),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Empty))),
-    };
-    /// SpaceAndBubFn = Space BubFn / f
-    const SPACE_AND_BUBBLE_FUNCTION_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Space),
-            rhs: E::V(BubFn),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-
-    // BubFn
-    /// BubFn = SumAndSpace BubFn1 / f
-    const BUBBLE_FUNCTION_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(SumAndSpace),
-            rhs: E::V(BubFn1),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// BubFn1 = SumAndSpace BubFn2 / f
-    const BUBBLE_FUNCTION1_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(SumAndSpace),
-            rhs: E::V(BubFn2),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// BubFn2 = SumAndSpace BubFn3 / f
-    const BUBBLE_FUNCTION2_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(SumAndSpace),
-            rhs: E::V(BubFn3),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// BubFn3 = OrOrExprAndSpace BubFn4 / f
-    const BUBBLE_FUNCTION3_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(OrOrExprAndSpace),
-            rhs: E::V(BubFn4),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// BubFn4 = Sum () / f
-    const BUBBLE_FUNCTION4_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Sum),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-
-    /// SumAndSpace = Sum Space / f
-    const SUM_AND_SPACE_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Sum),
-            rhs: E::V(Space),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// OrOrExprAndSpace = OrOrExpr Space / f
-    const OR_OR_EXPRESSION_AND_SPACE_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(OrOrExpr),
-            rhs: E::V(Space),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-
-    // OrOr Expr
-    /// OrOrExpr = AndAndExpr OrOrExpr1 / AndAndExpr
-    const OR_OR_EXPRESSION_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(AndAndExpr),
-            rhs: E::V(OrOrExpr1),
-        },
-        second: Second(E::V(AndAndExpr)),
-    };
-    /// OrOrExpr1 = OrOr OrOrExpr / f
-    const OR_OR_EXPRESSION1_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(OrOr),
-            rhs: E::V(OrOrExpr),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// OrOr = "||" () / f
-    const OR_OR_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Str("||"))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-
-    // AndAnd Expr
-    /// AndAndExpr = ComparisonExpr AndAndExpr1 / ComparisonExpr
-    const AND_AND_EXPRESSION_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(ComparisonExpr),
-            rhs: E::V(AndAndExpr1),
-        },
-        second: Second(E::V(ComparisonExpr)),
-    };
-    /// AndAndExpr1 = AndAnd AndAndExpr / f
-    const AND_AND_EXPRESSION1_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(AndAnd),
-            rhs: E::V(AndAndExpr),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// AndAnd = "&&" () / f
-    const AND_AND_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Str("&&"))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-
-    // Comparison Expr
-    /// ComparisonExpr = Sum ComparisonExpr1 / f
-    const COMPARISON_EXPRESSION_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Sum),
-            rhs: E::V(ComparisonExpr1),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// ComparisonExpr1 = Comparison Sum / f
-    const COMPARISON_EXPRESSION1_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Comparison),
-            rhs: E::V(Sum),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-
-    // Comparison
-    /// Comparison = EqEq () / Comparison1
-    const COMPARISON_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(EqEq),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Comparison1)),
-    };
-    /// Comparison1 = Ne () / Comparison2
-    const COMPARISON1_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Ne),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Comparison2)),
-    };
-    /// Comparison2 = Ge () / Comparison3
-    const COMPARISON2_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Ge),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Comparison3)),
-    };
-    /// Comparison3 = Le () / Comparison4
-    const COMPARISON3_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Le),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Comparison4)),
-    };
-    /// Comparison4 = Gt () / Comparison5
-    const COMPARISON4_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Gt),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Comparison5)),
-    };
-    /// Comparison5 = Lt () / f
-    const COMPARISON5_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Lt),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-
-    /// EqEq = "==" () / f
-    const EQ_EQ_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Str("=="))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// Ne = "!=" () / f
-    const NE_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Str("!="))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// Ge = ">=" () / f
-    const GE_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Str(">="))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// Le = "<=" () / f
-    const LE_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Str("<="))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// Gt = '>' () / f
-    const GT_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('>'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// Lt = '<' () / f
-    const LT_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('<'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-
-    // Sum
-    /// Sum = Term ZeroOrMorePlusOrMinusAndTerms / f
-    const SUM_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Term),
-            rhs: E::V(ZeroOrMorePlusOrMinusAndTerms),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// ZeroOrMorePlusOrMinusAndTerms = PlusOrMinusAndTerm ZeroOrMorePlusOrMinusAndTerms / ()
-    const ZERO_OR_MORE_PLUS_OR_MINUS_AND_TERM_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(PlusOrMinusAndTerm),
-            rhs: E::V(ZeroOrMorePlusOrMinusAndTerms),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Empty))),
-    };
-    /// PlusOrMinusAndTerm = PlusOrMinus Term / f
-    const PLUS_OR_MINUS_AND_TERM_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(PlusOrMinus),
-            rhs: E::V(Term),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-
-    // Term
-    /// Term = Factor ZeroOrMoreStarOrSlashAndFactors / f
-    const TERM_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Factor),
-            rhs: E::V(ZeroOrMoreStarOrSlashAndFactors),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// ZeroOrMoreStarOrSlashAndFactors = StarOrSlashAndFactor ZeroOrMoreStarOrSlashAndFactors / ()
-    const ZERO_OR_MORE_STAR_OR_SLASH_AND_FACTOR_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(StarOrSlashAndFactor),
-            rhs: E::V(ZeroOrMoreStarOrSlashAndFactors),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Empty))),
-    };
-    /// StarOrSlashAndFactor = StarOrSlash Factor / f
-    const STAR_OR_SLASH_AND_FACTOR_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(StarOrSlash),
-            rhs: E::V(Factor),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-
-    // Factor
-    /// Factor = PlusOrMinus Factor / Power
-    const FACTOR_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(PlusOrMinus),
-            rhs: E::V(Factor),
-        },
-        second: Second(E::V(Power)),
-    };
-
-    // Power
-    /// Power = Atom PowerAndFactor / Atom
-    const POWER_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Atom),
-            rhs: E::V(PowerAndFactor),
-        },
-        second: Second(E::V(Atom)),
-    };
-    /// PowerAndFactor = '^' Factor / f
-    const POWER_AND_FACTOR_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('^'))),
-            rhs: E::V(Factor),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-
-    // Atom
-    /// Atom = ExprInParentheses () / Atom1
-    const ATOM_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(ExprInParentheses),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Atom1)),
-    };
-    /// Atom1 = FloatLiteral () / Atom2
-    const ATOM1_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(FloatLiteral),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Atom2)),
-    };
-    /// Atom2 = IntegerLiteral () / Atom3
-    const ATOM2_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(IntegerLiteral),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Atom3)),
-    };
-    /// Atom3 = Function () / Atom4
-    const ATOM3_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Function),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Atom4)),
-    };
-    /// Atom4 = Variable () / Atom5
-    const ATOM4_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Variable),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Atom5)),
-    };
-    /// Atom5 = Constant () / f
-    const ATOM5_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Constant),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-
-    // Variable
-    /// Variable = UppercaseX () / Variable1
-    const VARIABLE_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(UppercaseX),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Variable1)),
-    };
-    /// Variable1 = UppercaseY () / Variable2
-    const VARIABLE1_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(UppercaseY),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Variable2)),
-    };
-    /// Variable2 = UppercaseZ () / Variable3
-    const VARIABLE2_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(UppercaseZ),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Variable3)),
-    };
-    /// Variable3 = LowercaseX () / Variable4
-    const VARIABLE3_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(LowercaseX),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Variable4)),
-    };
-    /// Variable4 = LowercaseY () / Variable5
-    const VARIABLE4_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(LowercaseY),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Variable5)),
-    };
-    /// Variable5 = LowercaseZ () / Variable6
-    const VARIABLE5_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(LowercaseZ),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Variable6)),
-    };
-    /// Variable6 = UppercaseN () / Variable7
-    const VARIABLE6_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(UppercaseN),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Variable7)),
-    };
-    /// Variable7 = LowercaseN () / Variable8
-    const VARIABLE7_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(LowercaseN),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Variable8)),
-    };
-    /// Variable8 = LowercaseN () / Variable9
-    const VARIABLE8_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(UppercaseF),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Variable9)),
-    };
-    /// Variable9 = UppercaseS () / f
-    const VARIABLE9_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(UppercaseS),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-
-    /// UppercaseX = 'X' () / f
-    const UPPERCASE_X_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('X'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// UppercaseY = 'Y' () / f
-    const UPPERCASE_Y_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('Y'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// UppercaseZ = 'Z' () / f
-    const UPPERCASE_Z_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('Z'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// LowercaseX = 'x' () / f
-    const LOWERCASE_X_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('x'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// LowercaseY = 'y' () / f
-    const LOWERCASE_Y_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('y'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// LowercaseZ = 'z' () / f
-    const LOWERCASE_Z_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('z'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// UppercaseN = 'N' () / f
-    const UPPERCASE_N_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('N'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// LowercaseN = 'n' () / f
-    const LOWERCASE_N_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('n'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// UppercaseF = 'F' () / f
-    const UPPERCASE_F_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('F'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// UppercaseS = 'S' () / f
-    const UPPERCASE_S_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('S'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-
-    // Constant
-    /// Constant = E () / Constant1
-    const CONSTANT_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(E),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Constant1)),
-    };
-    /// Constant1 = Pi () / f
-    const CONSTANT1_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Pi),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// E = 'E' () / f
-    const E_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('E'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// Pi = "PI" () / f
-    const PI_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Str("PI"))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-
-    // Function
-    const FUNCTION_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Sine),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Function1)),
-    };
-    const FUNCTION1_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Cosine),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Function2)),
-    };
-    const FUNCTION2_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Tangent),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Function3)),
-    };
-    const FUNCTION3_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Ln),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(Function4)),
-    };
-    const FUNCTION4_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Lg),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// `Sine = "sin" Factor / f`
-    const SINE_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Str("sin"))),
-            rhs: E::V(Factor),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// Cosine = "cos" Factor / f
-    const COSINE_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Str("cos"))),
-            rhs: E::V(Factor),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// Tangent = "tan" Factor / f
-    const TANGENT_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Str("tan"))),
-            rhs: E::V(Factor),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// Ln = "ln" Factor / f
-    const LN_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Str("ln"))),
-            rhs: E::V(Factor),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// Lg = "lg" Factor / f
-    const LG_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Str("lg"))),
-            rhs: E::V(Factor),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-
-    // Delimiters
-    /// ExprInParentheses = '(' ExprAndClose / f
-    const EXPRESSION_IN_PARENTHESES_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('('))),
-            rhs: E::V(ExprAndClose),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// ExprAndClose = Expr ')' / f
-    const EXPRESSION_AND_CLOSE_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Sum),
-            rhs: E::T(TerminalSymbol::Original(Char(')'))),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-
-    // Integer
-    /// IntegerLiteral = DecLiteral () / f
-    const INTEGER_LITERAL_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(DecLiteral),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-
-    // Float
-    /// FloatLiteral = DecLiteral PointAndDecLiteral / BytesF64Literal
-    const FLOAT_LITERAL_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(DecLiteral),
-            rhs: E::V(PointAndDecLiteral),
-        },
-        second: Second(E::V(BytesF64Literal)),
-    };
-    /// PointAndDecLiteral = '.' DecLiteral / f
-    const POINT_AND_DEC_LITERAL_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('.'))),
-            rhs: E::V(DecLiteral),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// BytesF64Literal = 'b' ???????? / f
-    const BYTES_F64_LITERAL_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('b'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Any(8))),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-
-    // Dec
-    /// DecLiteral = DecDigit ZeroOrMoreDecDigits / f
-    const DEC_LITERAL_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(DecDigit),
-            rhs: E::V(ZeroOrMoreDecDigits),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// ZeroOrMoreDecDigits = DecDigit ZeroOrMoreDecDigits / ()
-    const ZERO_OR_DEC_LITERAL_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(DecDigit),
-            rhs: E::V(ZeroOrMoreDecDigits),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Empty))),
-    };
-
-    /// DecDigit = '0' () / DecDigit1
-    const DEC_DIGIT_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('0'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(DecDigit1)),
-    };
-    /// DecDigit1 = '1' () / DecDigit2
-    const DEC_DIGIT1_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('1'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(DecDigit2)),
-    };
-    /// DecDigit2 = '2' () / DecDigit3
-    const DEC_DIGIT2_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('2'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(DecDigit3)),
-    };
-    /// DecDigit3 = '3' () / DecDigit4
-    const DEC_DIGIT3_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('3'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(DecDigit4)),
-    };
-    /// DecDigit4 = '4' () / DecDigit5
-    const DEC_DIGIT4_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('4'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(DecDigit5)),
-    };
-    /// DecDigit5 = '5' () / DecDigit6
-    const DEC_DIGIT5_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('5'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(DecDigit6)),
-    };
-    /// DecDigit6 = '6' () / DecDigit7
-    const DEC_DIGIT6_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('6'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(DecDigit7)),
-    };
-    /// DecDigit7 = '7' () / DecDigit8
-    const DEC_DIGIT7_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('7'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(DecDigit8)),
-    };
-    /// DecDigit8 = '8' () / '9'
-    const DEC_DIGIT8_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('8'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Original(Char('9')))),
-    };
-
-    // Others
-    /// PlusOrMinus = Plus () / PlusOrMinus1
-    const PLUS_OR_MINUS_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Plus),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(PlusOrMinus1)),
-    };
-    /// PlusOrMinus1 = Minus () / f
-    const PLUS_OR_MINUS1_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Minus),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// Plus = '+' () / f
-    const PLUS_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('+'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// Minus = '-' () / f
-    const MINUS_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('-'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-
-    /// StarOrSlash = Star () / StarOrSlash1
-    const STAR_OR_SLASH_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Star),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::V(StarOrSlash1)),
-    };
-    /// StarOrSlash1 = Slash () / f
-    const STAR_OR_SLASH1_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::V(Slash),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// Star = '*' () / f
-    const STAR_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('*'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-    /// Slash = '/' () / f
-    const SLASH_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char('/'))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-
-    /// Space = ' ' () / f
-    const SPACE_RULE: Rule<'a> = RightRule {
-        first: First {
-            lhs: E::T(TerminalSymbol::Original(Char(' '))),
-            rhs: E::T(TerminalSymbol::Metasymbol(Empty)),
-        },
-        second: Second(E::T(TerminalSymbol::Metasymbol(Failure))),
-    };
-}
 
 impl<'a> Rules<U8SliceTerminal<'a>, BubFnsVariable> for BubFnsRules {
     fn get(&self, variable: &BubFnsVariable) -> Option<&Rule<'a>> {
         Some(match variable {
             // BubFns
-            BubFns => &Self::BUBBLE_FUNCTIONS_RULE,
-            ZeroOrMoreBubFns => &Self::ZERO_OR_MORE_BUBBLE_FUNCTIONS_RULE,
+            BubFns => &Self::BubFns_RULE,
+            ZeroOrMoreBubFns => &Self::ZeroOrMoreBubFns_RULE,
 
-            SpaceAndBubFn => &Self::SPACE_AND_BUBBLE_FUNCTION_RULE,
+            SpaceAndBubFn => &Self::SpaceAndBubFn_RULE,
 
             // BubFn
-            BubFn => &Self::BUBBLE_FUNCTION_RULE,
-            BubFn1 => &Self::BUBBLE_FUNCTION1_RULE,
-            BubFn2 => &Self::BUBBLE_FUNCTION2_RULE,
-            BubFn3 => &Self::BUBBLE_FUNCTION3_RULE,
-            BubFn4 => &Self::BUBBLE_FUNCTION4_RULE,
+            BubFn => &Self::BubFn_RULE,
+            BubFn1 => &Self::BubFn1_RULE,
+            BubFn2 => &Self::BubFn2_RULE,
+            BubFn3 => &Self::BubFn3_RULE,
+            BubFn4 => &Self::BubFn4_RULE,
 
-            SumAndSpace => &Self::SUM_AND_SPACE_RULE,
-            OrOrExprAndSpace => &Self::OR_OR_EXPRESSION_AND_SPACE_RULE,
+            SumAndSpace => &Self::SumAndSpace_RULE,
+            OrOrExprAndSpace => &Self::OrOrExprAndSpace_RULE,
 
             // OrOr Expr
-            OrOrExpr => &Self::OR_OR_EXPRESSION_RULE,
-            OrOrExpr1 => &Self::OR_OR_EXPRESSION1_RULE,
+            OrOrExpr => &Self::OrOrExpr_RULE,
+            OrOrExpr1 => &Self::OrOrExpr1_RULE,
 
-            OrOr => &Self::OR_OR_RULE,
+            OrOr => &Self::OrOr_RULE,
 
             // AndAnd Expr
-            AndAndExpr => &Self::AND_AND_EXPRESSION_RULE,
-            AndAndExpr1 => &Self::AND_AND_EXPRESSION1_RULE,
+            AndAndExpr => &Self::AndAndExpr_RULE,
+            AndAndExpr1 => &Self::AndAndExpr1_RULE,
 
-            AndAnd => &Self::AND_AND_RULE,
+            AndAnd => &Self::AndAnd_RULE,
 
             // Comparison Expr
-            ComparisonExpr => &Self::COMPARISON_EXPRESSION_RULE,
-            ComparisonExpr1 => &Self::COMPARISON_EXPRESSION1_RULE,
+            ComparisonExpr => &Self::ComparisonExpr_RULE,
+            ComparisonExpr1 => &Self::ComparisonExpr1_RULE,
 
-            Comparison => &Self::COMPARISON_RULE,
-            Comparison1 => &Self::COMPARISON1_RULE,
-            Comparison2 => &Self::COMPARISON2_RULE,
-            Comparison3 => &Self::COMPARISON3_RULE,
-            Comparison4 => &Self::COMPARISON4_RULE,
-            Comparison5 => &Self::COMPARISON5_RULE,
+            Comparison => &Self::Comparison_RULE,
+            Comparison1 => &Self::Comparison1_RULE,
+            Comparison2 => &Self::Comparison2_RULE,
+            Comparison3 => &Self::Comparison3_RULE,
+            Comparison4 => &Self::Comparison4_RULE,
+            Comparison5 => &Self::Comparison5_RULE,
 
-            EqEq => &Self::EQ_EQ_RULE,
-            Ne => &Self::NE_RULE,
-            Ge => &Self::GE_RULE,
-            Le => &Self::LE_RULE,
-            Gt => &Self::GT_RULE,
-            Lt => &Self::LT_RULE,
+            EqEq => &Self::EqEq_RULE,
+            Ne => &Self::Ne_RULE,
+            Ge => &Self::Ge_RULE,
+            Le => &Self::Le_RULE,
+            Gt => &Self::Gt_RULE,
+            Lt => &Self::Lt_RULE,
 
             // Sum
-            Sum => &Self::SUM_RULE,
-            ZeroOrMorePlusOrMinusAndTerms => &Self::ZERO_OR_MORE_PLUS_OR_MINUS_AND_TERM_RULE,
-            PlusOrMinusAndTerm => &Self::PLUS_OR_MINUS_AND_TERM_RULE,
+            Sum => &Self::Sum_RULE,
+            ZeroOrMorePlusOrMinusAndTerms => &Self::ZeroOrMorePlusOrMinusAndTerms_RULE,
+            PlusOrMinusAndTerm => &Self::PlusOrMinusAndTerm_RULE,
 
             // Term
-            Term => &Self::TERM_RULE,
-            ZeroOrMoreStarOrSlashAndFactors => &Self::ZERO_OR_MORE_STAR_OR_SLASH_AND_FACTOR_RULE,
-            StarOrSlashAndFactor => &Self::STAR_OR_SLASH_AND_FACTOR_RULE,
+            Term => &Self::Term_RULE,
+            ZeroOrMoreStarOrSlashAndFactors => &Self::ZeroOrMoreStarOrSlashAndFactors_RULE,
+            StarOrSlashAndFactor => &Self::StarOrSlashAndFactor_RULE,
 
             // Factor
-            Factor => &Self::FACTOR_RULE,
+            Factor => &Self::Factor_RULE,
 
             // Power
-            Power => &Self::POWER_RULE,
-            PowerAndFactor => &Self::POWER_AND_FACTOR_RULE,
+            Power => &Self::Power_RULE,
+            PowerAndFactor => &Self::PowerAndFactor_RULE,
 
             // Atom
-            Atom => &Self::ATOM_RULE,
-            Atom1 => &Self::ATOM1_RULE,
-            Atom2 => &Self::ATOM2_RULE,
-            Atom3 => &Self::ATOM3_RULE,
-            Atom4 => &Self::ATOM4_RULE,
-            Atom5 => &Self::ATOM5_RULE,
+            Atom => &Self::Atom_RULE,
+            Atom1 => &Self::Atom1_RULE,
+            Atom2 => &Self::Atom2_RULE,
+            Atom3 => &Self::Atom3_RULE,
+            Atom4 => &Self::Atom4_RULE,
+            Atom5 => &Self::Atom5_RULE,
 
             // Variable
-            Variable => &Self::VARIABLE_RULE,
-            Variable1 => &Self::VARIABLE1_RULE,
-            Variable2 => &Self::VARIABLE2_RULE,
-            Variable3 => &Self::VARIABLE3_RULE,
-            Variable4 => &Self::VARIABLE4_RULE,
-            Variable5 => &Self::VARIABLE5_RULE,
-            Variable6 => &Self::VARIABLE6_RULE,
-            Variable7 => &Self::VARIABLE7_RULE,
-            Variable8 => &Self::VARIABLE8_RULE,
-            Variable9 => &Self::VARIABLE9_RULE,
+            Variable => &Self::Variable_RULE,
+            Variable1 => &Self::Variable1_RULE,
+            Variable2 => &Self::Variable2_RULE,
+            Variable3 => &Self::Variable3_RULE,
+            Variable4 => &Self::Variable4_RULE,
+            Variable5 => &Self::Variable5_RULE,
+            Variable6 => &Self::Variable6_RULE,
+            Variable7 => &Self::Variable7_RULE,
+            Variable8 => &Self::Variable8_RULE,
+            Variable9 => &Self::Variable9_RULE,
 
-            UppercaseX => &Self::UPPERCASE_X_RULE,
-            UppercaseY => &Self::UPPERCASE_Y_RULE,
-            UppercaseZ => &Self::UPPERCASE_Z_RULE,
-            LowercaseX => &Self::LOWERCASE_X_RULE,
-            LowercaseY => &Self::LOWERCASE_Y_RULE,
-            LowercaseZ => &Self::LOWERCASE_Z_RULE,
-            UppercaseN => &Self::UPPERCASE_N_RULE,
-            LowercaseN => &Self::LOWERCASE_N_RULE,
-            UppercaseF => &Self::UPPERCASE_F_RULE,
-            UppercaseS => &Self::UPPERCASE_S_RULE,
+            UppercaseX => &Self::UppercaseX_RULE,
+            UppercaseY => &Self::UppercaseY_RULE,
+            UppercaseZ => &Self::UppercaseZ_RULE,
+            LowercaseX => &Self::LowercaseX_RULE,
+            LowercaseY => &Self::LowercaseY_RULE,
+            LowercaseZ => &Self::LowercaseZ_RULE,
+            UppercaseN => &Self::UppercaseN_RULE,
+            LowercaseN => &Self::LowercaseN_RULE,
+            UppercaseF => &Self::UppercaseF_RULE,
+            UppercaseS => &Self::UppercaseS_RULE,
 
             // Constant
-            Constant => &Self::CONSTANT_RULE,
-            Constant1 => &Self::CONSTANT1_RULE,
+            Constant => &Self::Constant_RULE,
+            Constant1 => &Self::Constant1_RULE,
 
             E => &Self::E_RULE,
-            Pi => &Self::PI_RULE,
+            Pi => &Self::Pi_RULE,
 
             // Function
-            Function => &Self::FUNCTION_RULE,
-            Function1 => &Self::FUNCTION1_RULE,
-            Function2 => &Self::FUNCTION2_RULE,
-            Function3 => &Self::FUNCTION3_RULE,
-            Function4 => &Self::FUNCTION4_RULE,
+            Function => &Self::Function_RULE,
+            Function1 => &Self::Function1_RULE,
+            Function2 => &Self::Function2_RULE,
+            Function3 => &Self::Function3_RULE,
+            Function4 => &Self::Function4_RULE,
 
-            Sine => &Self::SINE_RULE,
-            Cosine => &Self::COSINE_RULE,
-            Tangent => &Self::TANGENT_RULE,
-            Ln => &Self::LN_RULE,
-            Lg => &Self::LG_RULE,
+            Sine => &Self::Sine_RULE,
+            Cosine => &Self::Cosine_RULE,
+            Tangent => &Self::Tangent_RULE,
+            Ln => &Self::Ln_RULE,
+            Lg => &Self::Lg_RULE,
 
             // Delimiters
-            ExprInParentheses => &Self::EXPRESSION_IN_PARENTHESES_RULE,
-            ExprAndClose => &Self::EXPRESSION_AND_CLOSE_RULE,
+            ExprInParentheses => &Self::ExprInParentheses_RULE,
+            ExprAndClose => &Self::ExprAndClose_RULE,
 
             // Integer
-            IntegerLiteral => &Self::INTEGER_LITERAL_RULE,
+            IntegerLiteral => &Self::IntegerLiteral_RULE,
 
             // Float
-            FloatLiteral => &Self::FLOAT_LITERAL_RULE,
-            PointAndDecLiteral => &Self::POINT_AND_DEC_LITERAL_RULE,
+            FloatLiteral => &Self::FloatLiteral_RULE,
+            PointAndDecLiteral => &Self::PointAndDecLiteral_RULE,
 
-            BytesF64Literal => &Self::BYTES_F64_LITERAL_RULE,
+            BytesF64Literal => &Self::BytesF64Literal_RULE,
 
-            DecLiteral => &Self::DEC_LITERAL_RULE,
-            ZeroOrMoreDecDigits => &Self::ZERO_OR_DEC_LITERAL_RULE,
+            DecLiteral => &Self::DecLiteral_RULE,
+            ZeroOrMoreDecDigits => &Self::ZeroOrMoreDecDigits_RULE,
 
-            DecDigit => &Self::DEC_DIGIT_RULE,
-            DecDigit1 => &Self::DEC_DIGIT1_RULE,
-            DecDigit2 => &Self::DEC_DIGIT2_RULE,
-            DecDigit3 => &Self::DEC_DIGIT3_RULE,
-            DecDigit4 => &Self::DEC_DIGIT4_RULE,
-            DecDigit5 => &Self::DEC_DIGIT5_RULE,
-            DecDigit6 => &Self::DEC_DIGIT6_RULE,
-            DecDigit7 => &Self::DEC_DIGIT7_RULE,
-            DecDigit8 => &Self::DEC_DIGIT8_RULE,
+            DecDigit => &Self::DecDigit_RULE,
+            DecDigit1 => &Self::DecDigit1_RULE,
+            DecDigit2 => &Self::DecDigit2_RULE,
+            DecDigit3 => &Self::DecDigit3_RULE,
+            DecDigit4 => &Self::DecDigit4_RULE,
+            DecDigit5 => &Self::DecDigit5_RULE,
+            DecDigit6 => &Self::DecDigit6_RULE,
+            DecDigit7 => &Self::DecDigit7_RULE,
+            DecDigit8 => &Self::DecDigit8_RULE,
 
             // Other
-            PlusOrMinus => &Self::PLUS_OR_MINUS_RULE,
-            PlusOrMinus1 => &Self::PLUS_OR_MINUS1_RULE,
-            Plus => &Self::PLUS_RULE,
-            Minus => &Self::MINUS_RULE,
+            PlusOrMinus => &Self::PlusOrMinus_RULE,
+            PlusOrMinus1 => &Self::PlusOrMinus1_RULE,
+            Plus => &Self::Plus_RULE,
+            Minus => &Self::Minus_RULE,
 
-            StarOrSlash => &Self::STAR_OR_SLASH_RULE,
-            StarOrSlash1 => &Self::STAR_OR_SLASH1_RULE,
-            Star => &Self::STAR_RULE,
-            Slash => &Self::SLASH_RULE,
+            StarOrSlash => &Self::StarOrSlash_RULE,
+            StarOrSlash1 => &Self::StarOrSlash1_RULE,
+            Star => &Self::Star_RULE,
+            Slash => &Self::Slash_RULE,
 
-            Space => &Self::SPACE_RULE,
+            Space => &Self::Space_RULE,
         })
     }
 }

@@ -1,13 +1,17 @@
-use crate::bub::functions::rules::BubFnsRules;
-use crate::bub::functions::variable::BubFnsVariable;
 use crate::bub::functions::BubFnsAST;
-use mpl::parse::Parse;
+use mpl::parser::Parser;
 use mpl::span::StartAndLenSpan;
+use mpl_macro::Parse;
+
+#[derive(Parse, Debug)]
+#[mplg = "bub_fns.mplg"]
+pub struct BubFnsParser;
 
 pub fn parse(input: &[u8], start_variable: &BubFnsVariable) -> Result<BubFnsAST, BubFnsAST> {
+    let parser = BubFnsParser;
     let all_of_the_span = StartAndLenSpan::<u16, u16>::from_start_len(0, input.len() as u16);
     let rules = &BubFnsRules;
-    input.minimal_parse(rules, start_variable, &all_of_the_span)
+    parser.parse(input, rules, start_variable, &all_of_the_span)
 }
 
 #[cfg(test)]

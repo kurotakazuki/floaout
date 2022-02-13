@@ -5,14 +5,13 @@ use mpl::trees::AST;
 pub use self::interpreter::BubFnsInterpreter;
 pub use self::output::BubFnsOutput;
 pub use self::parse::parse;
-pub use self::rules::BubFnsRules;
-pub use self::variable::BubFnsVariable;
+pub use self::parse::BubFnsRules;
+pub use self::parse::BubFnsVariable;
 
 mod interpreter;
 mod output;
 mod parse;
 mod rules;
-mod variable;
 
 pub type BubFnsAST = AST<BubFnsVariable, StartAndLenSpan<u16, u16>, BubFnsOutput>;
 

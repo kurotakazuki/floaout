@@ -1,6 +1,6 @@
 [package]
 name = "floaout"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2018"
 license = "MIT OR Apache-2.0"
 description = "Floaout encoding and decoding library."
@@ -10,5 +10,6 @@ categories = ["multimedia::audio", "multimedia::encoding"]
 keywords = ["immersive", "sound", "codec", "bub", "oao"]
 
 [dependencies]
-mpl = "0.1"
+mpl = "0.2"
+mpl-macro = "0.1.2"
 mycrc = "0.3"
