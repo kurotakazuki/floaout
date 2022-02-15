@@ -1,15 +1,6 @@
-[package]
-name = "floaout"
-version = "0.2.1"
-edition = "2018"
-license = "MIT OR Apache-2.0"
-description = "Floaout encoding and decoding library."
-readme = "README.md"
-repository = "https://github.com/kurotakazuki/floaout"
-categories = ["multimedia::audio", "multimedia::encoding"]
-keywords = ["immersive", "sound", "codec", "bub", "oao"]
-
-[dependencies]
-mpl = "0.2"
-mpl-macro = "0.1.2"
-mycrc = "0.3"
+[workspace]
+members = [
+  # Packages
+  "packages/oao-core",
+  # Examples
+]
