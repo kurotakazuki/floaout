@@ -13,6 +13,8 @@ pub enum SampleFormat {
     U32,
     /// Unsigned 64-bit integer.
     U64,
+    /// Unsigned 128-bit integer.
+    U128,
     /// Signed 8-bit integer.
     I8,
     /// Signed 16-bit integer.
@@ -23,6 +25,8 @@ pub enum SampleFormat {
     I32,
     /// Signed 64-bit integer.
     I64,
+    /// Signed 128-bit integer.
+    I128,
     /// 32-bit float.
     F32,
     /// 64-bit float.
@@ -32,17 +36,19 @@ pub enum SampleFormat {
 impl SampleFormat {
     /// Returns the size of this SampleFormat in bytes.
     pub const fn sample_size(&self) -> usize {
-        match *self {
+        match self {
             SampleFormat::U8 => size_of::<u8>(),
             SampleFormat::U16 => size_of::<u16>(),
             SampleFormat::U24 => 3,
             SampleFormat::U32 => size_of::<u32>(),
             SampleFormat::U64 => size_of::<u64>(),
+            SampleFormat::U128 => size_of::<u128>(),
             SampleFormat::I8 => size_of::<u8>(),
             SampleFormat::I16 => size_of::<i16>(),
             SampleFormat::I24 => 3,
             SampleFormat::I32 => size_of::<i32>(),
             SampleFormat::I64 => size_of::<i64>(),
+            SampleFormat::I128 => size_of::<i128>(),
             SampleFormat::F32 => size_of::<f32>(),
             SampleFormat::F64 => size_of::<f64>(),
         }
@@ -64,14 +70,41 @@ pub trait Sample:
     const FORMAT: SampleFormat;
 }
 
+impl Sample for u8 {
+    const FORMAT: SampleFormat = SampleFormat::U8;
+}
+impl Sample for u16 {
+    const FORMAT: SampleFormat = SampleFormat::U16;
+}
+impl Sample for u32 {
+    const FORMAT: SampleFormat = SampleFormat::U32;
+}
+impl Sample for u64 {
+    const FORMAT: SampleFormat = SampleFormat::U64;
+}
+impl Sample for u128 {
+    const FORMAT: SampleFormat = SampleFormat::U128;
+}
+
+impl Sample for i8 {
+    const FORMAT: SampleFormat = SampleFormat::I8;
+}
 impl Sample for i16 {
     const FORMAT: SampleFormat = SampleFormat::I16;
+}
+impl Sample for i32 {
+    const FORMAT: SampleFormat = SampleFormat::I32;
+}
+impl Sample for i64 {
+    const FORMAT: SampleFormat = SampleFormat::I64;
+}
+impl Sample for i128 {
+    const FORMAT: SampleFormat = SampleFormat::I128;
 }
 
 impl Sample for f32 {
     const FORMAT: SampleFormat = SampleFormat::F32;
 }
-
 impl Sample for f64 {
     const FORMAT: SampleFormat = SampleFormat::F64;
 }
