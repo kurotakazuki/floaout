@@ -1,9 +1,13 @@
-/// Metadata
-pub trait Metadata {
-    /// Number of Frames.
-    fn frames(&self) -> u64;
-    /// Samples per sec
+/// Frames per sec
+pub trait FramesPerSec {
+    /// Returns frames per second.
     fn frames_per_sec(&self) -> f64;
+}
+
+/// Frames
+pub trait Frames: FramesPerSec {
+    /// Returns number of Frames.
+    fn frames(&self) -> u64;
 
     /// Returns the total number of whole seconds.
     fn as_secs(&self) -> u64 {
@@ -33,12 +37,14 @@ mod tests {
             frames: u64,
             frames_per_sec: f64,
         }
-        impl Metadata for Meta {
-            fn frames(&self) -> u64 {
-                self.frames
-            }
+        impl FramesPerSec for Meta {
             fn frames_per_sec(&self) -> f64 {
                 self.frames_per_sec
+            }
+        }
+        impl Frames for Meta {
+            fn frames(&self) -> u64 {
+                self.frames
             }
         }
 

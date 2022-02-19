@@ -1,5 +1,4 @@
-pub use self::read::ReadBytes;
-pub use self::read::ReadExt;
+pub use self::read::{ReadBytes, ReadExt};
 
 mod read;
 
