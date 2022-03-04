@@ -52,7 +52,7 @@ Floaout is the next-generation audio format.
 | Scope or BubFnsBlock (Child_i Node) | {`Scope or BubFnsBlock (Child_i Node) Size`} | Child_i Scope or BubFnsBlock (Child_i Node). |
 
 
-##### User-Defined Formula (UDF)
+##### User-defined Formula (UDF)
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
 | Number of Child Nodes | `ULEB128` | An unsigned value identifying the size of `Number of Child Nodes`. |
@@ -64,8 +64,9 @@ Floaout is the next-generation audio format.
 | ------------- | ------------- | ------------- |
 | Array `a` |  | 0 (`u8`) |
 | Assignment |  | 1 (`u8`) |
-| Map `m` |  | 2 (`u8`) |
-| Variable `v` |  | 3 (`u8`) |
+| Constant |  | 2 (`u8`) |
+| Map `m` |  | 3 (`u8`) |
+| Variable `v` |  | 4 (`u8`) |
 
 ###### Array (Leaf Node)
 Ident is `a`.
@@ -111,7 +112,7 @@ Assign after the BubFnsBlock output is generated at each frame.
 | UDFKind | `u8` (1) | `UDFKind::Assignment` |
 | AsgmtExpr | `AsgmtExpr` | Assignment Expression |
 
-###### User-Defined Map (Function) (Leaf Node)
+###### User-defined Map (Function) (Leaf Node)
 Ident is `m`.
 
 Parameter (Argument) ident is `p`.
@@ -128,7 +129,7 @@ m(p0, p1)=p0+p1+1
 | Number of Arguments | `ULEB128` | Number of Arguments |
 | Map | `Sum` | Map |
 
-###### User-Defined Variable (Leaf Node)
+###### User-defined Variable (Leaf Node)
 Ident is `v`.
 
 ```
@@ -192,15 +193,15 @@ v=a+1
 
 ### Keywords
 
-#### Built-In Variables
+#### Built-in Variables
 Ident is `V`.
 
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- |
 | V | `Char` (1) | Ident is `V`. |
-| BIVKind | `ULEB128` | Built-In Variable Kind |
+| BVariableKind | `ULEB128` | Built-in Variable Kind |
 
-##### Built-In Variable Kind (BIVKind)
+##### Built-in Variable Kind (BVariableKind)
 This data is `ULEB128`.
 
 | Variant | Description | Value |
@@ -219,15 +220,15 @@ This data is `ULEB128`.
 | t | Relative Time. t = n / f | 11 |
 | S | Frames per sec. (`as f64`) f_s | 12 |
 
-#### Constants
+#### Built-in Constants
 Ident is `C`.
 
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- |
 | C | `Char` (1) | Ident is `C`. |
-| CKind | `ULEB128` | Constant Kind |
+| BCKind | `ULEB128` | Built-in Constant Kind |
 
-##### Constant Kind (CKind)
+##### Built-in Constant Kind (BCKind)
 This data is `ULEB128`.
 
 | Variant | Description | Value |
@@ -252,18 +253,18 @@ This data is `ULEB128`.
 | Sqrt2 | sqrt(2) | 17 |
 | Tau | The full circle constant (τ) | 18 |
 
-#### Built-In Maps (Functions)
+#### Built-in Maps (Functions)
 Ident is `M`.
 
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- |
 | M | `Char` (1) | Ident is `M`. |
-| BIMKind | `ULEB128` | Built-In Map Kind |
+| BMapKind | `ULEB128` | Built-in Map Kind |
 | Open paren |  | `(` |
 | Arguments |  | Arguments |
 | Close paren |  | `)` |
 
-##### Built-In Map Kind (BIMKind)
+##### Built-in Map Kind (BMapKind)
 This data is `ULEB128`.
 
 | Variant | Description | Arguments | Value |
