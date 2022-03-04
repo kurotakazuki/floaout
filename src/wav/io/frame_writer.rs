@@ -71,6 +71,7 @@ mod tests {
             lpcm_kind: LpcmKind::F32LE,
             channels: 1,
             samples_per_sec: 44100.0,
+            list: vec![],
         };
         let mut wav_frame_writer = WavFrameWriter::<Vec<u8>, f32>::new(data, metadata);
 

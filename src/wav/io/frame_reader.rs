@@ -91,6 +91,7 @@ mod tests {
                        lpcm_kind,
                         channels,
                         samples_per_sec,
+                    list: vec![],
                 };
                 let mut wav_frame_reader: WavFrameReader<&[u8], $t> = WavFrameReader::new(&data[..], metadata);
                 assert!(wav_frame_reader.next().is_none());
@@ -105,6 +106,7 @@ mod tests {
                    lpcm_kind,
                     channels,
                     samples_per_sec,
+                    list: vec![],
                 };
                 let mut wav_frame_reader: WavFrameReader<&[u8], $t> = WavFrameReader::new(&data[..], metadata);
                 assert_eq!(wav_frame_reader.next().unwrap().unwrap().0, vec![0.5]);
@@ -120,6 +122,7 @@ mod tests {
                    lpcm_kind,
                     channels,
                     samples_per_sec,
+                    list: vec![],
                 };
                 let mut wav_frame_reader: WavFrameReader<&[u8], $t> = WavFrameReader::new(&data[..], metadata);
                 assert_eq!(wav_frame_reader.next().unwrap().unwrap().0, vec![0.0]);
@@ -135,6 +138,7 @@ mod tests {
                    lpcm_kind,
                     channels,
                     samples_per_sec,
+                    list: vec![],
                 };
                 let mut wav_frame_reader: WavFrameReader<&[u8], $t> = WavFrameReader::new(&data[..], metadata);
                 assert_eq!(wav_frame_reader.next().unwrap().unwrap().0, vec![0.0, 1.0]);
@@ -155,6 +159,7 @@ mod tests {
                    lpcm_kind,
                     channels,
                     samples_per_sec,
+                    list: vec![],
                 };
                 let mut wav_frame_reader: WavFrameReader<&[u8], $t> = WavFrameReader::new(&data[..], metadata);
                 assert_eq!(wav_frame_reader.next().unwrap().unwrap().0, vec![0.0, 1.0]);

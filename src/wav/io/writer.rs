@@ -60,7 +60,7 @@ mod tests {
         let wav_reader = WavReader::open("tests/test.wav")?;
         let wav_frame_reader = wav_reader.into_wav_frame_reader_kind().into_f32_le()?;
 
-        let wav_writer = WavWriter::new(v, wav_frame_reader.metadata)?;
+        let wav_writer = WavWriter::new(v, wav_frame_reader.metadata.clone())?;
         let mut wav_frame_writer = wav_writer.into_wav_frame_writer_kind().into_f32_le()?;
 
         for frame in wav_frame_reader {

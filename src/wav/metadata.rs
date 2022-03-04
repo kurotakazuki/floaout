@@ -3,7 +3,7 @@ use crate::utils::return_invalid_data_if_not_equal;
 use crate::{LpcmKind, Metadata};
 use std::io::Result;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct WavMetadata {
     /// Number of sample frames
     pub frames: u64,
@@ -13,6 +13,14 @@ pub struct WavMetadata {
     pub channels: u16,
     /// Samples per sec
     pub samples_per_sec: f64,
+    /// List data
+    pub list: Vec<Chunk>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Chunk {
+    pub fourcc: String,
+    pub data: Vec<u8>,
 }
 
 impl Metadata for WavMetadata {}
@@ -23,12 +31,14 @@ impl WavMetadata {
         lpcm_kind: LpcmKind,
         channels: u16,
         samples_per_sec: f64,
+        list: Vec<Chunk>,
     ) -> Self {
         Self {
             frames,
             lpcm_kind,
             channels,
             samples_per_sec,
+            list,
         }
     }
 
@@ -118,55 +128,77 @@ impl WavMetadata {
             Ok(())
         };
 
-        // Fmt chunk
+        // Declare
+        let mut format_tag: u16 = 0;
+        let mut channels: u16 = 0;
+        let mut samples_per_sec: u32 = 0;
+        let mut avg_bytes_per_sec: u32 = 0;
+        let mut block_align: u16 = 0;
+        let mut bits_per_sample: u16 = 0;
+        let mut list: Vec<Chunk> = vec![];
+
+        // Read chunks
         loop {
-            match check_fourcc(reader, "fmt ") {
-                Ok(_) => {
+            let fourcc = reader.read_string::<4>()?;
+            match fourcc.as_ref() {
+                "LIST" => {
+                    let list_size: u32 = reader.read_le()?;
+                    check_fourcc(reader, "INFO")?;
+                    let mut curr_size: u32 = 4;
+                    while list_size != curr_size {
+                        let fourcc = reader.read_string::<4>()?;
+                        let child_size: u32 = reader.read_le()?;
+                        let mut data = vec![0; child_size as usize];
+                        reader.read_exact(&mut data)?;
+                        list.push(
+                            Chunk {
+                                fourcc,
+                                data,
+                            }
+                        );
+                        curr_size += 8 + child_size;
+                    }
+                }
+                "fmt " => {
                     let fmt_size: u32 = reader.read_le()?;
                     return_invalid_data_if_not_equal(fmt_size, 16)?;
 
-                    let format_tag: u16 = reader.read_le()?;
-                    let channels: u16 = reader.read_le()?;
-                    let samples_per_sec: u32 = reader.read_le()?;
-                    let avg_bytes_per_sec: u32 = reader.read_le()?;
-                    let block_align: u16 = reader.read_le()?;
-                    let bits_per_sample: u16 = reader.read_le()?;
-
-                    // Data chunk
-                    loop {
-                        match check_fourcc(reader, "data") {
-                            Ok(_) => {
-                                let data_size: u32 = reader.read_le()?;
-
-                                let frames =
-                                    Self::calculate_frames(data_size, channels, bits_per_sample);
-
-                                let wav_metadata = Self {
-                                    frames,
-                                    lpcm_kind: LpcmKind::from_format_tag_and_bits_per_sample(
-                                        format_tag,
-                                        bits_per_sample,
-                                    ),
-                                    channels,
-                                    samples_per_sec: samples_per_sec as f64,
-                                };
-
-                                return_invalid_data_if_not_equal(
-                                    avg_bytes_per_sec,
-                                    wav_metadata.avg_bytes_per_sec(),
-                                )?;
-                                return_invalid_data_if_not_equal(
-                                    block_align,
-                                    wav_metadata.block_align(),
-                                )?;
-
-                                return Ok(wav_metadata);
-                            }
-                            Err(_) => other_chunk(reader)?,
-                        }
-                    }
+                    format_tag = reader.read_le()?;
+                    channels = reader.read_le()?;
+                    samples_per_sec = reader.read_le()?;
+                    avg_bytes_per_sec = reader.read_le()?;
+                    block_align = reader.read_le()?;
+                    bits_per_sample = reader.read_le()?;
                 }
-                Err(_) => other_chunk(reader)?,
+                "data" => {
+                    let data_size: u32 = reader.read_le()?;
+
+                    let frames =
+                        Self::calculate_frames(data_size, channels, bits_per_sample);
+
+                    let wav_metadata = Self {
+                        frames,
+                        lpcm_kind: LpcmKind::from_format_tag_and_bits_per_sample(
+                            format_tag,
+                            bits_per_sample,
+                        ),
+                        channels,
+                        samples_per_sec: samples_per_sec as f64,
+                        list,
+                    };
+
+                    return_invalid_data_if_not_equal(
+                        avg_bytes_per_sec,
+                        wav_metadata.avg_bytes_per_sec(),
+                    )?;
+                    return_invalid_data_if_not_equal(
+                        block_align,
+                        wav_metadata.block_align(),
+                    )?;
+
+                    return Ok(wav_metadata);
+                },
+                _ => other_chunk(reader)?,
             }
         }
     }
@@ -205,6 +237,7 @@ mod tests {
             lpcm_kind: LpcmKind::F32LE,
             channels: 1,
             samples_per_sec: 48000.0,
+            list: vec![],
         };
         assert_eq!(metadata.secs(), 1);
         assert_eq!(metadata.millis(), 1_000);
@@ -215,6 +248,7 @@ mod tests {
             lpcm_kind: LpcmKind::F32LE,
             channels: 1,
             samples_per_sec: 48000.0,
+            list: vec![],
         };
         assert_eq!(metadata.secs(), 1);
         assert_eq!(metadata.millis(), 1_000);
@@ -225,6 +259,7 @@ mod tests {
             lpcm_kind: LpcmKind::F32LE,
             channels: 1,
             samples_per_sec: 48000.0,
+            list: vec![],
         };
         assert_eq!(metadata.secs(), 1);
         assert_eq!(metadata.millis(), 1_999);
@@ -243,6 +278,7 @@ mod tests {
             lpcm_kind,
             channels: 1,
             samples_per_sec,
+            list: vec![],
         };
         assert_eq!(metadata.format_tag(), 3);
         assert_eq!(metadata.channels(), 1);
@@ -258,6 +294,7 @@ mod tests {
             lpcm_kind,
             channels: 1,
             samples_per_sec,
+            list: vec![],
         };
         assert_eq!(metadata.format_tag(), 3);
         assert_eq!(metadata.channels(), 1);
@@ -275,6 +312,7 @@ mod tests {
             lpcm_kind,
             channels: 2,
             samples_per_sec,
+            list: vec![],
         };
         assert_eq!(metadata.format_tag(), 3);
         assert_eq!(metadata.channels(), 2);
@@ -301,6 +339,7 @@ mod tests {
             lpcm_kind,
             channels: 1,
             samples_per_sec: 44100.0,
+            list: vec![],
         };
         assert_eq!(val, expect);
 
@@ -368,6 +407,7 @@ mod tests {
             lpcm_kind,
             channels: 2,
             samples_per_sec: 44100.0,
+            list: vec![],
         };
         assert_eq!(val, expect);
 
@@ -392,6 +432,7 @@ mod tests {
             lpcm_kind: LpcmKind::F32LE,
             channels: 1,
             samples_per_sec: 44100.0,
+            list: vec![],
         };
         let mut data: &[u8] = &[
             0x52, 0x49, 0x46, 0x46, 0x44, 0x62, 0x05, 0x00, 0x57, 0x41, 0x56, 0x45, 0x66, 0x6D,
