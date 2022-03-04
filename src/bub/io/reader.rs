@@ -59,6 +59,7 @@ impl<R: Read> BubReader<R> {
                 self.speakers_absolute_coord,
                 oao_spaces,
             )),
+            _ => unimplemented!(),
         }
     }
 }

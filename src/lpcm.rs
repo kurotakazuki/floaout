@@ -97,6 +97,7 @@ impl<S: Sample> Frame<S> {
 pub enum LpcmKind {
     F32LE,
     F64LE,
+    I16LE,
 }
 
 impl LpcmKind {
@@ -105,6 +106,7 @@ impl LpcmKind {
         Ok(match value {
             0 => Self::F32LE,
             1 => Self::F64LE,
+            3 => Self::I16LE,
             _ => return Err(ErrorKind::InvalidData.into()),
         })
     }
@@ -113,6 +115,7 @@ impl LpcmKind {
         Ok(match value {
             0 => Self::F32LE,
             1 => Self::F64LE,
+            3 => Self::I16LE,
             _ => return Err(ErrorKind::InvalidData.into()),
         })
     }
@@ -128,6 +131,7 @@ impl LpcmKind {
         match value {
             0 => Self::F32LE,
             1 => Self::F64LE,
+            3 => Self::I16LE,
             _ => unimplemented!(),
         }
     }
@@ -136,6 +140,7 @@ impl LpcmKind {
         match self {
             Self::F32LE => 0,
             Self::F64LE => 1,
+            Self::I16LE => 3,
         }
     }
 
@@ -143,6 +148,7 @@ impl LpcmKind {
         match self {
             Self::F32LE => 3,
             Self::F64LE => 3,
+            Self::I16LE => 1,
         }
     }
 
@@ -150,14 +156,16 @@ impl LpcmKind {
         match self {
             Self::F32LE => 32,
             Self::F64LE => 64,
+            Self::I16LE => 16,
         }
     }
 
     pub fn from_format_tag_and_bits_per_sample(format_tag: u16, bits_per_sample: u16) -> Self {
         match format_tag {
-            1 => {
-                todo!()
-            }
+            1 => match bits_per_sample {
+                16 => Self::I16LE,
+                _ => unimplemented!(),
+            },
             3 => match bits_per_sample {
                 32 => Self::F32LE,
                 64 => Self::F64LE,

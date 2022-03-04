@@ -45,6 +45,7 @@ impl<W: Write> BubWriter<W> {
                 self.inner,
                 (self.metadata, self.crc),
             )),
+            _ => unimplemented!(),
         }
     }
 }

@@ -32,6 +32,7 @@ impl<R: Read> WavReader<R> {
             LpcmKind::F64LE => {
                 WavFrameReaderKind::F64LE(WavFrameReader::<R, f64>::new(self.inner, self.metadata))
             }
+            _ => unimplemented!(),
         }
     }
 }

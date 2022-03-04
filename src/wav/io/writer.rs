@@ -36,6 +36,7 @@ impl<W: Write> WavWriter<W> {
             LpcmKind::F64LE => {
                 WavFrameWriterKind::F64LE(WavFrameWriter::<W, f64>::new(self.inner, self.metadata))
             }
+            _ => unimplemented!(),
         }
     }
 }
