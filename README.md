@@ -1,285 +1,122 @@
 # Floaout
+[![Crate](https://img.shields.io/crates/v/floaout.svg)](https://crates.io/crates/floaout)
+[![API](https://docs.rs/floaout/badge.svg)](https://docs.rs/floaout)
 
 Floaout is the next-generation audio format.
 
-## Bubble File Format Specification
+# Bubble File Format Specification
 
-
-### Root Node
+## Metadata
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
-| Tree Size | `ULEB128` | An unsigned value identifying the size of `Tree`. This size value doesn't include the size on or before the `Node ID` field. |
-| Metadata |  | Metadata. |
+| Spec Version | `u8` (1) | Version of Bubble File Format Specification. |
+| Bubble ID | `u128` (16) | Bubble ID of this file. The value is 0 if the Bubble is undefined. If it is not 0, it must be based on the ID managed by bkbkb.net. |
+| Bubble Version | `u16` (2) | Version of Bubble |
+| Frames | `u64` (8) | Number of frames |
+| First Head Absolute Frame | `u64` (8) | First Head Absolute Frame |
+| Samples Per Sec | `f64` (8) | Samples per sec |
+| LpcmKind | `u8` (1) | `LpcmKind` |
+| BubSampleKind | `u8` (1) | `BubSampleKind` |
+| Name Size | `u8` (1) | Name Size (0~255) |
+| Name | `String` | Name (UTF-8) |
+| CRC-32K/4.2 | `u32` (4) | Max length at Hamming Distance 4 is 2147483615 (bits). And max length at Hamming Distance 6 is 6167 (bits). |
 
-### Metadata
-| Name | `Type` (Bytes) | Description |
+### LpcmKind
+| Variant  | Description | Value (`Type`) |
 | ------------- | ------------- | ------------- |
-| Number of Child Nodes | `u8` (1) | The value is `2`. |
-| Optional Metadata (Child_0 Node) Size | `ULEB128` | An unsigned value identifying the size of `Child_0 Node`. |
-| Audio Data (Child_1 Node) Size | `ULEB128` | An unsigned value identifying the size of `Child_1 Node`. |
-| Required Metadata |  | Binary data. |
-| Optional Metadata (Child_0 Node) | {`Optional Metadata (Child_0 Node) Size`} | Optional Metadata (Child_0 Node). (Details in Optional Metadata table.) |
-| Audio Data (Child_1 Node) | {`Audio Data (Child_1 Node) Size`} | Audio Data (Child_1 Node). (Details in Audio Data table.) |
+| F32LE | `f32` Little Endian | 0 (`u8`) |
+| F64LE | `f64` Little Endian | 1 (`u8`) |
 
-#### Required Metadata
-| Name | `Type` (Bytes) | Description |
+### BubSampleKind
+| Variant  | Description | Value |
 | ------------- | ------------- | ------------- |
-| Spec Version | `u8` (1) | Version of Bubble File Format Specification. The value is `0`. |
-| Minor Spec Version | `u8` (1) | Minor Version of Bubble File Format Specification. Will be deleted in Spec Version 1.  The value is `0`. |
-| Bubble ID | `ULEB128` | Bubble ID of this file. The value is 0 if the Bubble is undefined. If it is not 0, it must be based on the ID managed by bkbkb.net. |
-| Frames | `ULEB128` | Number of frames. |
-| Frames Per Sec | `ULEB128` | Frames per second. |
+| Lpcm | Lpcm | 0 |
+| Expr | Expr | 1 |
 
-#### Optional Metadata
-
-- Instruments Name
-
-- Ident
-
-
-#### Audio Data
-| Name | `Type` (Bytes) | Description |
-| ------------- | ------------- | ------------- |
-| Scope || Scope. (Details in Scope table.) |
-
-##### Scope
-| Name | `Type` (Bytes) | Description |
-| ------------- | ------------- | ------------- |
-| Number of Child Nodes | `ULEB128` | An unsigned value identifying the size of `Number of Child Nodes`. The value is 1 (1 UDF) + { Number of Scopes and BubFnsBlocks }. |
-| UDF (Child_0 Node) Size | `ULEB128` | An unsigned value identifying the size of `Child_0 Node`. |
-| Scope or BubFnsBlock (Child_i Node) Size | `ULEB128` | An unsigned value identifying the size of `Child_i Node`. |
-| UDF (Child_0 Node) | {`UDF (Child_0 Node) Size`} | UDF (Child_0 Node). |
-| Scope or BubFnsBlock (Child_i Node) | {`Scope or BubFnsBlock (Child_i Node) Size`} | Child_i Scope or BubFnsBlock (Child_i Node). |
-
-
-##### User-Defined Formula (UDF)
-| Name | `Type` (Bytes) | Description |
-| ------------- | ------------- | ------------- |
-| Number of Child Nodes | `ULEB128` | An unsigned value identifying the size of `Number of Child Nodes`. |
-| Array, Assignment, Map, or Variable  (Child_i Node) Size | `ULEB128` | An unsigned value identifying the size of `Child_i Node`. |
-| Array, Assignment, Map, or Variable  (Child_i Node) | {`Array, Assignment, Map, or Variable  (Child_i Node) Size`} | Child_i Array, Assignment, Map, or Variable  (Child_i Node). |
-
-###### UDF Kind
-| Variant | Description | Value (`Type`) |
-| ------------- | ------------- | ------------- |
-| Array `a` |  | 0 (`u8`) |
-| Assignment |  | 1 (`u8`) |
-| Map `m` |  | 2 (`u8`) |
-| Variable `v` |  | 3 (`u8`) |
-
-###### Array (Leaf Node)
-Ident is `a`.
-
-```
-a[1]
+### CRC
+```rust ignore
+Algorithm::<u32> {
+    endian: Endian::Little,
+    poly: 0x93a409eb, // CRC-32K/4.2
+    init: 0xffffffff,
+    refin: true,
+    refout: true,
+    xorout: 0xffffffff,
+    residue: 0x76e908ce,
+}
 ```
 
+## Each Sample
+| Bubble Sample |  | `BubbleSample` |
+
+
+## Bubble Sample
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
-| Number of Child Nodes | `u8` (1) | The value is `0`. |
-| UDFKind | `u8` (1) | `UDFKind::Array` |
-| Array ID | `ULEB128` | An unsigned value identifying the size of Array Ident. |
-| ArrayKind | `u8` (1) | `ArrayKind` |
-| Array |  | Data of Array |
+| Bubble Functions size | `u16` (1) | Bubble Functions size |
+| Bubble's absolute X coordinate | `Sum` | Bubble's absolute X coordinate (X_0) |
+| Space | `char` (1) | ' ' |
+| Bubble's absolute Y coordinate | `Sum` | Bubble's absolute Y coordinate (Y_0) |
+| Space | `char` (1) | ' ' |
+| Bubble's absolute Z coordinate | `Sum` | Bubble's absolute Z coordinate (Z_0) |
+| Space | `char` (1) | ' ' |
+| Domain | `OrOrExpr` |  |
+| Space | `char` (1) | ' ' |
+| Volume | `Sum` |  |
+| Space or Empty | `char` (1) | ' ' if there is another |
+| Foot Relative Frame | `u64` (8) | Number of frames at the end of `BubFnsBlock`. |
+| Next Head Relative Frame | `Option<u64>` (8) | Number of frames at the start of the next `BubFnsBlock`. `None` if 0. |
+| Sample Data |  | Sample Data |
+| CRC-32K/4.2 | `u32` (4) | After every foot frames. From the previous CRC. |
 
-###### Array Kind
-| Variant | Description | Value (`Type`) |
-| ------------- | ------------- | ------------- |
-| LEu8 |  | 0 (`[u8]`) |
-| LEu16 |  | 1 (`[u16]`) |
-| LEu32 |  | 2 (`[u32]`) |
-| LEu64 |  | 3 (`[u64]`) |
-| LEu128 |  | 4 (`[u128]`) |
-| LEi8 |  | 5 (`[i8]`) |
-| LEi16 |  | 6 (`[i16]`) |
-| LEi32 |  | 7 (`[i32]`) |
-| LEi64 |  | 8 (`[i64]`) |
-| LEi128 |  | 9 (`[i128]`) |
-| LEf32 |  | 10 (`[f32]`) |
-| LEf64 |  | 11 (`[f64]`) |
-
-###### Assignment (Leaf Node)
-```
-A[n-1]=n+1
-```
-
-Assign after the BubFnsBlock output is generated at each frame.
-
+### Sample Data
+#### Lpcm
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
-| Number of Child Nodes | `u8` (1) | The value is `0`. |
-| UDFKind | `u8` (1) | `UDFKind::Assignment` |
-| AsgmtExpr | `AsgmtExpr` | Assignment Expression |
+| Sample | `f32` or `f64` (4 or 8) | depends on `LpcmKind` |
 
-###### User-Defined Map (Function) (Leaf Node)
-Ident is `m`.
-
-Parameter (Argument) ident is `p`.
-
-```
-m(p0, p1)=p0+p1+1
-```
-
+#### Expr
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
-| Number of Child Nodes | `u8` (1) | The value is `0`. |
-| UDFKind | `u8` (1) | `UDFKind::Map` |
-| Map ID | `ULEB128` | Map ID |
-| Number of Arguments | `ULEB128` | Number of Arguments |
-| Map | `Sum` | Map |
-
-###### User-Defined Variable (Leaf Node)
-Ident is `v`.
-
-```
-v=a+1
-```
-
-| Name | `Type` (Bytes) | Description |
-| ------------- | ------------- | ------------- |
-| Number of Child Nodes | `u8` (1) | The value is `0`. |
-| UDFKind | `u8` (1) | `UDFKind::Variable` |
-| Variable ID | `ULEB128` | Variable ID |
-| Variable | `Sum` | Variable |
-
-##### BubFnsBlock
-| Name | `Type` (Bytes) | Description |
-| ------------- | ------------- | ------------- |
-| Number of Child Nodes | `ULEB128` | An unsigned value identifying the size of `Number of Child Nodes`. |
-| BubFn (Child_i Node) Size | `ULEB128` | An unsigned value identifying the size of `Child_i Node`. |
-
-| Head Absolute Frame | `ULEB128` | Number of frames at the start of `BubFnsBlock`. |
-| BubFnsBlock Frames | `ULEB128` | Number of frames in `BubFnsBlock`. `Tail Absolute Frame` - `Head Absolute Frame` + 1 |
-
-| BubFn (Child_i Node) | {`BubFn (Child_i Node) Size`} | Child_i BubFn (Child_i Node). |
-
-
-
-##### BubFn
-| Name | `Type` (Bytes) | Description |
-| ------------- | ------------- | ------------- |
-| Number of Child Nodes | `ULEB128` | An unsigned value identifying the size of `Number of Child Nodes`. The value is `5`. |
-| Bubble's absolute X coordinate (Child_0 Node) Size | `ULEB128` | An unsigned value identifying the size of `Child_0 Node`. |
-| Bubble's absolute Y coordinate (Child_1 Node) Size | `ULEB128` | An unsigned value identifying the size of `Child_1 Node`. |
-| Bubble's absolute Z coordinate (Child_2 Node) Size | `ULEB128` | An unsigned value identifying the size of `Child_2 Node`. |
-| Domain (Child_3 Node) Size | `ULEB128` | An unsigned value identifying the size of `Child_3 Node`. |
-| Output (Child_4 Node) Size | `ULEB128` | An unsigned value identifying the size of `Child_4 Node`. |
-| Bubble's absolute X coordinate |  | Bubble's absolute X coordinate. |
-| Bubble's absolute Y coordinate |  | Bubble's absolute Y coordinate. |
-| Bubble's absolute Z coordinate |  | Bubble's absolute Z coordinate. |
-| Domain |  | Domain. |
-| Output |  | Output. |
-
-###### Bubble's absolute (X|Y|Z) coordinate (Leaf Node)
-| Name | `Type` (Bytes) | Description |
-| ------------- | ------------- | ------------- |
-| Number of Child Nodes | `u8` (1) | The value is `0`. |
-| Bubble's absolute (X|Y|Z) coordinate | `Sum` | Bubble's absolute (X|Y|Z) coordinate ((X|Y|Z)_b) |
-
-###### Domain (Leaf Node)
-| Name | `Type` (Bytes) | Description |
-| ------------- | ------------- | ------------- |
-| Number of Child Nodes | `u8` (1) | The value is `0`. |
-| Domain | `OrOrExpr` | Domain |
-
-###### Output (Leaf Node)
-| Name | `Type` (Bytes) | Description |
-| ------------- | ------------- | ------------- |
-| Number of Child Nodes | `u8` (1) | The value is `0`. |
-| Output | `Sum` | Output |
-
+| Expr Size | `u16` (2) | Expr Size |
+| Expr | `Sum` | Expr |
 
 
 ### Keywords
 
-#### Built-In Variables
-Ident is `V`.
-
-| Name | `Type` (Bytes) | Description |
-| ------------- | ------------- |
-| V | `Char` (1) | Ident is `V`. |
-| BIVKind | `ULEB128` | Built-In Variable Kind |
-
-##### Built-In Variable Kind (BIVKind)
-This data is `ULEB128`.
-
-| Variant | Description | Value |
-| ------------- | ------------- | ------------- |
-| X | Speaker's absolute X coordinate | 0 |
-| Y | Speaker's absolute Y coordinate | 1 |
-| Z | Speaker's absolute Z coordinate | 2 |
-| x | x = X - X_0 (X_0 is Bubble's absolute X coordinate). Speaker's relative X coordinate. | 3 |
-| y | y = Y - Y_0 (Y_0 is Bubble's absolute Y coordinate). Speaker's relative Y coordinate. | 4 |
-| z | z = Z - Z_0 (Z_0 is Bubble's absolute Z coordinate). Speaker's relative Z coordinate. | 5 |
-| N | Absolute frame n. Number of frames starting from the file. (`as f64`) | 6 |
-| n | Relative frame n. Number of frames starting from at the start of `BubFnsBlock`.(`as f64`) | 7 |
-| F | Absolute Frames (`as f64`) | 8 |
-| f | Relative Frames (`as f64`) | 9 |
-| T | Absolute Time. T = N / F | 10 |
-| t | Relative Time. t = n / f | 11 |
-| S | Frames per sec. (`as f64`) f_s | 12 |
-
-#### Constants
-Ident is `C`.
-
-| Name | `Type` (Bytes) | Description |
-| ------------- | ------------- |
-| C | `Char` (1) | Ident is `C`. |
-| CKind | `ULEB128` | Constant Kind |
-
-##### Constant Kind (CKind)
-This data is `ULEB128`.
-
-| Variant | Description | Value |
-| ------------- | ------------- | ------------- |
-| E | Euler’s number (e) | 0 |
-| Frac1Pi | 1/π | 1 |
-| Frac1Sqrt2 | 1/sqrt(2) | 2 |
-| Frac2Pi | 2/π | 3 |
-| Frac2SqrtPi | 2/sqrt(π) | 4 |
-| FracPi2 | π/2 | 5 |
-| FracPi3 | π/3 | 6 |
-| FracPi4 | π/4 | 7 |
-| FracPi6 | π/6 | 8 |
-| FracPi8 | π/8 | 9 |
-| Ln2 | ln(2) | 10 |
-| Ln10 | ln(10) | 11 |
-| Log210 | log2(10) | 12 |
-| Log2E | log2(e) | 13 |
-| Log102 | log10(2) | 14 |
-| Log10E | log10(e) | 15 |
-| Pi | Archimedes’ constant (π) | 16 |
-| Sqrt2 | sqrt(2) | 17 |
-| Tau | The full circle constant (τ) | 18 |
-
-#### Built-In Maps (Functions)
-Ident is `M`.
-
-| Name | `Type` (Bytes) | Description |
-| ------------- | ------------- |
-| M | `Char` (1) | Ident is `M`. |
-| BIMKind | `ULEB128` | Built-In Map Kind |
-| Open paren |  | `(` |
-| Arguments |  | Arguments |
-| Close paren |  | `)` |
-
-##### Built-In Map Kind (BIMKind)
-This data is `ULEB128`.
-
-| Variant | Description | Arguments | Value |
-| ------------- | ------------- | ------------- |
-| Sin | Sine | n | 0 |
-| Cos | Cosine | n | 1 |
-| Tan | Tangent | n | 2 |
-| Log | The logarithm. | base, n | 3 |
-| Ln | The natural logarithm of the number. | n | 4 |
-| Log2 | The base 2 logarithm of the number. | n | 5 |
-| Log10 | The base 2 logarithm of the number. | n | 6 |
-
-<!-- #### Others
+#### Variables
 | Keyword | Description |
 | ------------- | ------------- |
-| b | `b????????` `f64` | -->
+| X | Speaker's absolute X coordinate |
+| Y | Speaker's absolute Y coordinate |
+| Z | Speaker's absolute Z coordinate |
+| x | x = X - X_0 (X_0 is Bubble's absolute X coordinate). Speaker's relative X coordinate. |
+| y | y = Y - Y_0 (Y_0 is Bubble's absolute Y coordinate). Speaker's relative Y coordinate. |
+| z | z = Z - Z_0 (Z_0 is Bubble's absolute Z coordinate). Speaker's relative Z coordinate. |
+| N | Absolute frame n. Number of frames starting from the file. (`as f64`) |
+| n | Relative frame n. Number of frames starting from at the start of `BubFnsBlock`.(`as f64`) |
+| F | Frames (`as f64`) |
+| S | Samples per sec |
+
+##### Constants
+| Keyword | Description |
+| ------------- | ------------- |
+| E | Euler's number |
+| PI | Pi |
+
+#### Functions
+| Keyword | Description |
+| ------------- | ------------- |
+| sin | Sine |
+| cos | Cosine |
+| tan | Tangent |
+| ln | The natural logarithm of the number. |
+| lg | The base 2 logarithm of the number. |
+
+#### Others
+| Keyword | Description |
+| ------------- | ------------- |
+| b | `b????????` `f64` |
 
 ### Punctuation
 | Symbol | Name |
@@ -300,11 +137,29 @@ This data is `ULEB128`.
 ### Delimiters
 | Symbol | Name |
 | ------------- | ------------- |
+|   | Space |
 | , | Comma |
 | ( ) | Parentheses |
 
 ### Syntax
 ```rust ignore
+// BubFns
+BubFns = BubFn ZeroOrMoreBubFns / f
+ZeroOrMoreBubFns = SpaceAndBubFn ZeroOrMoreBubFns / ()
+
+SpaceAndBubFn = Space BubFn / f
+
+// BubFn
+// BubFn = Sum Space Sum Space Sum Space OrOrExpr Space Sum
+BubFn = SumAndSpace BubFn1 / f
+BubFn1 = SumAndSpace BubFn2 / f
+BubFn2 = SumAndSpace BubFn3 / f
+BubFn3 = OrOrExprAndSpace BubFn4 / f
+BubFn4 = Sum () / f
+
+SumAndSpace = Sum Space / f
+OrOrExprAndSpace = OrOrExpr Space / f
+
 // OrOr Expr
 OrOrExpr = AndAndExpr OrOrExpr1 / AndAndExpr
 OrOrExpr1 = OrOr OrOrExpr / f
@@ -356,28 +211,52 @@ PowerAndFactor = '^' Factor / f
 Atom = ExprInParentheses () / Atom1
 Atom1 = FloatLiteral () / Atom2
 Atom2 = IntegerLiteral () / Atom3
-Atom3 = Map () / Atom4
+Atom3 = Function () / Atom4
 Atom4 = Variable () / Atom5
 Atom5 = Constant () / f
 
 // Variable
-Variable = BIOrUDVariable ? / f
-BIOrUDVariable = 'V' () / 'v'
+Variable = UppercaseX () / Variable1
+Variable1 = UppercaseY () / Variable2
+Variable2 = UppercaseZ () / Variable3
+Variable3 = LowercaseX () / Variable4
+Variable4 = LowercaseY () / Variable5
+Variable5 = LowercaseZ () / Variable6
+Variable6 = UppercaseN () / Variable7
+Variable7 = LowercaseN () / Variable8
+Variable8 = UppercaseF () / Variable9
+Variable9 = UppercaseS () / f
+
+UppercaseX = 'X' () / f
+UppercaseY = 'Y' () / f
+UppercaseZ = 'Z' () / f
+LowercaseX = 'x' () / f
+LowercaseY = 'y' () / f
+LowercaseZ = 'z' () / f
+UppercaseN = 'N' () / f
+LowercaseN = 'n' () / f
+UppercaseF = 'F' () / f
+UppercaseS = 'S' () / f
 
 // Constant
-Constant = 'C' ? / f
+Constant = E () / Constant1
+Constant1 = Pi () / f
 
-// Map (Function)
-Map = BIOrUDMap Map1 / f
-BIOrUDMap = 'M' () / 'm'
-// TODO Change into ULEB128.
-Map1 = ? Map2 / f
-Map2 = '(' Map3 / f
-Map3 = MapParams ')' / f
+E = 'E' () / f
+Pi = "PI" () / f
 
-MapParams = Sum ZeroOrMoreMapParams / f
-ZeroOrMoreMapParams = CommaAndMapParam ZeroOrMoreMapParams / ()
-CommaAndMapParam = ',' Sum / f
+// Function
+Function = Sine () / Function1
+Function1 = Cosine () / Function2
+Function2 = Tangent () / Function3
+Function3 = Ln () / Function4
+Function4 = Lg () / f
+
+Sine = "sin" Factor / f
+Cosine = "cos" Factor / f
+Tangent = "tan" Factor / f
+Ln = "ln" Factor / f
+Lg = "lg" Factor / f
 
 // Delimiters
 ExprInParentheses = '(' ExprAndClose / f
@@ -390,7 +269,7 @@ IntegerLiteral = DecLiteral () / f
 FloatLiteral = DecLiteral PointAndDecLiteral / BytesF64Literal
 PointAndDecLiteral = '.' DecLiteral / f
 
-// BytesF64Literal = 'b' ???????? / f
+BytesF64Literal = 'b' ???????? / f
 
 // Dec
 DecLiteral = DecDigit ZeroOrMoreDecDigits / f
@@ -416,15 +295,61 @@ StarOrSlash = Star () / StarOrSlash1
 StarOrSlash1 = Slash () / f
 Star = '*' () / f
 Slash = '/' () / f
+
+Space = ' ' () / f
 ```
 
 
+# Floaout File Format Specification
 
-## TODO
-- [ ] Add summation
-- [ ] Add CRC
-- [ ] Add assignment in BubFn
-- [ ] Add Others
-- [ ] Add Output array or variable
-- [ ] Add f64::consts::EPSILON
-- [ ] Change Number Literal to `u{ULEB128}`, `i{Signed LEB128}`, `f????`, and `d????????`
+## Metadata
+| Name | `Type` (Bytes) | Description |
+| ------------- | ------------- | ------------- |
+| Spec Version | `u8` (1) | Version of Floaout File Format Specification. |
+| Floaout ID | `u128` (16) | Floaout ID of this file. The value is 0 if the song is undefined. If it is not 0, it must be based on the ID managed by bkbkb.net. |
+| Floaout Version | `u16` (2) | Version of Floaout |
+| Bubbles | `u16` (2) | Number of Bubbles |
+| Frames | `u64` (8) | Number of frames |
+| Samples Per Sec | `f64` (8) | Samples per sec |
+| LpcmKind | `u8` (1) | `LpcmKind` |
+| Title Size | `u8` (1) | Title Size (0~255) |
+| Title | `String` | Title (UTF-8) |
+| Artist Size | `u8` (1) | Artist Size (0~255) |
+| Artist | `String` | Artist (UTF-8) |
+| CRC-32K/4.2 | `u32` (4) | Max length at Hamming Distance 4 is 2147483615 (bits). And max length at Hamming Distance 6 is 6167 (bits). |
+
+## Each Bubble
+Bubble Files will be 'i.bub' (i = 0, ... , Bubbles - 1)
+
+| Name | `Type` (Bytes) | Description |
+| ------------- | ------------- | ------------- |
+| File Name Size | `u8` (1) | File Name Size (0~255) |
+| File Name | `String` | Bubble File Name without ".bub" (UTF-8) |
+| Bubble Starting Frames | `u16` (2) | Number of Bubble Starting Frames |
+| Bubble Starting Frame | `u64` (8) | Bubble Starting Frame |
+| ... | ... | ... |
+| Bubble Starting Frame | `u64` (8) | Bubble Starting Frame |
+| CRC-32K/4.2 | `u32` (4) | From the previous CRC. |
+
+
+# Library License
+
+- [MIT](LICENSE-MIT) OR [Apache-2.0](LICENSE-APACHE)
+
+# Format License
+- Except modify or derive from these formats specification, anyone can use or create these formats the way each wants.
+
+- these formats = { Bubble, Floaout }
+
+
+(As a precaution, copyrights and other intellectual property rights belong to the artists and their associates.)
+
+# TODO
+- Use generic type in `Color` and `Space`.
+- Add `read_bub_fns_block` in BubFrameReader
+- error handling
+- Clarify whether #[derive(Order)] is needed
+- Add Position field in BubfnsInterpreter
+- Check file is supported version or not
+- Parallel computing
+- Add Functions like pow, sinh, ...
