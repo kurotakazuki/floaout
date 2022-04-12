@@ -4,9 +4,13 @@
 
 Floaout is the next-generation audio format.
 
-# Bubble File Format Specification
 
-## Metadata
+## Examples
+- [bgm_oao](https://github.com/kurotakazuki/bgm_oao) : Background music made with Floaout.
+
+## Bubble File Format Specification
+
+### Metadata
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
 | Spec Version | `u8` (1) | Version of Bubble File Format Specification. |
@@ -21,19 +25,19 @@ Floaout is the next-generation audio format.
 | Name | `String` | Name (UTF-8) |
 | CRC-32K/4.2 | `u32` (4) | Max length at Hamming Distance 4 is 2147483615 (bits). And max length at Hamming Distance 6 is 6167 (bits). |
 
-### LpcmKind
+#### LpcmKind
 | Variant  | Description | Value (`Type`) |
 | ------------- | ------------- | ------------- |
 | F32LE | `f32` Little Endian | 0 (`u8`) |
 | F64LE | `f64` Little Endian | 1 (`u8`) |
 
-### BubSampleKind
+#### BubSampleKind
 | Variant  | Description | Value |
 | ------------- | ------------- | ------------- |
 | Lpcm | Lpcm | 0 |
 | Expr | Expr | 1 |
 
-### CRC
+#### CRC
 ```rust ignore
 Algorithm::<u32> {
     endian: Endian::Little,
@@ -46,11 +50,11 @@ Algorithm::<u32> {
 }
 ```
 
-## Each Sample
+### Each Sample
 | Bubble Sample |  | `BubbleSample` |
 
 
-## Bubble Sample
+### Bubble Sample
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
 | Bubble Functions size | `u16` (1) | Bubble Functions size |
@@ -69,22 +73,22 @@ Algorithm::<u32> {
 | Sample Data |  | Sample Data |
 | CRC-32K/4.2 | `u32` (4) | After every foot frames. From the previous CRC. |
 
-### Sample Data
-#### Lpcm
+#### Sample Data
+##### Lpcm
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
 | Sample | `f32` or `f64` (4 or 8) | depends on `LpcmKind` |
 
-#### Expr
+##### Expr
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
 | Expr Size | `u16` (2) | Expr Size |
 | Expr | `Sum` | Expr |
 
 
-### Keywords
+#### Keywords
 
-#### Variables
+##### Variables
 | Keyword | Description |
 | ------------- | ------------- |
 | X | Speaker's absolute X coordinate |
@@ -98,13 +102,13 @@ Algorithm::<u32> {
 | F | Frames (`as f64`) |
 | S | Samples per sec |
 
-##### Constants
+###### Constants
 | Keyword | Description |
 | ------------- | ------------- |
 | E | Euler's number |
 | PI | Pi |
 
-#### Functions
+##### Functions
 | Keyword | Description |
 | ------------- | ------------- |
 | sin | Sine |
@@ -113,12 +117,12 @@ Algorithm::<u32> {
 | ln | The natural logarithm of the number. |
 | lg | The base 2 logarithm of the number. |
 
-#### Others
+##### Others
 | Keyword | Description |
 | ------------- | ------------- |
 | b | `b????????` `f64` |
 
-### Punctuation
+#### Punctuation
 | Symbol | Name |
 | ------------- | ------------- |
 | + | Plus |
@@ -134,14 +138,14 @@ Algorithm::<u32> {
 | >= | Ge |
 | <= | Le |
 
-### Delimiters
+#### Delimiters
 | Symbol | Name |
 | ------------- | ------------- |
 |   | Space |
 | , | Comma |
 | ( ) | Parentheses |
 
-### Syntax
+#### Syntax
 ```rust ignore
 // BubFns
 BubFns = BubFn ZeroOrMoreBubFns / f
@@ -300,9 +304,9 @@ Space = ' ' () / f
 ```
 
 
-# Floaout File Format Specification
+## Floaout File Format Specification
 
-## Metadata
+### Metadata
 | Name | `Type` (Bytes) | Description |
 | ------------- | ------------- | ------------- |
 | Spec Version | `u8` (1) | Version of Floaout File Format Specification. |
@@ -318,7 +322,7 @@ Space = ' ' () / f
 | Artist | `String` | Artist (UTF-8) |
 | CRC-32K/4.2 | `u32` (4) | Max length at Hamming Distance 4 is 2147483615 (bits). And max length at Hamming Distance 6 is 6167 (bits). |
 
-## Each Bubble
+### Each Bubble
 Bubble Files will be 'i.bub' (i = 0, ... , Bubbles - 1)
 
 | Name | `Type` (Bytes) | Description |
@@ -332,11 +336,11 @@ Bubble Files will be 'i.bub' (i = 0, ... , Bubbles - 1)
 | CRC-32K/4.2 | `u32` (4) | From the previous CRC. |
 
 
-# Library License
+## Library License
 
 - [MIT](LICENSE-MIT) OR [Apache-2.0](LICENSE-APACHE)
 
-# Format License
+## Format License
 - Except modify or derive from these formats specification, anyone can use or create these formats the way each wants.
 
 - these formats = { Bubble, Floaout }
@@ -344,7 +348,7 @@ Bubble Files will be 'i.bub' (i = 0, ... , Bubbles - 1)
 
 (As a precaution, copyrights and other intellectual property rights belong to the artists and their associates.)
 
-# TODO
+## TODO
 - Use generic type in `Color` and `Space`.
 - Add `read_bub_fns_block` in BubFrameReader
 - error handling
